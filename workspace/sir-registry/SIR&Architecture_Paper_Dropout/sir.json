@@ -4,9 +4,23 @@
   "provenance": {
     "parsed_at": "2026-06-19T00:00:00Z",
     "parser_stage": "01_paper_parser",
-    "source": "PDF upload — ASimpleWaytoPreventNeuralNetworksfromOverfitting.pdf"
+    "source": "PDF upload — ASimpleWaytoPreventNeuralNetworksfromOverfitting.pdf",
+    "title": "Dropout: A Simple Way to Prevent Neural Networks from Overfitting",
+    "authors": [
+      "Nitish Srivastava",
+      "Geoffrey Hinton",
+      "Alex Krizhevsky",
+      "Ilya Sutskever",
+      "Ruslan Salakhutdinov"
+    ],
+    "affiliations": [],
+    "arxiv_id": null,
+    "doi": null,
+    "submission_date": null,
+    "abstract": "",
+    "domain": "Other",
+    "arxivist_version": "1.0"
   },
-
   "metadata": {
     "title": "Dropout: A Simple Way to Prevent Neural Networks from Overfitting",
     "authors": [
@@ -32,7 +46,6 @@
       "Marginalizing dropout noise in linear regression yields a modified ridge regularizer; Gaussian multiplicative noise is a viable high-entropy variant."
     ]
   },
-
   "architecture": {
     "confidence": 0.92,
     "description": "Dropout is a regularization wrapper applied over any feed-forward or convolutional neural network. No new module topology is introduced — the core change is a per-layer stochastic masking operation during training and a weight-scaling operation at test time.",
@@ -106,152 +119,182 @@
         "primary_assumption": "AlexNet: 5 conv layers + 3 FC layers, dropout in last 2 FC layers at p=0.5",
         "confidence": 0.85
       }
-    ]
+    ],
+    "modules": [],
+    "connections": []
   },
-
-  "mathematical_spec": {
-    "confidence": 0.97,
-    "equations": [
-      {
-        "id": "eq_standard_feedforward",
-        "name": "Standard Feed-Forward Pass",
-        "latex": "z_i^{(l+1)} = w_i^{(l+1)} y^{(l)} + b_i^{(l+1)}, \\quad y_i^{(l+1)} = f(z_i^{(l+1)})",
-        "role": "baseline forward pass without dropout",
-        "symbols": {
-          "z_i^{(l+1)}": "pre-activation of unit i in layer l+1",
-          "w_i^{(l+1)}": "weight vector for unit i in layer l+1",
-          "y^{(l)}": "output vector from layer l",
-          "b_i^{(l+1)}": "bias of unit i in layer l+1",
-          "f": "activation function (logistic or ReLU)"
+  "mathematical_spec": [
+    {
+      "name": "confidence",
+      "value": 0.97,
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    },
+    {
+      "name": "equations",
+      "value": [
+        {
+          "id": "eq_standard_feedforward",
+          "name": "Standard Feed-Forward Pass",
+          "latex": "z_i^{(l+1)} = w_i^{(l+1)} y^{(l)} + b_i^{(l+1)}, \\quad y_i^{(l+1)} = f(z_i^{(l+1)})",
+          "role": "baseline forward pass without dropout",
+          "symbols": {
+            "z_i^{(l+1)}": "pre-activation of unit i in layer l+1",
+            "w_i^{(l+1)}": "weight vector for unit i in layer l+1",
+            "y^{(l)}": "output vector from layer l",
+            "b_i^{(l+1)}": "bias of unit i in layer l+1",
+            "f": "activation function (logistic or ReLU)"
+          }
+        },
+        {
+          "id": "eq_dropout_mask_sample",
+          "name": "Bernoulli Dropout Mask Sampling",
+          "latex": "r_j^{(l)} \\sim \\text{Bernoulli}(p)",
+          "role": "training — sample per-unit binary mask",
+          "symbols": {
+            "r_j^{(l)}": "binary mask for unit j in layer l",
+            "p": "probability of retaining a unit (hyperparameter)"
+          }
+        },
+        {
+          "id": "eq_dropout_thinned_output",
+          "name": "Thinned Layer Output",
+          "latex": "\\tilde{y}^{(l)} = r^{(l)} \\ast y^{(l)}",
+          "role": "training — element-wise masking of layer output",
+          "symbols": {
+            "\\tilde{y}^{(l)}": "thinned output after dropout",
+            "r^{(l)}": "Bernoulli mask vector for layer l",
+            "\\ast": "element-wise (Hadamard) product"
+          }
+        },
+        {
+          "id": "eq_dropout_forward",
+          "name": "Dropout Forward Pass",
+          "latex": "z_i^{(l+1)} = w_i^{(l+1)} \\tilde{y}^{(l)} + b_i^{(l+1)}, \\quad y_i^{(l+1)} = f(z_i^{(l+1)})",
+          "role": "training — forward pass through thinned network",
+          "notes": "Applied at every hidden layer. Mask is re-sampled for each training example."
+        },
+        {
+          "id": "eq_test_weight_scaling",
+          "name": "Test-Time Weight Scaling",
+          "latex": "W_{\\text{test}}^{(l)} = p \\cdot W^{(l)}",
+          "role": "inference — approximate model averaging",
+          "notes": "Multiplying by p ensures expected output at test time equals expected output at train time."
+        },
+        {
+          "id": "eq_max_norm",
+          "name": "Max-Norm Regularization Constraint",
+          "latex": "\\|\\mathbf{w}\\|_2 \\leq c",
+          "role": "training constraint applied via projection after each gradient step",
+          "symbols": {
+            "w": "incoming weight vector at a hidden unit",
+            "c": "max-norm bound hyperparameter (typical values 2–4)"
+          }
+        },
+        {
+          "id": "eq_linear_regression_dropout",
+          "name": "Marginalized Dropout for Linear Regression",
+          "latex": "\\min_w \\|y - pXw\\|^2 + p(1-p)\\|\\Gamma w\\|^2, \\quad \\Gamma = (\\text{diag}(X^\\top X))^{1/2}",
+          "role": "theoretical analysis — shows dropout ≡ ridge regression with input-scaled regularizer",
+          "notes": "Derived in Section 9.1. Shows dropout implicitly applies stronger regularization to high-variance input dimensions."
+        },
+        {
+          "id": "eq_gaussian_dropout",
+          "name": "Multiplicative Gaussian Noise (Gaussian Dropout)",
+          "latex": "h_i \\leftarrow h_i \\cdot r', \\quad r' \\sim \\mathcal{N}(1, \\sigma^2), \\quad \\sigma^2 = \\frac{1-p}{p}",
+          "role": "alternative to Bernoulli dropout; no test-time weight scaling needed",
+          "notes": "Same mean (1) and variance ((1-p)/p) as Bernoulli dropout scaled version; higher entropy."
+        },
+        {
+          "id": "eq_dropout_rbm",
+          "name": "Dropout RBM Joint Distribution",
+          "latex": "P(r, h, v; p, \\theta) = P(r; p) P(h, v | r; \\theta)",
+          "role": "generalization of dropout to Restricted Boltzmann Machines",
+          "symbols": {
+            "r": "binary dropout mask vector for hidden units",
+            "h": "hidden unit states in {0,1}^F",
+            "v": "visible unit states in {0,1}^D",
+            "theta": "RBM parameters {W, a, b}"
+          }
         }
-      },
-      {
-        "id": "eq_dropout_mask_sample",
-        "name": "Bernoulli Dropout Mask Sampling",
-        "latex": "r_j^{(l)} \\sim \\text{Bernoulli}(p)",
-        "role": "training — sample per-unit binary mask",
-        "symbols": {
-          "r_j^{(l)}": "binary mask for unit j in layer l",
-          "p": "probability of retaining a unit (hyperparameter)"
+      ],
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "confidence",
+      "value": 0.85,
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    },
+    {
+      "name": "tensors",
+      "value": [
+        {
+          "name": "x (input)",
+          "shape": "[B, D_in]",
+          "dtype": "float32",
+          "role": "input",
+          "notes": "D_in: MNIST=784, SVHN=3072 (RGB), Reuters=2000, AltSplice=1014"
+        },
+        {
+          "name": "r^(l) (dropout mask)",
+          "shape": "[B, D_l]  or  [D_l] broadcast over batch",
+          "dtype": "float32 (0.0 or 1.0)",
+          "role": "intermediate — per-layer binary mask",
+          "notes": "Re-sampled per training example per forward pass. NOT applied at test time."
+        },
+        {
+          "name": "y^(l) (layer output pre-mask)",
+          "shape": "[B, D_l]",
+          "dtype": "float32",
+          "role": "intermediate"
+        },
+        {
+          "name": "y_tilde^(l) (thinned output)",
+          "shape": "[B, D_l]",
+          "dtype": "float32",
+          "role": "intermediate — input to layer l+1 during training"
+        },
+        {
+          "name": "W^(l) (weight matrix)",
+          "shape": "[D_l, D_{l-1}]",
+          "dtype": "float32",
+          "role": "parameter"
+        },
+        {
+          "name": "b^(l) (bias vector)",
+          "shape": "[D_l]",
+          "dtype": "float32",
+          "role": "parameter"
+        },
+        {
+          "name": "logits / softmax output",
+          "shape": "[B, C]",
+          "dtype": "float32",
+          "role": "output — C is number of classes"
         }
-      },
-      {
-        "id": "eq_dropout_thinned_output",
-        "name": "Thinned Layer Output",
-        "latex": "\\tilde{y}^{(l)} = r^{(l)} \\ast y^{(l)}",
-        "role": "training — element-wise masking of layer output",
-        "symbols": {
-          "\\tilde{y}^{(l)}": "thinned output after dropout",
-          "r^{(l)}": "Bernoulli mask vector for layer l",
-          "\\ast": "element-wise (Hadamard) product"
-        }
-      },
-      {
-        "id": "eq_dropout_forward",
-        "name": "Dropout Forward Pass",
-        "latex": "z_i^{(l+1)} = w_i^{(l+1)} \\tilde{y}^{(l)} + b_i^{(l+1)}, \\quad y_i^{(l+1)} = f(z_i^{(l+1)})",
-        "role": "training — forward pass through thinned network",
-        "notes": "Applied at every hidden layer. Mask is re-sampled for each training example."
-      },
-      {
-        "id": "eq_test_weight_scaling",
-        "name": "Test-Time Weight Scaling",
-        "latex": "W_{\\text{test}}^{(l)} = p \\cdot W^{(l)}",
-        "role": "inference — approximate model averaging",
-        "notes": "Multiplying by p ensures expected output at test time equals expected output at train time."
-      },
-      {
-        "id": "eq_max_norm",
-        "name": "Max-Norm Regularization Constraint",
-        "latex": "\\|\\mathbf{w}\\|_2 \\leq c",
-        "role": "training constraint applied via projection after each gradient step",
-        "symbols": {
-          "w": "incoming weight vector at a hidden unit",
-          "c": "max-norm bound hyperparameter (typical values 2–4)"
-        }
-      },
-      {
-        "id": "eq_linear_regression_dropout",
-        "name": "Marginalized Dropout for Linear Regression",
-        "latex": "\\min_w \\|y - pXw\\|^2 + p(1-p)\\|\\Gamma w\\|^2, \\quad \\Gamma = (\\text{diag}(X^\\top X))^{1/2}",
-        "role": "theoretical analysis — shows dropout ≡ ridge regression with input-scaled regularizer",
-        "notes": "Derived in Section 9.1. Shows dropout implicitly applies stronger regularization to high-variance input dimensions."
-      },
-      {
-        "id": "eq_gaussian_dropout",
-        "name": "Multiplicative Gaussian Noise (Gaussian Dropout)",
-        "latex": "h_i \\leftarrow h_i \\cdot r', \\quad r' \\sim \\mathcal{N}(1, \\sigma^2), \\quad \\sigma^2 = \\frac{1-p}{p}",
-        "role": "alternative to Bernoulli dropout; no test-time weight scaling needed",
-        "notes": "Same mean (1) and variance ((1-p)/p) as Bernoulli dropout scaled version; higher entropy."
-      },
-      {
-        "id": "eq_dropout_rbm",
-        "name": "Dropout RBM Joint Distribution",
-        "latex": "P(r, h, v; p, \\theta) = P(r; p) P(h, v | r; \\theta)",
-        "role": "generalization of dropout to Restricted Boltzmann Machines",
-        "symbols": {
-          "r": "binary dropout mask vector for hidden units",
-          "h": "hidden unit states in {0,1}^F",
-          "v": "visible unit states in {0,1}^D",
-          "theta": "RBM parameters {W, a, b}"
-        }
-      }
-    ]
-  },
-
-  "tensor_semantics": {
-    "confidence": 0.85,
-    "tensors": [
-      {
-        "name": "x (input)",
-        "shape": "[B, D_in]",
-        "dtype": "float32",
-        "role": "input",
-        "notes": "D_in: MNIST=784, SVHN=3072 (RGB), Reuters=2000, AltSplice=1014"
-      },
-      {
-        "name": "r^(l) (dropout mask)",
-        "shape": "[B, D_l]  or  [D_l] broadcast over batch",
-        "dtype": "float32 (0.0 or 1.0)",
-        "role": "intermediate — per-layer binary mask",
-        "notes": "Re-sampled per training example per forward pass. NOT applied at test time."
-      },
-      {
-        "name": "y^(l) (layer output pre-mask)",
-        "shape": "[B, D_l]",
-        "dtype": "float32",
-        "role": "intermediate"
-      },
-      {
-        "name": "y_tilde^(l) (thinned output)",
-        "shape": "[B, D_l]",
-        "dtype": "float32",
-        "role": "intermediate — input to layer l+1 during training"
-      },
-      {
-        "name": "W^(l) (weight matrix)",
-        "shape": "[D_l, D_{l-1}]",
-        "dtype": "float32",
-        "role": "parameter"
-      },
-      {
-        "name": "b^(l) (bias vector)",
-        "shape": "[D_l]",
-        "dtype": "float32",
-        "role": "parameter"
-      },
-      {
-        "name": "logits / softmax output",
-        "shape": "[B, C]",
-        "dtype": "float32",
-        "role": "output — C is number of classes"
-      }
-    ]
-  },
-
+      ],
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    }
+  ],
   "training_pipeline": {
     "confidence": 0.88,
-    "optimizer": "SGD with momentum",
+    "optimizer": {
+      "name": "SGD with momentum",
+      "learning_rate": null,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null,
+      "confidence": 0.0
+    },
     "optimizer_hyperparams": {
       "momentum": "0.95 (standard nets: 0.9; dropout nets: 0.95–0.99 recommended)",
       "learning_rate": "10–100x that of equivalent non-dropout net; decayed over training",
@@ -270,7 +313,7 @@
         "applied_via": "project w onto L2 ball of radius c after each gradient step"
       }
     },
-    "batch_size": "mini-batch SGD; exact batch sizes not universally specified",
+    "batch_size": null,
     "training_duration": {
       "MNIST": "1 million weight updates; hyperparams tuned on 10K validation split then retrained on full 60K",
       "SVHN": "trained until best validation error; val set not merged back due to large training set",
@@ -278,20 +321,24 @@
     },
     "pretraining": {
       "supported": true,
-      "methods": ["RBM stacks (DBN)", "Deep Boltzmann Machines", "Autoencoders"],
+      "methods": [
+        "RBM stacks (DBN)",
+        "Deep Boltzmann Machines",
+        "Autoencoders"
+      ],
       "weight_scaling_on_finetune": "pretrained weights scaled up by 1/p before dropout finetuning",
       "finetuning_lr": "smaller than random-init lr to preserve pretrained weights"
     },
     "loss_function": "cross-entropy (classification); code-quality / neg-KL for Alternative Splicing; MSE implied for regression analysis",
-    "data_augmentation": {
-      "MNIST": "none for permutation-invariant setting; distortions possible in non-PI setting",
-      "SVHN": "global mean/variance normalization per channel; no ZCA or GCN (no improvement)",
-      "CIFAR": "global contrast normalization + ZCA whitening"
-    },
+    "data_augmentation": [
+      "MNIST: none for permutation-invariant setting; distortions possible in non-PI setting",
+      "SVHN: global mean/variance normalization per channel; no ZCA or GCN (no improvement)",
+      "CIFAR: global contrast normalization + ZCA whitening"
+    ],
     "gradient_clipping": null,
-    "mixed_precision": null
+    "mixed_precision": null,
+    "batch_size_detail": "mini-batch SGD; exact batch sizes not universally specified"
   },
-
   "evaluation_protocol": {
     "confidence": 0.97,
     "datasets": [
@@ -369,17 +416,61 @@
       }
     ],
     "key_results": [
-      {"dataset": "MNIST (perm-invariant)", "model": "Dropout NN + max-norm, ReLU, 3 layers 1024 units", "value": "1.25% error"},
-      {"dataset": "MNIST (perm-invariant)", "model": "Dropout NN + max-norm, ReLU, 2 layers 8192 units", "value": "0.95% error"},
-      {"dataset": "MNIST (perm-invariant)", "model": "DBM pretrained + dropout finetune", "value": "0.79% error (SOTA at time)"},
-      {"dataset": "SVHN", "model": "Conv Net + dropout all layers", "value": "2.55% error"},
-      {"dataset": "CIFAR-10", "model": "Conv Net + dropout all layers", "value": "12.61% error"},
-      {"dataset": "CIFAR-100", "model": "Conv Net + dropout all layers", "value": "37.20% error"},
-      {"dataset": "ImageNet ILSVRC-2010", "model": "Conv Net + dropout (AlexNet-style)", "value": "Top-5: 17.0%"},
-      {"dataset": "ImageNet ILSVRC-2012", "model": "Avg of 5 Conv Nets + dropout", "value": "Top-5: 16.4% (ILSVRC-2012 winner)"},
-      {"dataset": "TIMIT", "model": "DBN-pretrained NN (4-layer) + dropout", "value": "19.7% phone error"},
-      {"dataset": "Reuters-RCV1", "model": "Dropout NN (best)", "value": "29.62% error vs 31.05% baseline"},
-      {"dataset": "Alternative Splicing", "model": "Dropout 2-layer 1024-unit net", "value": "567 code quality vs 623 Bayesian NN"}
+      {
+        "dataset": "MNIST (perm-invariant)",
+        "model": "Dropout NN + max-norm, ReLU, 3 layers 1024 units",
+        "value": "1.25% error"
+      },
+      {
+        "dataset": "MNIST (perm-invariant)",
+        "model": "Dropout NN + max-norm, ReLU, 2 layers 8192 units",
+        "value": "0.95% error"
+      },
+      {
+        "dataset": "MNIST (perm-invariant)",
+        "model": "DBM pretrained + dropout finetune",
+        "value": "0.79% error (SOTA at time)"
+      },
+      {
+        "dataset": "SVHN",
+        "model": "Conv Net + dropout all layers",
+        "value": "2.55% error"
+      },
+      {
+        "dataset": "CIFAR-10",
+        "model": "Conv Net + dropout all layers",
+        "value": "12.61% error"
+      },
+      {
+        "dataset": "CIFAR-100",
+        "model": "Conv Net + dropout all layers",
+        "value": "37.20% error"
+      },
+      {
+        "dataset": "ImageNet ILSVRC-2010",
+        "model": "Conv Net + dropout (AlexNet-style)",
+        "value": "Top-5: 17.0%"
+      },
+      {
+        "dataset": "ImageNet ILSVRC-2012",
+        "model": "Avg of 5 Conv Nets + dropout",
+        "value": "Top-5: 16.4% (ILSVRC-2012 winner)"
+      },
+      {
+        "dataset": "TIMIT",
+        "model": "DBN-pretrained NN (4-layer) + dropout",
+        "value": "19.7% phone error"
+      },
+      {
+        "dataset": "Reuters-RCV1",
+        "model": "Dropout NN (best)",
+        "value": "29.62% error vs 31.05% baseline"
+      },
+      {
+        "dataset": "Alternative Splicing",
+        "model": "Dropout 2-layer 1024-unit net",
+        "value": "567 code quality vs 623 Bayesian NN"
+      }
     ],
     "baselines": [
       "Standard neural nets without dropout",
@@ -399,33 +490,46 @@
       "Max-norm": "1.35%",
       "Dropout+L2": "1.25%",
       "Dropout+Max-norm": "1.05%"
-    }
+    },
+    "metrics": [],
+    "reported_results": []
   },
-
   "implementation_assumptions": [
     {
       "assumption": "PyTorch is the target framework (torch.nn.Dropout module applies Bernoulli mask and rescales by 1/p at train time — equivalent to paper's test-time weight scaling when inverted)",
       "basis": "Modern standard practice; paper used CUDA-C (cudamat/cuda-convnet) but PyTorch is the contemporary equivalent",
-      "confidence": 0.90,
-      "alternatives": ["JAX/Flax", "TensorFlow/Keras", "NumPy for educational implementation"]
+      "confidence": 0.9,
+      "alternatives": [
+        "JAX/Flax",
+        "TensorFlow/Keras",
+        "NumPy for educational implementation"
+      ]
     },
     {
       "assumption": "PyTorch nn.Dropout uses 'inverted dropout' convention: scales by 1/p during training rather than p at test time. Both are equivalent. Implementation should note this difference from paper notation.",
       "basis": "PyTorch documentation; mathematical equivalence with appropriate lr scaling",
       "confidence": 0.97,
-      "alternatives": ["Manual Bernoulli mask + test-time scaling as in paper"]
+      "alternatives": [
+        "Manual Bernoulli mask + test-time scaling as in paper"
+      ]
     },
     {
       "assumption": "Xavier/Glorot initialization for weights unless pretraining is used",
       "basis": "Standard practice for ReLU nets; paper uses random init but doesn't specify strategy",
       "confidence": 0.75,
-      "alternatives": ["Kaiming/He initialization (better for ReLU)", "Random normal with small std"]
+      "alternatives": [
+        "Kaiming/He initialization (better for ReLU)",
+        "Random normal with small std"
+      ]
     },
     {
       "assumption": "Activation function is ReLU for primary experiments (paper shows ReLU outperforms logistic on MNIST: 1.35% → 1.25%)",
       "basis": "Explicitly compared in paper; ReLU used in SVHN, CIFAR, TIMIT best results",
       "confidence": 0.95,
-      "alternatives": ["Logistic sigmoid (shown as secondary)", "Maxout (referenced Goodfellow 2013)"]
+      "alternatives": [
+        "Logistic sigmoid (shown as secondary)",
+        "Maxout (referenced Goodfellow 2013)"
+      ]
     },
     {
       "assumption": "Max-norm projection implemented as: w = w * min(1, c / ||w||_2) after each gradient step",
@@ -437,16 +541,22 @@
       "assumption": "Batch size of 128 for MNIST experiments (not specified in paper)",
       "basis": "Common practice for MNIST with SGD; paper only states mini-batch SGD",
       "confidence": 0.65,
-      "alternatives": ["64", "256", "512"]
+      "alternatives": [
+        "64",
+        "256",
+        "512"
+      ]
     },
     {
       "assumption": "For the MNIST reproducibility demo, we target: 2-layer ReLU net with 1024 units, p=0.5 hidden, p=0.8 input, max-norm c=2, momentum=0.95, aiming for ~1.06% error",
       "basis": "Explicitly reported configuration in Table 2 and Appendix B.1",
       "confidence": 0.95,
-      "alternatives": ["Larger nets for better results", "Logistic activation for baseline comparison"]
+      "alternatives": [
+        "Larger nets for better results",
+        "Logistic activation for baseline comparison"
+      ]
     }
   ],
-
   "confidence_annotations": {
     "architecture": 0.92,
     "mathematical_spec": 0.97,
@@ -454,22 +564,27 @@
     "training_pipeline": 0.88,
     "evaluation_protocol": 0.97,
     "implementation_assumptions": 0.82,
-    "overall_sir_confidence": 0.90
+    "overall_sir_confidence": 0.9
   },
-
   "ambiguities": [
     {
       "location": "Section 5.1 / Appendix A.2",
       "description": "Exact initial learning rate values not given universally — only the heuristic of '10–100x the non-dropout optimal lr'. TIMIT gives lr=0.1; MNIST does not specify a number.",
       "primary_assumption": "lr=0.01 for MNIST (within typical range for SGD on MNIST)",
-      "alternatives": ["0.1", "0.001"],
+      "alternatives": [
+        "0.1",
+        "0.001"
+      ],
       "confidence": 0.65
     },
     {
       "location": "Section 7.5 / Appendix B",
       "description": "Exact batch size for MNIST/CIFAR/SVHN experiments not stated in the paper.",
       "primary_assumption": "128 for MNIST, 128 for CIFAR/SVHN",
-      "alternatives": ["64", "256"],
+      "alternatives": [
+        "64",
+        "256"
+      ],
       "confidence": 0.65
     },
     {
@@ -480,11 +595,16 @@
       "confidence": 0.85
     }
   ],
-
   "reproducibility_scope": {
     "primary_target": "MNIST classification — Dropout Feed-Forward Net with ReLU and max-norm (Table 2 row: 1.06% error, 3-layer 1024-unit net)",
     "secondary_target": "Regularizer comparison on MNIST (Table 9)",
     "tertiary_target": "Effect of dropout rate (Figure 9) and data set size (Figure 10)",
-    "out_of_scope_for_minimal_repro": ["ImageNet (AlexNet)", "SVHN conv net", "DBM pretraining chain", "Alternative Splicing"]
-  }
+    "out_of_scope_for_minimal_repro": [
+      "ImageNet (AlexNet)",
+      "SVHN conv net",
+      "DBM pretraining chain",
+      "Alternative Splicing"
+    ]
+  },
+  "sir_version": 1
 }
