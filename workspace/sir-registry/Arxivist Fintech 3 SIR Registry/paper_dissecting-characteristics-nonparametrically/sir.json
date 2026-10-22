@@ -3,9 +3,9 @@
   "provenance": {
     "title": "Dissecting Characteristics Nonparametrically",
     "authors": [
-      {"name": "Joachim Freyberger", "affiliation": "University of Wisconsin-Madison"},
-      {"name": "Andreas Neuhierl", "affiliation": "University of Notre Dame"},
-      {"name": "Michael Weber", "affiliation": "University of Chicago Booth School of Business, NBER"}
+      "Joachim Freyberger",
+      "Andreas Neuhierl",
+      "Michael Weber"
     ],
     "arxiv_id": "NBER Working Paper 23227",
     "submission_date": "March 2017",
@@ -19,7 +19,29 @@
       "Portfolio sorts are a special case of nonparametric regression using constant splines",
       "Significant time variation exists in the predictive power of characteristics for expected returns"
     ],
-    "parsed_at": "2026-05-26T00:00:00Z"
+    "parsed_at": "2026-05-26T00:00:00Z",
+    "author_details": [
+      {
+        "name": "Joachim Freyberger",
+        "affiliation": "University of Wisconsin-Madison"
+      },
+      {
+        "name": "Andreas Neuhierl",
+        "affiliation": "University of Notre Dame"
+      },
+      {
+        "name": "Michael Weber",
+        "affiliation": "University of Chicago Booth School of Business, NBER"
+      }
+    ],
+    "affiliations": [
+      "University of Wisconsin-Madison",
+      "University of Notre Dame",
+      "University of Chicago Booth School of Business, NBER"
+    ],
+    "doi": null,
+    "domain": "Other",
+    "arxivist_version": "1.0"
   },
   "architecture": {
     "description": "Statistical/econometric methodology, not a neural architecture. The 'model' is an additive nonparametric regression estimated via adaptive group LASSO with quadratic splines.",
@@ -98,138 +120,191 @@
       }
     ],
     "variants": [
-      {"name": "9 knots (baseline OOS)", "L": 9, "notes": "Corresponds to 10-portfolio sort"},
-      {"name": "14 knots (baseline in-sample)", "L": 14, "notes": "Primary in-sample specification"},
-      {"name": "4 knots", "L": 4, "notes": "Fewer parameters, robustness check"},
-      {"name": "19 knots", "L": 19, "notes": "Finer grid, robustness check"}
+      {
+        "name": "9 knots (baseline OOS)",
+        "L": 9,
+        "notes": "Corresponds to 10-portfolio sort"
+      },
+      {
+        "name": "14 knots (baseline in-sample)",
+        "L": 14,
+        "notes": "Primary in-sample specification"
+      },
+      {
+        "name": "4 knots",
+        "L": 4,
+        "notes": "Fewer parameters, robustness check"
+      },
+      {
+        "name": "19 knots",
+        "L": 19,
+        "notes": "Finer grid, robustness check"
+      }
     ],
     "primary_variant": "14 knots for in-sample; 9 knots for out-of-sample",
-    "confidence": 0.93
+    "confidence": 0.93,
+    "modules": [],
+    "connections": []
   },
-  "mathematical_spec": {
-    "equations": [
-      {
-        "id": "eq1",
-        "name": "Conditional Mean Function",
-        "latex": "E[R_{it} | C_{it-1}]",
-        "role": "Defines the object of estimation — expected excess return conditional on characteristics",
-        "confidence": 0.99
-      },
-      {
-        "id": "eq2",
-        "name": "Additive Model",
-        "latex": "R_{it} = \\sum_{s=1}^{S} \\tilde{m}_{ts}(\\tilde{C}_{s,it-1}) + \\epsilon_{it}",
-        "role": "Core model specification — additively separable in rank-transformed characteristics",
-        "confidence": 0.99
-      },
-      {
-        "id": "eq3",
-        "name": "Rank Transformation",
-        "latex": "F_{s,t}(C_{s,it-1}) = \\frac{\\text{rank}(C_{s,it-1})}{N_t + 1}",
-        "role": "Maps raw characteristics to cross-sectional ranks in (0,1)",
-        "confidence": 0.99
-      },
-      {
-        "id": "eq4",
-        "name": "Spline Basis Functions",
-        "latex": "p_1(c)=1,\\; p_2(c)=c,\\; p_3(c)=c^2,\\; p_k(c)=\\max\\{c-t_{k-3}, 0\\}^2 \\text{ for } k=4,\\ldots,L+2",
-        "role": "Quadratic spline basis with L-1 interior knots at quantiles t_l = l/L",
-        "confidence": 0.98
-      },
-      {
-        "id": "eq5",
-        "name": "Group LASSO Stage 1 Objective",
-        "latex": "\\tilde{\\beta}_t = \\arg\\min_{b} \\sum_{i=1}^{N} \\left(R_{it} - \\sum_{s=1}^{S}\\sum_{k=1}^{L+2} b_{sk} p_k(\\tilde{C}_{s,it-1})\\right)^2 + \\lambda_1 \\sum_{s=1}^{S} \\left(\\sum_{k=1}^{L+2} b_{sk}^2\\right)^{1/2}",
-        "role": "First-step group LASSO — selects groups (characteristics) jointly",
-        "hyperparameters": ["lambda1 (selected by BIC)", "L (number of knots, user-specified)"],
-        "confidence": 0.97
-      },
-      {
-        "id": "eq6",
-        "name": "Adaptive Weights",
-        "latex": "w_s = \\begin{cases} \\left(\\sum_{k=1}^{L+2} \\tilde{\\beta}_{sk}^2\\right)^{-1/2} & \\text{if } \\sum_k \\tilde{\\beta}_{sk}^2 \\neq 0 \\\\ \\infty & \\text{if } \\sum_k \\tilde{\\beta}_{sk}^2 = 0 \\end{cases}",
-        "role": "Ensures Stage 2 does not select any characteristic not selected in Stage 1",
-        "confidence": 0.97
-      },
-      {
-        "id": "eq7",
-        "name": "Adaptive Group LASSO Stage 2 Objective",
-        "latex": "\\breve{\\beta}_t = \\arg\\min_{b} \\sum_{i=1}^{N} \\left(R_{it} - \\sum_{s}\\sum_{k} b_{sk} p_k(\\tilde{C}_{s,it-1})\\right)^2 + \\lambda_2 \\sum_{s=1}^{S} w_s \\left(\\sum_{k=1}^{L+2} b_{sk}^2\\right)^{1/2}",
-        "role": "Model-selection-consistent step; correctly identifies truly zero functions",
-        "hyperparameters": ["lambda2 (selected by BIC)"],
-        "confidence": 0.97
-      },
-      {
-        "id": "eq8",
-        "name": "Estimated Conditional Mean Function",
-        "latex": "\\hat{\\tilde{m}}_{ts}(\\tilde{c}) = \\sum_{k=1}^{L+2} \\hat{\\beta}_{tsk} p_k(\\tilde{c})",
-        "role": "Final function estimate after OLS re-estimation on selected characteristics",
-        "confidence": 0.98
-      },
-      {
-        "id": "eq9",
-        "name": "Uniform Confidence Band",
-        "latex": "\\left[\\hat{\\tilde{m}}_{ts}(\\tilde{c}) \\pm d_{ts} \\hat{\\sigma}_{ts}(\\tilde{c})\\right], \\quad \\hat{\\sigma}_{ts}(\\tilde{c}) = \\sqrt{p(\\tilde{c})' \\hat{\\Sigma}_{ts} p(\\tilde{c})}",
-        "role": "Uniform (sup-norm) confidence bands based on simulated critical values",
-        "confidence": 0.92
-      }
-    ],
-    "confidence": 0.96
-  },
-  "tensor_semantics": {
-    "note": "This is a panel econometrics method; 'tensors' are matrices/vectors. No GPU tensor operations.",
-    "data_objects": [
-      {
-        "name": "Returns matrix",
-        "symbol": "R",
-        "shape": "[N*T x 1] (pooled panel)",
-        "description": "Monthly excess returns for N firms over T months"
-      },
-      {
-        "name": "Raw characteristics matrix",
-        "symbol": "C",
-        "shape": "[N*T x S]",
-        "description": "S=36 characteristics per firm per month"
-      },
-      {
-        "name": "Rank-normalized characteristics",
-        "symbol": "C_tilde",
-        "shape": "[N*T x S]",
-        "description": "Cross-sectional rank transforms of C, values in (0,1)"
-      },
-      {
-        "name": "Spline design matrix",
-        "symbol": "X",
-        "shape": "[N*T x S*(L+2)]",
-        "description": "Spline basis expansion of C_tilde; L+2 basis functions per characteristic"
-      },
-      {
-        "name": "First-stage coefficients",
-        "symbol": "beta_tilde",
-        "shape": "[(L+2) x S]",
-        "description": "Group LASSO Stage 1 coefficient matrix"
-      },
-      {
-        "name": "Adaptive weights",
-        "symbol": "w",
-        "shape": "[S x 1]",
-        "description": "Per-characteristic adaptive penalty weights"
-      },
-      {
-        "name": "Final coefficients",
-        "symbol": "beta_hat",
-        "shape": "[(L+2) x S_selected]",
-        "description": "OLS re-estimated coefficients for selected S_selected characteristics"
-      },
-      {
-        "name": "Predicted returns",
-        "symbol": "R_hat",
-        "shape": "[N*T x 1]",
-        "description": "In-sample and out-of-sample predicted expected returns"
-      }
-    ],
-    "confidence": 0.88
-  },
+  "mathematical_spec": [
+    {
+      "name": "equations",
+      "value": [
+        {
+          "id": "eq1",
+          "name": "Conditional Mean Function",
+          "latex": "E[R_{it} | C_{it-1}]",
+          "role": "Defines the object of estimation — expected excess return conditional on characteristics",
+          "confidence": 0.99
+        },
+        {
+          "id": "eq2",
+          "name": "Additive Model",
+          "latex": "R_{it} = \\sum_{s=1}^{S} \\tilde{m}_{ts}(\\tilde{C}_{s,it-1}) + \\epsilon_{it}",
+          "role": "Core model specification — additively separable in rank-transformed characteristics",
+          "confidence": 0.99
+        },
+        {
+          "id": "eq3",
+          "name": "Rank Transformation",
+          "latex": "F_{s,t}(C_{s,it-1}) = \\frac{\\text{rank}(C_{s,it-1})}{N_t + 1}",
+          "role": "Maps raw characteristics to cross-sectional ranks in (0,1)",
+          "confidence": 0.99
+        },
+        {
+          "id": "eq4",
+          "name": "Spline Basis Functions",
+          "latex": "p_1(c)=1,\\; p_2(c)=c,\\; p_3(c)=c^2,\\; p_k(c)=\\max\\{c-t_{k-3}, 0\\}^2 \\text{ for } k=4,\\ldots,L+2",
+          "role": "Quadratic spline basis with L-1 interior knots at quantiles t_l = l/L",
+          "confidence": 0.98
+        },
+        {
+          "id": "eq5",
+          "name": "Group LASSO Stage 1 Objective",
+          "latex": "\\tilde{\\beta}_t = \\arg\\min_{b} \\sum_{i=1}^{N} \\left(R_{it} - \\sum_{s=1}^{S}\\sum_{k=1}^{L+2} b_{sk} p_k(\\tilde{C}_{s,it-1})\\right)^2 + \\lambda_1 \\sum_{s=1}^{S} \\left(\\sum_{k=1}^{L+2} b_{sk}^2\\right)^{1/2}",
+          "role": "First-step group LASSO — selects groups (characteristics) jointly",
+          "hyperparameters": [
+            "lambda1 (selected by BIC)",
+            "L (number of knots, user-specified)"
+          ],
+          "confidence": 0.97
+        },
+        {
+          "id": "eq6",
+          "name": "Adaptive Weights",
+          "latex": "w_s = \\begin{cases} \\left(\\sum_{k=1}^{L+2} \\tilde{\\beta}_{sk}^2\\right)^{-1/2} & \\text{if } \\sum_k \\tilde{\\beta}_{sk}^2 \\neq 0 \\\\ \\infty & \\text{if } \\sum_k \\tilde{\\beta}_{sk}^2 = 0 \\end{cases}",
+          "role": "Ensures Stage 2 does not select any characteristic not selected in Stage 1",
+          "confidence": 0.97
+        },
+        {
+          "id": "eq7",
+          "name": "Adaptive Group LASSO Stage 2 Objective",
+          "latex": "\\breve{\\beta}_t = \\arg\\min_{b} \\sum_{i=1}^{N} \\left(R_{it} - \\sum_{s}\\sum_{k} b_{sk} p_k(\\tilde{C}_{s,it-1})\\right)^2 + \\lambda_2 \\sum_{s=1}^{S} w_s \\left(\\sum_{k=1}^{L+2} b_{sk}^2\\right)^{1/2}",
+          "role": "Model-selection-consistent step; correctly identifies truly zero functions",
+          "hyperparameters": [
+            "lambda2 (selected by BIC)"
+          ],
+          "confidence": 0.97
+        },
+        {
+          "id": "eq8",
+          "name": "Estimated Conditional Mean Function",
+          "latex": "\\hat{\\tilde{m}}_{ts}(\\tilde{c}) = \\sum_{k=1}^{L+2} \\hat{\\beta}_{tsk} p_k(\\tilde{c})",
+          "role": "Final function estimate after OLS re-estimation on selected characteristics",
+          "confidence": 0.98
+        },
+        {
+          "id": "eq9",
+          "name": "Uniform Confidence Band",
+          "latex": "\\left[\\hat{\\tilde{m}}_{ts}(\\tilde{c}) \\pm d_{ts} \\hat{\\sigma}_{ts}(\\tilde{c})\\right], \\quad \\hat{\\sigma}_{ts}(\\tilde{c}) = \\sqrt{p(\\tilde{c})' \\hat{\\Sigma}_{ts} p(\\tilde{c})}",
+          "role": "Uniform (sup-norm) confidence bands based on simulated critical values",
+          "confidence": 0.92
+        }
+      ],
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    },
+    {
+      "name": "confidence",
+      "value": 0.96,
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "note",
+      "value": "This is a panel econometrics method; 'tensors' are matrices/vectors. No GPU tensor operations.",
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    },
+    {
+      "name": "data_objects",
+      "value": [
+        {
+          "name": "Returns matrix",
+          "symbol": "R",
+          "shape": "[N*T x 1] (pooled panel)",
+          "description": "Monthly excess returns for N firms over T months"
+        },
+        {
+          "name": "Raw characteristics matrix",
+          "symbol": "C",
+          "shape": "[N*T x S]",
+          "description": "S=36 characteristics per firm per month"
+        },
+        {
+          "name": "Rank-normalized characteristics",
+          "symbol": "C_tilde",
+          "shape": "[N*T x S]",
+          "description": "Cross-sectional rank transforms of C, values in (0,1)"
+        },
+        {
+          "name": "Spline design matrix",
+          "symbol": "X",
+          "shape": "[N*T x S*(L+2)]",
+          "description": "Spline basis expansion of C_tilde; L+2 basis functions per characteristic"
+        },
+        {
+          "name": "First-stage coefficients",
+          "symbol": "beta_tilde",
+          "shape": "[(L+2) x S]",
+          "description": "Group LASSO Stage 1 coefficient matrix"
+        },
+        {
+          "name": "Adaptive weights",
+          "symbol": "w",
+          "shape": "[S x 1]",
+          "description": "Per-characteristic adaptive penalty weights"
+        },
+        {
+          "name": "Final coefficients",
+          "symbol": "beta_hat",
+          "shape": "[(L+2) x S_selected]",
+          "description": "OLS re-estimated coefficients for selected S_selected characteristics"
+        },
+        {
+          "name": "Predicted returns",
+          "symbol": "R_hat",
+          "shape": "[N*T x 1]",
+          "description": "In-sample and out-of-sample predicted expected returns"
+        }
+      ],
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    },
+    {
+      "name": "confidence",
+      "value": 0.88,
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    }
+  ],
   "training_pipeline": {
     "note": "Estimation procedure, not neural network training. No optimizer in the ML sense.",
     "estimation_steps": [
@@ -251,11 +326,20 @@
       }
     ],
     "hyperparameters": {
-      "L_knots": {"values": [4, 9, 14, 19], "primary": 14, "OOS_primary": 9},
+      "L_knots": {
+        "values": [
+          4,
+          9,
+          14,
+          19
+        ],
+        "primary": 14,
+        "OOS_primary": 9
+      },
       "lambda1": "Data-driven via BIC",
       "lambda2": "Data-driven via BIC",
       "rolling_window_months": 120,
-      "hedge_portfolio_decile": 0.10
+      "hedge_portfolio_decile": 0.1
     },
     "data_split": {
       "model_selection_period": "July 1963 – December 1990",
@@ -263,7 +347,7 @@
       "OOS_prediction_start": "January 1991",
       "OOS_prediction_end": "December 2014"
     },
-    "confidence": 0.90
+    "confidence": 0.9
   },
   "evaluation_protocol": {
     "datasets": [
@@ -281,9 +365,59 @@
     ],
     "characteristics": {
       "count": 36,
-      "list": ["A2ME","AT","ATO","BEME","Beta","C","CTO","D2A","DPI2A","E2P","FC2Y","Free CF","Idio vol","Investment","Lev","LME","Lturnover","NOA","OA","OL","PCM","PM","Prof","Q","Rel to High","RNA","ROA","ROE","r12-2","r12-7","r2-1","r36-13","S2P","SGA2M","Spread","SUV"]
+      "list": [
+        "A2ME",
+        "AT",
+        "ATO",
+        "BEME",
+        "Beta",
+        "C",
+        "CTO",
+        "D2A",
+        "DPI2A",
+        "E2P",
+        "FC2Y",
+        "Free CF",
+        "Idio vol",
+        "Investment",
+        "Lev",
+        "LME",
+        "Lturnover",
+        "NOA",
+        "OA",
+        "OL",
+        "PCM",
+        "PM",
+        "Prof",
+        "Q",
+        "Rel to High",
+        "RNA",
+        "ROA",
+        "ROE",
+        "r12-2",
+        "r12-7",
+        "r2-1",
+        "r36-13",
+        "S2P",
+        "SGA2M",
+        "Spread",
+        "SUV"
+      ]
     },
     "metrics": [
+      "In-sample Sharpe Ratio",
+      "Out-of-sample Sharpe Ratio (EW)",
+      "Out-of-sample Sharpe Ratio (VW)",
+      "Number of selected characteristics",
+      "Firm-level return forecast R^2"
+    ],
+    "baselines": [
+      "Fama-MacBeth linear regression (Lewellen 2015 style)",
+      "Linear with rank transformation",
+      "Fama-French Three-Factor Model"
+    ],
+    "confidence": 0.96,
+    "metric_details": [
       {
         "name": "In-sample Sharpe Ratio",
         "description": "Annualized Sharpe ratio of equally-weighted 10-1 hedge portfolio based on predicted returns",
@@ -317,49 +451,77 @@
         "period": "1991–2014"
       }
     ],
-    "baselines": [
-      {"name": "Fama-MacBeth linear regression (Lewellen 2015 style)", "OOS_SR_EW": 2.26, "OOS_SR_VW": 1.01},
-      {"name": "Linear with rank transformation", "OOS_SR_EW": 2.43},
-      {"name": "Fama-French Three-Factor Model", "role": "alpha comparison benchmark"}
-    ],
-    "confidence": 0.96
+    "reported_results": [],
+    "baseline_details": [
+      {
+        "name": "Fama-MacBeth linear regression (Lewellen 2015 style)",
+        "OOS_SR_EW": 2.26,
+        "OOS_SR_VW": 1.01
+      },
+      {
+        "name": "Linear with rank transformation",
+        "OOS_SR_EW": 2.43
+      },
+      {
+        "name": "Fama-French Three-Factor Model",
+        "role": "alpha comparison benchmark"
+      }
+    ]
   },
   "implementation_assumptions": [
     {
       "assumption": "BIC criterion follows Yuan & Lin (2006) group LASSO BIC formulation",
       "basis": "Paper cites Yuan and Lin (2006) for BIC selection",
       "confidence": 0.88,
-      "alternatives": ["Cross-validation", "AIC", "EBIC"]
+      "alternatives": [
+        "Cross-validation",
+        "AIC",
+        "EBIC"
+      ]
     },
     {
       "assumption": "Pooled OLS (not Fama-MacBeth) for re-estimation step",
       "basis": "Paper states 'pooled time-series cross-sectional regression'; Fama-MacBeth would be equivalent when characteristics are time-invariant but pooled is described",
-      "confidence": 0.80,
-      "alternatives": ["Fama-MacBeth (numerically equivalent when characteristics are constant)"]
+      "confidence": 0.8,
+      "alternatives": [
+        "Fama-MacBeth (numerically equivalent when characteristics are constant)"
+      ]
     },
     {
       "assumption": "Heteroscedasticity-consistent (HC) standard errors (White) for confidence bands",
       "basis": "Paper explicitly states 'heteroscedasticity-consistent estimator'",
       "confidence": 0.95,
-      "alternatives": ["Newey-West", "double-clustered"]
+      "alternatives": [
+        "Newey-West",
+        "double-clustered"
+      ]
     },
     {
       "assumption": "Confidence band critical values d_ts are computed via 10,000 simulation draws from N(0, Sigma_hat)",
       "basis": "Standard practice for sup-norm bands; paper describes simulation approach without specifying draw count",
-      "confidence": 0.70,
-      "alternatives": ["1,000 draws", "5,000 draws", "asymptotic approximation"]
+      "confidence": 0.7,
+      "alternatives": [
+        "1,000 draws",
+        "5,000 draws",
+        "asymptotic approximation"
+      ]
     },
     {
       "assumption": "Interior knots are placed at equally-spaced quantiles t_l = l/L",
       "basis": "Explicitly stated in paper",
       "confidence": 0.99,
-      "alternatives": ["Non-uniform knot placement"]
+      "alternatives": [
+        "Non-uniform knot placement"
+      ]
     },
     {
       "assumption": "Python implementation using numpy/scipy/sklearn; paper uses MATLAB (inferred from figure style)",
       "basis": "Figure style and NBER working paper era suggests MATLAB; Python is more reproducible",
-      "confidence": 0.60,
-      "alternatives": ["MATLAB", "R (glmnet/grpreg)"]
+      "confidence": 0.6,
+      "alternatives": [
+        "MATLAB",
+        "R (glmnet/grpreg)"
+      ]
     },
     {
       "assumption": "Equally-weighted portfolios use simple average returns within decile",
@@ -379,21 +541,29 @@
       "location": "Section III.D, Stage 1 penalty",
       "description": "The group LASSO penalty exponent: paper writes (sum_k b_sk^2)^{1/2} which is the L2 group norm. Some implementations use squared L2 norm. The L2 group norm (not squared) is standard GLASSO.",
       "primary_assumption": "L2 group norm (sqrt of sum of squares)",
-      "alternatives": ["Squared L2 norm"],
-      "confidence": 0.90
+      "alternatives": [
+        "Squared L2 norm"
+      ],
+      "confidence": 0.9
     },
     {
       "location": "Section V.C, out-of-sample",
       "description": "Exact CRSP/Compustat merge timing for balance-sheet variables described as 'fiscal year ending t-1' with 6-month lag but exact monthly lag cutoffs not fully specified for all 36 variables",
       "primary_assumption": "6-month lag for all accounting variables following Fama-French 1993 convention",
-      "alternatives": ["Variable-specific lags for some predictors"],
+      "alternatives": [
+        "Variable-specific lags for some predictors"
+      ],
       "confidence": 0.82
     },
     {
       "location": "Section III.E, confidence bands",
       "description": "Number of simulation draws for critical value computation not stated",
       "primary_assumption": 10000,
-      "alternatives": [1000, 5000, 50000],
+      "alternatives": [
+        1000,
+        5000,
+        50000
+      ],
       "confidence": 0.65
     }
   ],
@@ -401,9 +571,10 @@
     "architecture": 0.93,
     "mathematical_spec": 0.96,
     "tensor_semantics": 0.88,
-    "training_pipeline": 0.90,
+    "training_pipeline": 0.9,
     "evaluation_protocol": 0.96,
     "implementation_assumptions": 0.78,
-    "overall_sir_confidence": 0.90
-  }
+    "overall_sir_confidence": 0.9
+  },
+  "sir_version": 1
 }

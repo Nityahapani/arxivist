@@ -3,12 +3,18 @@
   "sir_version": 1,
   "provenance": {
     "title": "Mamba: Linear-Time Sequence Modeling with Selective State Spaces",
-    "authors": ["Albert Gu", "Tri Dao"],
-    "affiliations": ["Carnegie Mellon University", "Princeton University"],
+    "authors": [
+      "Albert Gu",
+      "Tri Dao"
+    ],
+    "affiliations": [
+      "Carnegie Mellon University",
+      "Princeton University"
+    ],
     "arxiv_id": "2312.00752v2",
     "doi": null,
     "submission_date": "2023-12",
-    "abstract": "Foundation models, now powering most of the exciting applications in deep learning, are almost universally based on the Transformer architecture and its core attention module. Many subquadratic-time architectures such as linear attention, gated convolution and recurrent models, and structured state space models (SSMs) have been developed to address Transformers' computational inefficiency on long sequences, but they have not performed as well as attention on important modalities such as language.",
+    "abstract": "Foundation models, now powering most of the exciting applications in deep learning, are almost universally based on the Transformer architecture and its core attention module. Many subquadratic-time architectures such as linear attention, gated convolution and recurrent models, and structured state space models (SSMs) have been developed to address Transformers' computational inefficiency on long sequences, but they have not performed as well as attention on important modalities such as…",
     "domain": "NLP",
     "key_claims": [
       "Letting SSM parameters be functions of the input allows content-based reasoning.",
@@ -18,7 +24,8 @@
       "Mamba-3B outperforms Transformers of the same size and matches Transformers twice its size."
     ],
     "parsed_at": "2026-07-27T02:01:36+05:30",
-    "arxivist_version": "1.0"
+    "arxivist_version": "1.0",
+    "abstract_full": "Foundation models, now powering most of the exciting applications in deep learning, are almost universally based on the Transformer architecture and its core attention module. Many subquadratic-time architectures such as linear attention, gated convolution and recurrent models, and structured state space models (SSMs) have been developed to address Transformers' computational inefficiency on long sequences, but they have not performed as well as attention on important modalities such as language."
   },
   "architecture": {
     "primary_variant": "Mamba-3B",
@@ -28,7 +35,9 @@
         "operation_type": "combination of H3 and MLP blocks",
         "input_shape": null,
         "output_shape": null,
-        "parameters": {"expansion_factor": 2},
+        "parameters": {
+          "expansion_factor": 2
+        },
         "paper_section": "3.4",
         "confidence": 0.9,
         "notes": "Repeated homogeneously with normalization and residual connections"
@@ -38,7 +47,9 @@
         "operation_type": "Linear projection",
         "input_shape": "[B, L, D]",
         "output_shape": "[B, L, E]",
-        "parameters": {"E": "expansion factor * D"},
+        "parameters": {
+          "E": "expansion factor * D"
+        },
         "paper_section": "3.4",
         "confidence": 0.8,
         "notes": "Projects input dimension D to expanded dimension E"
@@ -58,7 +69,9 @@
         "operation_type": "Time-varying State Space Model",
         "input_shape": "[B, L, E]",
         "output_shape": "[B, L, E]",
-        "parameters": {"state_dimension_N": 16},
+        "parameters": {
+          "state_dimension_N": 16
+        },
         "paper_section": "3.2",
         "confidence": 0.95,
         "notes": "Uses input-dependent parameters B, C, Delta"
@@ -109,23 +122,33 @@
     "variants": [
       {
         "name": "Mamba-130M",
-        "differences": {"parameters": "130M"}
+        "differences": {
+          "parameters": "130M"
+        }
       },
       {
         "name": "Mamba-370M",
-        "differences": {"parameters": "370M"}
+        "differences": {
+          "parameters": "370M"
+        }
       },
       {
         "name": "Mamba-790M",
-        "differences": {"parameters": "790M"}
+        "differences": {
+          "parameters": "790M"
+        }
       },
       {
         "name": "Mamba-1.4B",
-        "differences": {"parameters": "1.4B"}
+        "differences": {
+          "parameters": "1.4B"
+        }
       },
       {
         "name": "Mamba-2.8B",
-        "differences": {"parameters": "2.8B"}
+        "differences": {
+          "parameters": "2.8B"
+        }
       }
     ]
   },
@@ -288,14 +311,19 @@
       "assumption": "Batch size 1024 is used across some modalities",
       "basis": "Mentioned in DNA modeling and implied by token counts",
       "confidence": 0.7,
-      "alternatives": ["Smaller batch sizes with gradient accumulation"],
+      "alternatives": [
+        "Smaller batch sizes with gradient accumulation"
+      ],
       "affects_section": "training_pipeline"
     },
     {
       "assumption": "1D Depthwise Convolution kernel size is likely 4",
       "basis": "Standard practice in H3/Mamba for sequence modeling",
       "confidence": 0.6,
-      "alternatives": ["3", "5"],
+      "alternatives": [
+        "3",
+        "5"
+      ],
       "affects_section": "architecture"
     }
   ],
@@ -304,7 +332,11 @@
       "location": "Section 4.3.1",
       "description": "Exact batch size for language modeling is not specified clearly for all scales, only for DNA modeling (1024)",
       "primary_assumption": "Batch size scales similarly to GPT-3",
-      "alternatives": ["1024", "512", "2048"],
+      "alternatives": [
+        "1024",
+        "512",
+        "2048"
+      ],
       "confidence": 0.6
     }
   ],

@@ -3,11 +3,14 @@
   "sir_version": 1,
   "provenance": {
     "title": "Empirical Asset Pricing via Machine Learning",
-    "authors": ["Shihao Gu", "Bryan Kelly", "Dacheng Xiu"],
+    "authors": [
+      "Shihao Gu",
+      "Bryan Kelly",
+      "Dacheng Xiu"
+    ],
     "affiliations": [
       "Booth School of Business, University of Chicago",
-      "Yale University, AQR Capital Management, and NBER",
-      "Booth School of Business, University of Chicago"
+      "Yale University, AQR Capital Management, and NBER"
     ],
     "journal": "The Review of Financial Studies",
     "volume": 33,
@@ -18,7 +21,7 @@
     "submission_date": "2018-09-04",
     "editorial_decision": "2019-09-22",
     "abstract": "We perform a comparative analysis of machine learning methods for the canonical problem of empirical asset pricing: measuring asset risk premiums. We demonstrate large economic gains to investors using machine learning forecasts, in some cases doubling the performance of leading regression-based strategies from the literature.",
-    "domain": "Tabular / Finance",
+    "domain": "Tabular",
     "key_claims": [
       "Machine learning forecasts yield large economic gains — NN-based S&P 500 timing achieves annualized Sharpe ratio of 0.77 vs. 0.51 buy-and-hold",
       "Long-short decile portfolio sorted on NN forecasts earns annualized Sharpe ratio of 1.35 (value-weighted), 2.45 (equal-weighted)",
@@ -27,7 +30,8 @@
       "Shallow learning (NN3) outperforms deep learning (NN4, NN5) due to small financial data sets and low signal-to-noise ratio"
     ],
     "parsed_at": "2026-05-22T00:00:00Z",
-    "arxivist_version": "1.0"
+    "arxivist_version": "1.0",
+    "domain_detail": "Tabular / Finance"
   },
   "architecture": {
     "primary_variant": "Feed-forward neural network with ReLU activations (NN1–NN5 variants)",
@@ -49,26 +53,36 @@
         "description": "Elastic net penalized linear regression",
         "type": "Linear",
         "regularization": "Elastic net (L1 + L2)",
-        "hyperparams": ["lambda", "rho"]
+        "hyperparams": [
+          "lambda",
+          "rho"
+        ]
       },
       {
         "name": "PCR",
         "description": "Principal components regression — reduce P predictors to K components via SVD then OLS",
         "type": "Dimension reduction",
-        "hyperparams": ["K (number of components)"]
+        "hyperparams": [
+          "K (number of components)"
+        ]
       },
       {
         "name": "PLS",
         "description": "Partial least squares — dimension reduction maximizing covariance with forecast target via SIMPLS",
         "type": "Dimension reduction",
-        "hyperparams": ["K (number of components)"]
+        "hyperparams": [
+          "K (number of components)"
+        ]
       },
       {
         "name": "GLM",
         "description": "Generalized linear model with spline basis expansion and group lasso penalty",
         "type": "Nonlinear (no interactions)",
         "regularization": "Group lasso",
-        "hyperparams": ["lambda", "K (spline order)"],
+        "hyperparams": [
+          "lambda",
+          "K (spline order)"
+        ],
         "basis": "Spline series: {1, z, (z-c1)^2, (z-c2)^2, ...}"
       },
       {
@@ -76,21 +90,31 @@
         "description": "Gradient boosted regression trees — ensemble of shallow trees fitted to residuals with shrinkage",
         "type": "Tree ensemble",
         "regularization": "Shrinkage nu, early stopping",
-        "hyperparams": ["L (tree depth)", "nu (shrinkage)", "B (number of trees)"]
+        "hyperparams": [
+          "L (tree depth)",
+          "nu (shrinkage)",
+          "B (number of trees)"
+        ]
       },
       {
         "name": "RF",
         "description": "Random forest — bootstrap aggregation of deep trees with random feature subsets",
         "type": "Tree ensemble",
         "regularization": "Random feature subsampling",
-        "hyperparams": ["L (tree depth)", "m (features per split)", "B (bootstrap samples)"]
+        "hyperparams": [
+          "L (tree depth)",
+          "m (features per split)",
+          "B (bootstrap samples)"
+        ]
       },
       {
         "name": "NN1",
         "description": "1 hidden layer: 32 neurons",
         "type": "Neural network",
         "activation": "ReLU",
-        "architecture": [32],
+        "architecture": [
+          32
+        ],
         "confidence": 0.95
       },
       {
@@ -98,7 +122,10 @@
         "description": "2 hidden layers: 32, 16 neurons",
         "type": "Neural network",
         "activation": "ReLU",
-        "architecture": [32, 16],
+        "architecture": [
+          32,
+          16
+        ],
         "confidence": 0.95
       },
       {
@@ -106,7 +133,11 @@
         "description": "3 hidden layers: 32, 16, 8 neurons (best overall performer)",
         "type": "Neural network",
         "activation": "ReLU",
-        "architecture": [32, 16, 8],
+        "architecture": [
+          32,
+          16,
+          8
+        ],
         "confidence": 0.95
       },
       {
@@ -114,7 +145,12 @@
         "description": "4 hidden layers: 32, 16, 8, 4 neurons",
         "type": "Neural network",
         "activation": "ReLU",
-        "architecture": [32, 16, 8, 4],
+        "architecture": [
+          32,
+          16,
+          8,
+          4
+        ],
         "confidence": 0.95
       },
       {
@@ -122,7 +158,13 @@
         "description": "5 hidden layers: 32, 16, 8, 4, 2 neurons",
         "type": "Neural network",
         "activation": "ReLU",
-        "architecture": [32, 16, 8, 4, 2],
+        "architecture": [
+          32,
+          16,
+          8,
+          4,
+          2
+        ],
         "confidence": 0.95
       }
     ],
@@ -139,186 +181,264 @@
       {
         "name": "PredictorConstruction",
         "role": "Build zi,t feature vector from characteristics × macro interactions",
-        "inputs": ["ci,t (94 stock characteristics)", "xt (8 macro variables + constant)", "74 industry dummies"],
-        "outputs": ["zi,t vector of shape [P=920]"],
+        "inputs": [
+          "ci,t (94 stock characteristics)",
+          "xt (8 macro variables + constant)",
+          "74 industry dummies"
+        ],
+        "outputs": [
+          "zi,t vector of shape [P=920]"
+        ],
         "formula": "zi,t = xt ⊗ ci,t concatenated with industry dummies",
-        "confidence": 0.93
+        "confidence": 0.93,
+        "operation_type": "Build zi,t feature vector from characteristics × macro interactions"
       },
       {
         "name": "ReturnPredictor",
         "role": "Model g(zi,t) = Et(ri,t+1) — conditional expected excess return",
-        "inputs": ["zi,t [P=920]"],
-        "outputs": ["r_hat_i,t+1 [scalar]"],
-        "confidence": 0.95
+        "inputs": [
+          "zi,t [P=920]"
+        ],
+        "outputs": [
+          "r_hat_i,t+1 [scalar]"
+        ],
+        "confidence": 0.95,
+        "operation_type": "Model g(zi,t) = Et(ri,t+1) — conditional expected excess return"
       },
       {
         "name": "HyperparameterTuner",
         "role": "Select tuning parameters via validation sample",
-        "inputs": ["Training sample predictions", "Validation sample errors"],
-        "outputs": ["Optimal hyperparameter set"],
-        "confidence": 0.92
+        "inputs": [
+          "Training sample predictions",
+          "Validation sample errors"
+        ],
+        "outputs": [
+          "Optimal hyperparameter set"
+        ],
+        "confidence": 0.92,
+        "operation_type": "Select tuning parameters via validation sample"
       },
       {
         "name": "PortfolioConstructor",
         "role": "Build bottom-up portfolio forecasts and decile-sorted long-short portfolios",
-        "inputs": ["r_hat_i,t+1 for all stocks", "portfolio weights wp_i,t"],
-        "outputs": ["Portfolio return forecast r_hat_p_t+1", "Decile-sorted portfolio returns"],
-        "confidence": 0.90
+        "inputs": [
+          "r_hat_i,t+1 for all stocks",
+          "portfolio weights wp_i,t"
+        ],
+        "outputs": [
+          "Portfolio return forecast r_hat_p_t+1",
+          "Decile-sorted portfolio returns"
+        ],
+        "confidence": 0.9,
+        "operation_type": "Build bottom-up portfolio forecasts and decile-sorted long-short portfolios"
       }
-    ]
+    ],
+    "connections": [],
+    "variants": []
   },
   "mathematical_spec": [
     {
       "name": "Return prediction model",
       "latex": "r_{i,t+1} = E_t(r_{i,t+1}) + \\varepsilon_{i,t+1}, \\quad E_t(r_{i,t+1}) = g(z_{i,t})",
-      "role": "Overarching additive prediction-error model. g(·) is estimated by each ML method.",
-      "used_in": "All methods",
-      "confidence": 0.99
+      "role": "loss",
+      "confidence": 0.99,
+      "role_detail": "Overarching additive prediction-error model. g(·) is estimated by each ML method.",
+      "used_in_detail": "All methods"
     },
     {
       "name": "Feature vector construction",
       "latex": "z_{i,t} = x_t \\otimes c_{i,t}, \\quad P = P_c \\times P_x = 94 \\times (8+1) + 74 = 920",
-      "role": "Kronecker interaction of stock characteristics with macro predictors plus industry dummies",
-      "used_in": "All methods (shared predictor set)",
-      "confidence": 0.97
+      "role": "other",
+      "confidence": 0.97,
+      "role_detail": "Kronecker interaction of stock characteristics with macro predictors plus industry dummies",
+      "used_in_detail": "All methods (shared predictor set)"
     },
     {
       "name": "OLS objective (L2 loss)",
       "latex": "L(\\theta) = \\frac{1}{NT} \\sum_{i=1}^{N} \\sum_{t=1}^{T} \\left(r_{i,t+1} - g(z_{i,t}; \\theta)\\right)^2",
-      "role": "Standard pooled OLS training objective",
-      "used_in": "Training (OLS, PCR, PLS, NN)",
-      "confidence": 0.99
+      "role": "objective",
+      "used_in": "training",
+      "confidence": 0.99,
+      "role_detail": "Standard pooled OLS training objective",
+      "used_in_detail": "Training (OLS, PCR, PLS, NN)"
     },
     {
       "name": "Weighted least squares objective",
       "latex": "L_W(\\theta) = \\frac{1}{NT} \\sum_{i=1}^{N} \\sum_{t=1}^{T} w_{i,t} \\left(r_{i,t+1} - g(z_{i,t}; \\theta)\\right)^2",
-      "role": "Value-weighted or time-equal-weighted variant of OLS",
-      "used_in": "Training (robustness variant)",
-      "weight_choices": ["Equal-weight per month (1/N_t)", "Market cap proportional"],
-      "confidence": 0.95
+      "role": "other",
+      "used_in": "training",
+      "weight_choices": [
+        "Equal-weight per month (1/N_t)",
+        "Market cap proportional"
+      ],
+      "confidence": 0.95,
+      "role_detail": "Value-weighted or time-equal-weighted variant of OLS",
+      "used_in_detail": "Training (robustness variant)"
     },
     {
       "name": "Huber robust loss",
       "latex": "L_H(\\theta) = \\frac{1}{NT} \\sum_{i,t} H(r_{i,t+1} - g(z_{i,t}; \\theta), \\xi), \\quad H(x;\\xi) = \\begin{cases} x^2 & |x| \\leq \\xi \\\\ 2\\xi|x| - \\xi^2 & |x| > \\xi \\end{cases}",
-      "role": "Robust training objective for heavy-tailed financial returns; applied to OLS, ENet, GLM, GBRT",
-      "used_in": "Training (models marked +H in results tables)",
-      "hyperparameters": ["xi (tuned via validation)"],
-      "confidence": 0.97
+      "role": "objective",
+      "used_in": "training",
+      "hyperparameters": [
+        "xi (tuned via validation)"
+      ],
+      "confidence": 0.97,
+      "role_detail": "Robust training objective for heavy-tailed financial returns; applied to OLS, ENet, GLM, GBRT",
+      "used_in_detail": "Training (models marked +H in results tables)"
     },
     {
       "name": "Elastic net penalty",
       "latex": "\\phi(\\theta; \\lambda, \\rho) = \\lambda(1-\\rho)\\sum_{j=1}^{P}|\\theta_j| + \\frac{1}{2}\\lambda\\rho\\sum_{j=1}^{P}\\theta_j^2",
-      "role": "L1+L2 regularization; rho=0 → lasso (sparsity), rho=1 → ridge (shrinkage)",
-      "used_in": "Training (ENet)",
-      "hyperparameters": ["lambda (penalization strength)", "rho (L1/L2 mix)"],
-      "confidence": 0.99
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [
+        "lambda (penalization strength)",
+        "rho (L1/L2 mix)"
+      ],
+      "confidence": 0.99,
+      "role_detail": "L1+L2 regularization; rho=0 → lasso (sparsity), rho=1 → ridge (shrinkage)",
+      "used_in_detail": "Training (ENet)"
     },
     {
       "name": "Group lasso penalty (GLM)",
       "latex": "\\phi(\\theta; \\lambda, K) = \\lambda \\sum_{j=1}^{P} \\left(\\sum_{k=1}^{K} \\theta_{j,k}^2\\right)^{1/2}",
-      "role": "Select or zero out all K spline basis terms for each characteristic as a group",
-      "used_in": "Training (GLM)",
-      "hyperparameters": ["lambda", "K (spline order)"],
-      "confidence": 0.97
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [
+        "lambda",
+        "K (spline order)"
+      ],
+      "confidence": 0.97,
+      "role_detail": "Select or zero out all K spline basis terms for each characteristic as a group",
+      "used_in_detail": "Training (GLM)"
     },
     {
       "name": "GLM spline basis expansion",
       "latex": "g(z; \\theta, p(\\cdot)) = \\sum_{j=1}^{P} p(z_j)^\\top \\theta_j, \\quad p(z) = (1, z, (z-c_1)^2, (z-c_2)^2, \\ldots, (z-c_{K-2})^2)",
-      "role": "Nonlinear univariate spline transformations of each predictor (no interactions)",
-      "used_in": "Training/inference (GLM)",
-      "confidence": 0.95
+      "role": "other",
+      "used_in": "both",
+      "confidence": 0.95,
+      "role_detail": "Nonlinear univariate spline transformations of each predictor (no interactions)",
+      "used_in_detail": "Training/inference (GLM)"
     },
     {
       "name": "Tree prediction",
       "latex": "g(z_{i,t}; \\theta, K, L) = \\sum_{k=1}^{K} \\theta_k \\mathbf{1}\\{z_{i,t} \\in C_k(L)\\}",
-      "role": "Piecewise-constant prediction over K rectangular partitions of depth L",
-      "used_in": "Inference (GBRT, RF)",
-      "confidence": 0.96
+      "role": "objective",
+      "used_in": "inference",
+      "confidence": 0.96,
+      "role_detail": "Piecewise-constant prediction over K rectangular partitions of depth L",
+      "used_in_detail": "Inference (GBRT, RF)"
     },
     {
       "name": "Tree impurity (L2)",
       "latex": "H(\\theta, C) = \\frac{1}{|C|} \\sum_{z_{i,t} \\in C} (r_{i,t+1} - \\theta)^2, \\quad \\theta^* = \\frac{1}{|C|} \\sum_{z_{i,t} \\in C} r_{i,t+1}",
-      "role": "Branch splitting criterion: minimize L2 impurity at each node",
-      "used_in": "Training (GBRT, RF)",
-      "confidence": 0.97
+      "role": "objective",
+      "used_in": "training",
+      "confidence": 0.97,
+      "role_detail": "Branch splitting criterion: minimize L2 impurity at each node",
+      "used_in_detail": "Training (GBRT, RF)"
     },
     {
       "name": "PCR dimension reduction objective",
       "latex": "\\min_{\\Omega_K} \\|Z - Z\\Omega_K\\Omega_K^\\top\\|_F^2 \\quad \\text{s.t.} \\; \\Omega_K^\\top\\Omega_K = I_K",
-      "role": "Find K components that best preserve predictor variance (via SVD of Z)",
-      "used_in": "Training (PCR)",
-      "confidence": 0.94
+      "role": "other",
+      "used_in": "training",
+      "confidence": 0.94,
+      "role_detail": "Find K components that best preserve predictor variance (via SVD of Z)",
+      "used_in_detail": "Training (PCR)"
     },
     {
       "name": "PLS dimension reduction objective",
       "latex": "w_j = \\arg\\max_w \\mathrm{Cov}^2(R, Zw), \\quad \\text{s.t.} \\; w^\\top w = 1, \\; \\mathrm{Cov}(Zw, Zw_l) = 0 \\; \\forall l < j",
-      "role": "Find K components maximizing covariance with return target (solved via SIMPLS)",
-      "used_in": "Training (PLS)",
-      "confidence": 0.96
+      "role": "objective",
+      "used_in": "training",
+      "confidence": 0.96,
+      "role_detail": "Find K components maximizing covariance with return target (solved via SIMPLS)",
+      "used_in_detail": "Training (PLS)"
     },
     {
       "name": "Neural network recursive formula",
       "latex": "x_k^{(l)} = \\mathrm{ReLU}\\left(x^{(l-1)} \\theta_k^{(l-1)}\\right), \\quad g(z;\\theta) = x^{(L-1)} \\theta^{(L-1)}",
-      "role": "Forward pass through hidden layers with ReLU activation; linear output layer",
-      "used_in": "Training and inference (NN1–NN5)",
-      "confidence": 0.97
+      "role": "activation",
+      "used_in": "both",
+      "confidence": 0.97,
+      "role_detail": "Forward pass through hidden layers with ReLU activation; linear output layer",
+      "used_in_detail": "Training and inference (NN1–NN5)"
     },
     {
       "name": "Out-of-sample R-squared",
       "latex": "R^2_{oos} = 1 - \\frac{\\sum_{(i,t) \\in T_3} (r_{i,t+1} - \\hat{r}_{i,t+1})^2}{\\sum_{(i,t) \\in T_3} r_{i,t+1}^2}",
-      "role": "Primary predictive performance metric; benchmark is zero forecast (NOT historical mean)",
-      "used_in": "Evaluation",
-      "confidence": 0.99
+      "role": "other",
+      "used_in": "inference",
+      "confidence": 0.99,
+      "role_detail": "Primary predictive performance metric; benchmark is zero forecast (NOT historical mean)",
+      "used_in_detail": "Evaluation"
     },
     {
       "name": "Diebold-Mariano test statistic",
       "latex": "DM_{12} = \\bar{d}_{12} / \\sigma_{\\bar{d}_{12}}, \\quad d_{12,t+1} = \\frac{1}{n_{3,t+1}} \\sum_{i=1}^{n_{3,t+1}} \\left[(e^{(1)}_{i,t+1})^2 - (e^{(2)}_{i,t+1})^2\\right]",
-      "role": "Pairwise model comparison test; positive DM → column model outperforms row model",
-      "used_in": "Evaluation (Table 3)",
-      "confidence": 0.96
+      "role": "other",
+      "used_in": "inference",
+      "confidence": 0.96,
+      "role_detail": "Pairwise model comparison test; positive DM → column model outperforms row model",
+      "used_in_detail": "Evaluation (Table 3)"
     },
     {
       "name": "Campbell-Thompson Sharpe ratio improvement",
       "latex": "SR^* = \\sqrt{SR^2 + \\frac{R^2}{1 - R^2}}",
-      "role": "Translate predictive R² into Sharpe ratio improvement for a market-timing investor",
-      "used_in": "Evaluation (Table 6)",
-      "confidence": 0.98
+      "role": "other",
+      "used_in": "inference",
+      "confidence": 0.98,
+      "role_detail": "Translate predictive R² into Sharpe ratio improvement for a market-timing investor",
+      "used_in_detail": "Evaluation (Table 6)"
     },
     {
       "name": "Variable importance (R² reduction)",
       "latex": "VI_j = R^2_{oos} - R^2_{oos}\\big|_{z_j=0}",
-      "role": "Importance of predictor j = drop in R² when all values of predictor j are set to zero",
-      "used_in": "Evaluation (Figures 4, 5)",
-      "confidence": 0.93
+      "role": "other",
+      "used_in": "inference",
+      "confidence": 0.93,
+      "role_detail": "Importance of predictor j = drop in R² when all values of predictor j are set to zero",
+      "used_in_detail": "Evaluation (Figures 4, 5)"
     },
     {
       "name": "Variable importance (SSD)",
       "latex": "SSD_j = \\sum_{i,t \\in T_1} \\left(\\frac{\\partial g(z; \\theta)}{\\partial z_j}\\bigg|_{z=z_{i,t}}\\right)^2",
-      "role": "Sensitivity of model output to each input — sum of squared partial derivatives over training set",
-      "used_in": "Evaluation (Section 2.3, Figure A.2)",
+      "role": "other",
+      "used_in": "inference",
       "note": "Not applicable to tree models — mean decrease in impurity used instead",
-      "confidence": 0.94
+      "confidence": 0.94,
+      "role_detail": "Sensitivity of model output to each input — sum of squared partial derivatives over training set",
+      "used_in_detail": "Evaluation (Section 2.3, Figure A.2)"
     },
     {
       "name": "Portfolio return forecast (bottom-up)",
       "latex": "\\hat{r}^p_{t+1} = \\sum_{i=1}^{n} w^p_{i,t} \\times \\hat{r}_{i,t+1}",
-      "role": "Aggregate stock-level forecasts into portfolio-level forecasts using known ex-ante weights",
-      "used_in": "Evaluation (Section 2.4)",
-      "confidence": 0.98
+      "role": "other",
+      "used_in": "inference",
+      "confidence": 0.98,
+      "role_detail": "Aggregate stock-level forecasts into portfolio-level forecasts using known ex-ante weights",
+      "used_in_detail": "Evaluation (Section 2.4)"
     },
     {
       "name": "Maximum drawdown",
       "latex": "\\mathrm{MaxDD} = \\max_{0 \\leq t_1 \\leq t_2 \\leq T} (Y_{t_1} - Y_{t_2})",
-      "role": "Risk measure for long-short decile portfolios",
-      "used_in": "Evaluation (Table 8)",
-      "confidence": 0.97
+      "role": "other",
+      "used_in": "inference",
+      "confidence": 0.97,
+      "role_detail": "Risk measure for long-short decile portfolios",
+      "used_in_detail": "Evaluation (Table 8)"
     },
     {
       "name": "Portfolio turnover",
       "latex": "\\mathrm{Turnover} = \\frac{1}{T} \\sum_{t=1}^{T} \\sum_i \\left|w_{i,t+1} - \\frac{w_{i,t}(1+r_{i,t+1})}{1 + \\sum_j w_{j,t} r_{j,t+1}}\\right|",
-      "role": "Average monthly portfolio rebalancing cost proxy",
-      "used_in": "Evaluation (Table 8)",
-      "confidence": 0.96
+      "role": "other",
+      "used_in": "inference",
+      "confidence": 0.96,
+      "role_detail": "Average monthly portfolio rebalancing cost proxy",
+      "used_in_detail": "Evaluation (Table 8)"
     }
   ],
   "tensor_semantics": [
@@ -327,86 +447,121 @@
       "shape": "[NT, 1]",
       "description": "Panel of all excess stock returns ri,t+1; NT = total stock-month observations",
       "dtype": "float32",
-      "role": "Prediction target"
+      "role": "Prediction target",
+      "shape_notation": "[NT, 1]",
+      "tensor_type": "output",
+      "tensor_type_detail": "Prediction target",
+      "confidence": 0.0
     },
     {
       "name": "Z",
       "shape": "[NT, P=920]",
       "description": "Full predictor matrix; rows = stock-month observations, columns = 920 features",
       "dtype": "float32",
-      "role": "Input to all models"
+      "role": "Input to all models",
+      "shape_notation": "[NT, P=920]",
+      "tensor_type": "input",
+      "tensor_type_detail": "Input to all models",
+      "confidence": 0.0
     },
     {
       "name": "c_it",
       "shape": "[N_t, P_c=94]",
       "description": "Cross-sectionally ranked stock characteristics (mapped to [-1,1]), one row per stock per month",
       "dtype": "float32",
-      "role": "Intermediate: stock-level predictors"
+      "role": "Intermediate: stock-level predictors",
+      "shape_notation": "[N_t, P_c=94]",
+      "tensor_type": "intermediate",
+      "tensor_type_detail": "Intermediate: stock-level predictors",
+      "confidence": 0.0
     },
     {
       "name": "x_t",
       "shape": "[P_x=9]",
       "description": "8 macro predictors + constant; common to all stocks at time t",
       "dtype": "float32",
-      "role": "Intermediate: macro state variables"
+      "role": "Intermediate: macro state variables",
+      "shape_notation": "[P_x=9]",
+      "tensor_type": "intermediate",
+      "tensor_type_detail": "Intermediate: macro state variables",
+      "confidence": 0.0
     },
     {
       "name": "z_it",
       "shape": "[P=920]",
       "description": "Feature vector for stock i at time t: Kronecker product of x_t and c_it plus 74 industry dummies",
       "dtype": "float32",
-      "role": "Input to prediction model"
+      "role": "Input to prediction model",
+      "shape_notation": "[P=920]",
+      "tensor_type": "input",
+      "tensor_type_detail": "Input to prediction model",
+      "confidence": 0.0
     },
     {
       "name": "theta",
       "shape": "Model-specific (P for linear; [K(0)×K(1), ...] for NN)",
       "description": "Model parameters estimated during training",
       "dtype": "float32",
-      "role": "Learned parameters"
+      "role": "Learned parameters",
+      "shape_notation": "Model-specific (P for linear; [K(0)×K(1), ...] for NN)",
+      "tensor_type": "parameter",
+      "tensor_type_detail": "Learned parameters",
+      "confidence": 0.0
     },
     {
       "name": "x_l (NN hidden layer output)",
       "shape": "[K(l)]",
       "description": "Output of hidden layer l in NN; K(l) neurons. NN3: l=1→32, l=2→16, l=3→8",
       "dtype": "float32",
-      "role": "Intermediate NN activation"
+      "role": "Intermediate NN activation",
+      "shape_notation": "[K(l)]",
+      "tensor_type": "output",
+      "tensor_type_detail": "Intermediate NN activation",
+      "confidence": 0.0
     },
     {
       "name": "r_hat_it",
       "shape": "[N_t]",
       "description": "Predicted excess return for stock i at time t from model g(z_it; theta)",
       "dtype": "float32",
-      "role": "Output prediction"
+      "role": "Output prediction",
+      "shape_notation": "[N_t]",
+      "tensor_type": "output",
+      "tensor_type_detail": "Output prediction",
+      "confidence": 0.0
     },
     {
       "name": "Omega_K",
       "shape": "[P, K]",
       "description": "Dimension reduction weight matrix (PCR: principal components; PLS: SIMPLS components)",
       "dtype": "float32",
-      "role": "Intermediate (PCR/PLS)"
+      "role": "Intermediate (PCR/PLS)",
+      "shape_notation": "[P, K]",
+      "tensor_type": "intermediate",
+      "tensor_type_detail": "Intermediate (PCR/PLS)",
+      "confidence": 0.0
     }
   ],
   "training_pipeline": {
     "optimizer": {
       "name": "Adam (for NN); Accelerated proximal gradient (for ENet, GLM); Greedy recursive splitting (for trees)",
-      "learning_rate": "Adaptive via Kingma & Ba (2014) Adam with learning rate shrinkage",
+      "learning_rate": null,
       "beta1": 0.9,
       "beta2": 0.999,
-      "weight_decay": "L1 penalization on NN weights",
+      "weight_decay": null,
       "confidence": 0.78,
-      "notes": "Exact Adam hyperparameters not stated; standard defaults assumed"
+      "notes": "Exact Adam hyperparameters not stated; standard defaults assumed",
+      "learning_rate_detail": "Adaptive via Kingma & Ba (2014) Adam with learning rate shrinkage",
+      "weight_decay_detail": "L1 penalization on NN weights"
     },
     "lr_schedule": {
       "type": "Learning rate shrinkage (Algorithm 5 in Internet Appendix B.3)",
       "warmup_steps": null,
       "decay": "Adaptive shrinkage toward zero as gradient approaches zero",
-      "confidence": 0.72
+      "confidence": 0.72,
+      "total_steps": null
     },
-    "batch_size": {
-      "value": null,
-      "note": "SGD with random mini-batches; exact batch size not stated in paper",
-      "confidence": 0.40
-    },
+    "batch_size": null,
     "training_splits": {
       "training": "1957–1974 (18 years, grows 1 year at each refit)",
       "validation": "1975–1986 (12 years, rolls forward annually)",
@@ -435,7 +590,12 @@
     },
     "mixed_precision": null,
     "gradient_clipping": null,
-    "confidence": 0.72
+    "confidence": 0.72,
+    "batch_size_detail": {
+      "value": null,
+      "note": "SGD with random mini-batches; exact batch size not stated in paper",
+      "confidence": 0.4
+    }
   },
   "evaluation_protocol": {
     "datasets": [
@@ -465,6 +625,60 @@
       }
     ],
     "metrics": [
+      "R²_oos (monthly, panel)",
+      "R²_oos (annual, panel)",
+      "Diebold-Mariano test statistic",
+      "Annualized Sharpe ratio",
+      "FF5+Mom alpha",
+      "Maximum drawdown",
+      "Monthly portfolio turnover"
+    ],
+    "key_reported_results": {
+      "individual_stock_R2_monthly": {
+        "OLS_all": -3.46,
+        "OLS_3": 0.16,
+        "ENet": 0.11,
+        "PCR": 0.26,
+        "PLS": 0.27,
+        "GLM": 0.19,
+        "RF": 0.33,
+        "GBRT": 0.34,
+        "NN1": 0.29,
+        "NN2": 0.31,
+        "NN3": 0.4,
+        "NN4": 0.35,
+        "NN5": 0.35,
+        "unit": "% per month"
+      },
+      "SP500_R2_monthly": {
+        "OLS_3": -0.22,
+        "GLM": 0.71,
+        "NN3": 1.8,
+        "unit": "% per month"
+      },
+      "long_short_decile_sharpe_NN3": {
+        "value_weighted": 1.35,
+        "equal_weighted": 2.45
+      },
+      "SP500_timing_sharpe_NN3": {
+        "active": 0.77,
+        "buy_and_hold": 0.51
+      }
+    },
+    "portfolios_evaluated": [
+      "S&P 500",
+      "Fama-French SMB, HML, RMW, CMA, UMD",
+      "24 size/value/investment/profitability/momentum double-sorted portfolios",
+      "Machine learning decile-sorted long-short portfolios"
+    ],
+    "baselines": [
+      "OLS with 3 predictors (Lewellen 2015 benchmark)",
+      "Buy-and-hold S&P 500",
+      "OLS with 7 and 15 predictors (Internet Appendix)"
+    ],
+    "compute": "{\"confidence\":0.3,\"description\":\"Research Computing Center at University of Chicago\",\"gpu_count\":null,\"gpu_type\":null,\"note\":\"Specific hardware details not provided in paper\",\"training_time\":null}",
+    "confidence": 0.97,
+    "metric_details": [
       {
         "name": "R²_oos (monthly, panel)",
         "description": "Out-of-sample R² benchmarked against zero forecast (NOT historical mean)",
@@ -495,125 +709,115 @@
         "description": "Average fraction of portfolio rebalanced per month"
       }
     ],
-    "key_reported_results": {
-      "individual_stock_R2_monthly": {
-        "OLS_all": -3.46,
-        "OLS_3": 0.16,
-        "ENet": 0.11,
-        "PCR": 0.26,
-        "PLS": 0.27,
-        "GLM": 0.19,
-        "RF": 0.33,
-        "GBRT": 0.34,
-        "NN1": 0.29,
-        "NN2": 0.31,
-        "NN3": 0.40,
-        "NN4": 0.35,
-        "NN5": 0.35,
-        "unit": "% per month"
-      },
-      "SP500_R2_monthly": {
-        "OLS_3": -0.22,
-        "GLM": 0.71,
-        "NN3": 1.80,
-        "unit": "% per month"
-      },
-      "long_short_decile_sharpe_NN3": {
-        "value_weighted": 1.35,
-        "equal_weighted": 2.45
-      },
-      "SP500_timing_sharpe_NN3": {
-        "active": 0.77,
-        "buy_and_hold": 0.51
-      }
-    },
-    "portfolios_evaluated": [
-      "S&P 500",
-      "Fama-French SMB, HML, RMW, CMA, UMD",
-      "24 size/value/investment/profitability/momentum double-sorted portfolios",
-      "Machine learning decile-sorted long-short portfolios"
-    ],
-    "baselines": [
-      "OLS with 3 predictors (Lewellen 2015 benchmark)",
-      "Buy-and-hold S&P 500",
-      "OLS with 7 and 15 predictors (Internet Appendix)"
-    ],
-    "compute": {
-      "description": "Research Computing Center at University of Chicago",
-      "gpu_type": null,
-      "gpu_count": null,
-      "training_time": null,
-      "note": "Specific hardware details not provided in paper",
-      "confidence": 0.30
-    },
-    "confidence": 0.97
+    "reported_results": []
   },
   "implementation_assumptions": [
     {
       "assumption": "Adam optimizer with lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8 for neural network training",
       "basis": "Standard Adam defaults (Kingma & Ba 2014); paper specifies Adam with learning rate shrinkage but not exact values",
       "confidence": 0.65,
-      "alternatives": ["lr=0.0001", "lr=0.01", "other Adam variants"]
+      "alternatives": [
+        "lr=0.0001",
+        "lr=0.01",
+        "other Adam variants"
+      ]
     },
     {
       "assumption": "Mini-batch size of 512 stock-month observations per SGD step",
       "basis": "Common practice for tabular financial data; paper uses SGD but does not state batch size",
       "confidence": 0.45,
-      "alternatives": ["batch_size=256", "batch_size=1024", "full-batch"]
+      "alternatives": [
+        "batch_size=256",
+        "batch_size=1024",
+        "full-batch"
+      ]
     },
     {
       "assumption": "10 ensemble random seeds for neural network prediction averaging",
       "basis": "Paper describes ensemble but does not state number of seeds; 10 is common practice",
-      "confidence": 0.50,
-      "alternatives": [5, 20, 50]
+      "confidence": 0.5,
+      "alternatives": [
+        "5",
+        "20",
+        "50"
+      ]
     },
     {
       "assumption": "Early stopping patience of 5 validation epochs before terminating",
       "basis": "Standard early stopping heuristic; paper describes the procedure but not the patience parameter",
       "confidence": 0.55,
-      "alternatives": [3, 10, "validation loss-based threshold"]
+      "alternatives": [
+        "3",
+        "10",
+        "validation loss-based threshold"
+      ]
     },
     {
       "assumption": "Batch normalization applied after each hidden layer activation",
       "basis": "Standard placement per Ioffe & Szegedy (2015); paper states batch normalization is used",
       "confidence": 0.72,
-      "alternatives": ["before activation", "only on input layer"]
+      "alternatives": [
+        "before activation",
+        "only on input layer"
+      ]
     },
     {
       "assumption": "L1 regularization lambda for NN tuned via validation grid search over {0.0001, 0.001, 0.01, 0.1}",
       "basis": "Standard grid for L1; paper states L1 penalization used but not the grid",
       "confidence": 0.52,
-      "alternatives": ["finer grid", "L1+L2 elastic net for NN"]
+      "alternatives": [
+        "finer grid",
+        "L1+L2 elastic net for NN"
+      ]
     },
     {
       "assumption": "Spline order K=3 (cubic splines) as default for GLM basis expansion",
       "basis": "Standard spline choice; paper specifies order-2 spline series form but K is a tuned hyperparameter",
-      "confidence": 0.60,
-      "alternatives": [2, 4, 5]
+      "confidence": 0.6,
+      "alternatives": [
+        "2",
+        "4",
+        "5"
+      ]
     },
     {
       "assumption": "Random forest: 300 bootstrap trees, m = sqrt(P) features per split",
       "basis": "Breiman (2001) default recommendations; paper tunes B and m via validation",
-      "confidence": 0.60,
-      "alternatives": ["B=100", "B=500", "m=P/3"]
+      "confidence": 0.6,
+      "alternatives": [
+        "B=100",
+        "B=500",
+        "m=P/3"
+      ]
     },
     {
       "assumption": "GBRT: 1000 trees, shrinkage nu=0.01, tree depth L=1 (stumps) or L=2",
       "basis": "Paper reports trees have 'on average less than 6 leaves' and uses shallow trees",
       "confidence": 0.65,
-      "alternatives": ["nu=0.1", "L=3", "B=500"]
+      "alternatives": [
+        "nu=0.1",
+        "L=3",
+        "B=500"
+      ]
     },
     {
       "assumption": "Framework: PyTorch for neural networks; scikit-learn for trees; NumPy/SciPy for linear methods",
       "basis": "Standard Python ML stack for academic finance; paper does not specify framework",
-      "confidence": 0.70,
-      "alternatives": ["TensorFlow/Keras", "JAX", "R (glmnet for elastic net)"]
+      "confidence": 0.7,
+      "alternatives": [
+        "TensorFlow/Keras",
+        "JAX",
+        "R (glmnet for elastic net)"
+      ]
     },
     {
       "assumption": "Cross-sectional rank normalization maps characteristics to [-1, 1] via rank / (N_t/2) - 1",
       "basis": "Paper states 'cross-sectionally rank all stock characteristics and map to [-1, 1]' following Kelly, Pruitt, Su (2019)",
-      "confidence": 0.80,
-      "alternatives": ["rank / N_t", "min-max normalization"]
+      "confidence": 0.8,
+      "alternatives": [
+        "rank / N_t",
+        "min-max normalization"
+      ]
     }
   ],
   "ambiguities": [
@@ -621,35 +825,50 @@
       "location": "Section 1.7, Neural Network Training",
       "description": "Exact mini-batch size for SGD not stated",
       "primary_assumption": 512,
-      "alternatives": [256, 1024],
+      "alternatives": [
+        256,
+        1024
+      ],
       "confidence": 0.45
     },
     {
       "location": "Section 1.7, Ensemble",
       "description": "Number of random seeds used for neural network ensemble averaging not stated",
       "primary_assumption": 10,
-      "alternatives": [5, 20],
-      "confidence": 0.50
+      "alternatives": [
+        5,
+        20
+      ],
+      "confidence": 0.5
     },
     {
       "location": "Section 1.7 / Internet Appendix B.3",
       "description": "Early stopping patience / number of epochs not stated in main paper",
       "primary_assumption": "5 epochs patience",
-      "alternatives": ["validation loss threshold", "fixed epochs"],
+      "alternatives": [
+        "validation loss threshold",
+        "fixed epochs"
+      ],
       "confidence": 0.55
     },
     {
       "location": "Section 1.5, GLM",
       "description": "Specific knot locations c1..c_{K-2} for spline basis not specified",
       "primary_assumption": "Equally spaced quantiles of training data",
-      "alternatives": ["Fixed grid", "K-means cluster centers"],
+      "alternatives": [
+        "Fixed grid",
+        "K-means cluster centers"
+      ],
       "confidence": 0.62
     },
     {
       "location": "Section 2.1, Data",
       "description": "Exact risk-free rate proxy source (Treasury bill rate) — Welch-Goyal data implied but not confirmed as source of rf",
       "primary_assumption": "1-month T-bill rate from Ibbotson via CRSP",
-      "alternatives": ["Fed Funds rate", "3-month T-bill"],
+      "alternatives": [
+        "Fed Funds rate",
+        "3-month T-bill"
+      ],
       "confidence": 0.75
     }
   ],

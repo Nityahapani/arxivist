@@ -4,10 +4,20 @@
   "provenance": {
     "title": "Attention Is All You Need",
     "authors": [
-      "Ashish Vaswani", "Noam Shazeer", "Niki Parmar", "Jakob Uszkoreit",
-      "Llion Jones", "Aidan N. Gomez", "Łukasz Kaiser", "Illia Polosukhin"
+      "Ashish Vaswani",
+      "Noam Shazeer",
+      "Niki Parmar",
+      "Jakob Uszkoreit",
+      "Llion Jones",
+      "Aidan N. Gomez",
+      "Łukasz Kaiser",
+      "Illia Polosukhin"
     ],
-    "affiliations": ["Google Brain", "Google Research", "University of Toronto"],
+    "affiliations": [
+      "Google Brain",
+      "Google Research",
+      "University of Toronto"
+    ],
     "arxiv_id": "1706.03762",
     "doi": null,
     "submission_date": "2017-06-12",
@@ -24,7 +34,6 @@
     "parsed_at": "2026-05-31T00:00:00Z",
     "arxivist_version": "1.0"
   },
-
   "architecture": {
     "primary_variant": "Transformer (base)",
     "modules": [
@@ -33,7 +42,10 @@
         "operation_type": "embedding_lookup",
         "input_shape": "[B, T]",
         "output_shape": "[B, T, 512]",
-        "parameters": { "vocab_size": "shared", "d_model": 512 },
+        "parameters": {
+          "vocab_size": "shared",
+          "d_model": 512
+        },
         "paper_section": "3.4",
         "confidence": 0.92,
         "notes": "Weights multiplied by sqrt(d_model). Weight matrix shared with output embedding and pre-softmax linear."
@@ -43,7 +55,10 @@
         "operation_type": "embedding_lookup",
         "input_shape": "[B, T_out]",
         "output_shape": "[B, T_out, 512]",
-        "parameters": { "vocab_size": "shared", "d_model": 512 },
+        "parameters": {
+          "vocab_size": "shared",
+          "d_model": 512
+        },
         "paper_section": "3.4",
         "confidence": 0.92,
         "notes": "Shares weight matrix with InputEmbedding and PreSoftmaxLinear."
@@ -53,7 +68,10 @@
         "operation_type": "sinusoidal_additive",
         "input_shape": "[B, T, 512]",
         "output_shape": "[B, T, 512]",
-        "parameters": { "d_model": 512, "base": 10000 },
+        "parameters": {
+          "d_model": 512,
+          "base": 10000
+        },
         "paper_section": "3.5",
         "confidence": 0.97,
         "notes": "PE(pos,2i)=sin(pos/10000^(2i/d_model)), PE(pos,2i+1)=cos(pos/10000^(2i/d_model)). Applied to both encoder and decoder inputs."
@@ -63,7 +81,9 @@
         "operation_type": "sequential_stack",
         "input_shape": "[B, T, 512]",
         "output_shape": "[B, T, 512]",
-        "parameters": { "N": 6 },
+        "parameters": {
+          "N": 6
+        },
         "paper_section": "3.1",
         "confidence": 0.97,
         "notes": "Stack of N=6 identical EncoderLayers."
@@ -83,7 +103,12 @@
         "operation_type": "multi_head_attention",
         "input_shape": "[B, T, 512]",
         "output_shape": "[B, T, 512]",
-        "parameters": { "h": 8, "d_k": 64, "d_v": 64, "d_model": 512 },
+        "parameters": {
+          "h": 8,
+          "d_k": 64,
+          "d_v": 64,
+          "d_model": 512
+        },
         "paper_section": "3.2.2",
         "confidence": 0.97,
         "notes": "Q, K, V all come from same source (self-attention). No mask applied."
@@ -93,7 +118,11 @@
         "operation_type": "position_wise_ffn",
         "input_shape": "[B, T, 512]",
         "output_shape": "[B, T, 512]",
-        "parameters": { "d_model": 512, "d_ff": 2048, "activation": "relu" },
+        "parameters": {
+          "d_model": 512,
+          "d_ff": 2048,
+          "activation": "relu"
+        },
         "paper_section": "3.3",
         "confidence": 0.97,
         "notes": "FFN(x) = max(0, xW1+b1)W2+b2. Applied identically and independently to each position."
@@ -103,7 +132,9 @@
         "operation_type": "sequential_stack",
         "input_shape": "[B, T_out, 512]",
         "output_shape": "[B, T_out, 512]",
-        "parameters": { "N": 6 },
+        "parameters": {
+          "N": 6
+        },
         "paper_section": "3.1",
         "confidence": 0.97,
         "notes": "Stack of N=6 identical DecoderLayers. Also receives encoder memory [B, T, 512]."
@@ -123,7 +154,11 @@
         "operation_type": "multi_head_attention_masked",
         "input_shape": "[B, T_out, 512]",
         "output_shape": "[B, T_out, 512]",
-        "parameters": { "h": 8, "d_k": 64, "d_v": 64 },
+        "parameters": {
+          "h": 8,
+          "d_k": 64,
+          "d_v": 64
+        },
         "paper_section": "3.1",
         "confidence": 0.97,
         "notes": "Causal mask applied: positions cannot attend to subsequent positions. Implemented by setting illegal softmax logits to -inf."
@@ -133,7 +168,11 @@
         "operation_type": "multi_head_attention",
         "input_shape": "Q:[B,T_out,512], K/V:[B,T,512]",
         "output_shape": "[B, T_out, 512]",
-        "parameters": { "h": 8, "d_k": 64, "d_v": 64 },
+        "parameters": {
+          "h": 8,
+          "d_k": 64,
+          "d_v": 64
+        },
         "paper_section": "3.1",
         "confidence": 0.97,
         "notes": "Q from previous decoder sub-layer; K and V from encoder output. Enables attending over all input positions."
@@ -143,7 +182,11 @@
         "operation_type": "position_wise_ffn",
         "input_shape": "[B, T_out, 512]",
         "output_shape": "[B, T_out, 512]",
-        "parameters": { "d_model": 512, "d_ff": 2048, "activation": "relu" },
+        "parameters": {
+          "d_model": 512,
+          "d_ff": 2048,
+          "activation": "relu"
+        },
         "paper_section": "3.3",
         "confidence": 0.97,
         "notes": "Identical structure to encoder FFN."
@@ -163,7 +206,9 @@
         "operation_type": "linear_projection",
         "input_shape": "[B, T_out, 512]",
         "output_shape": "[B, T_out, vocab_size]",
-        "parameters": { "d_model": 512 },
+        "parameters": {
+          "d_model": 512
+        },
         "paper_section": "3.4",
         "confidence": 0.92,
         "notes": "Weight matrix shared with InputEmbedding and OutputEmbedding."
@@ -180,42 +225,91 @@
       }
     ],
     "connections": [
-      { "from": "InputEmbedding", "to": "PositionalEncoding_Enc", "tensor_name": "enc_embedding" },
-      { "from": "PositionalEncoding_Enc", "to": "EncoderStack", "tensor_name": "enc_input" },
-      { "from": "EncoderStack", "to": "MultiHeadCrossAttention_Decoder", "tensor_name": "encoder_memory" },
-      { "from": "OutputEmbedding", "to": "PositionalEncoding_Dec", "tensor_name": "dec_embedding" },
-      { "from": "PositionalEncoding_Dec", "to": "MaskedMultiHeadSelfAttention_Decoder", "tensor_name": "dec_input" },
-      { "from": "MaskedMultiHeadSelfAttention_Decoder", "to": "MultiHeadCrossAttention_Decoder", "tensor_name": "dec_self_att_out" },
-      { "from": "MultiHeadCrossAttention_Decoder", "to": "FeedForward_Decoder", "tensor_name": "dec_cross_att_out" },
-      { "from": "FeedForward_Decoder", "to": "PreSoftmaxLinear", "tensor_name": "dec_ff_out" },
-      { "from": "PreSoftmaxLinear", "to": "Softmax", "tensor_name": "logits" }
+      {
+        "from": "InputEmbedding",
+        "to": "PositionalEncoding_Enc",
+        "tensor_name": "enc_embedding"
+      },
+      {
+        "from": "PositionalEncoding_Enc",
+        "to": "EncoderStack",
+        "tensor_name": "enc_input"
+      },
+      {
+        "from": "EncoderStack",
+        "to": "MultiHeadCrossAttention_Decoder",
+        "tensor_name": "encoder_memory"
+      },
+      {
+        "from": "OutputEmbedding",
+        "to": "PositionalEncoding_Dec",
+        "tensor_name": "dec_embedding"
+      },
+      {
+        "from": "PositionalEncoding_Dec",
+        "to": "MaskedMultiHeadSelfAttention_Decoder",
+        "tensor_name": "dec_input"
+      },
+      {
+        "from": "MaskedMultiHeadSelfAttention_Decoder",
+        "to": "MultiHeadCrossAttention_Decoder",
+        "tensor_name": "dec_self_att_out"
+      },
+      {
+        "from": "MultiHeadCrossAttention_Decoder",
+        "to": "FeedForward_Decoder",
+        "tensor_name": "dec_cross_att_out"
+      },
+      {
+        "from": "FeedForward_Decoder",
+        "to": "PreSoftmaxLinear",
+        "tensor_name": "dec_ff_out"
+      },
+      {
+        "from": "PreSoftmaxLinear",
+        "to": "Softmax",
+        "tensor_name": "logits"
+      }
     ],
     "variants": [
       {
         "name": "Transformer (base)",
         "differences": {
-          "N": 6, "d_model": 512, "d_ff": 2048, "h": 8,
-          "d_k": 64, "d_v": 64, "P_drop": 0.1, "train_steps": 100000
+          "N": 6,
+          "d_model": 512,
+          "d_ff": 2048,
+          "h": 8,
+          "d_k": 64,
+          "d_v": 64,
+          "P_drop": 0.1,
+          "train_steps": 100000
         }
       },
       {
         "name": "Transformer (big)",
         "differences": {
-          "N": 6, "d_model": 1024, "d_ff": 4096, "h": 16,
-          "d_k": 64, "d_v": 64, "P_drop": 0.3, "train_steps": 300000,
+          "N": 6,
+          "d_model": 1024,
+          "d_ff": 4096,
+          "h": 16,
+          "d_k": 64,
+          "d_v": 64,
+          "P_drop": 0.3,
+          "train_steps": 300000,
           "params_M": 213
         }
       }
     ]
   },
-
   "mathematical_spec": [
     {
       "name": "scaled_dot_product_attention",
       "latex": "\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)V",
       "role": "attention",
       "used_in": "both",
-      "hyperparameters": ["d_k"],
+      "hyperparameters": [
+        "d_k"
+      ],
       "undefined_symbols": [],
       "paper_section": "3.2.1, Eq. 1",
       "confidence": 0.99
@@ -225,7 +319,12 @@
       "latex": "\\text{MultiHead}(Q, K, V) = \\text{Concat}(\\text{head}_1, \\ldots, \\text{head}_h)W^O \\\\ \\text{where } \\text{head}_i = \\text{Attention}(QW^Q_i, KW^K_i, VW^V_i)",
       "role": "attention",
       "used_in": "both",
-      "hyperparameters": ["h", "d_k", "d_v", "d_model"],
+      "hyperparameters": [
+        "h",
+        "d_k",
+        "d_v",
+        "d_model"
+      ],
       "undefined_symbols": [],
       "paper_section": "3.2.2",
       "confidence": 0.99,
@@ -236,7 +335,10 @@
       "latex": "\\text{FFN}(x) = \\max(0, xW_1 + b_1)W_2 + b_2",
       "role": "other",
       "used_in": "both",
-      "hyperparameters": ["d_model", "d_ff"],
+      "hyperparameters": [
+        "d_model",
+        "d_ff"
+      ],
       "undefined_symbols": [],
       "paper_section": "3.3, Eq. 2",
       "confidence": 0.99
@@ -246,7 +348,9 @@
       "latex": "PE_{(pos,2i)} = \\sin\\left(\\frac{pos}{10000^{2i/d_{\\text{model}}}}\\right) \\\\ PE_{(pos,2i+1)} = \\cos\\left(\\frac{pos}{10000^{2i/d_{\\text{model}}}}\\right)",
       "role": "other",
       "used_in": "both",
-      "hyperparameters": ["d_model"],
+      "hyperparameters": [
+        "d_model"
+      ],
       "undefined_symbols": [],
       "paper_section": "3.5",
       "confidence": 0.99
@@ -256,7 +360,10 @@
       "latex": "lrate = d_{\\text{model}}^{-0.5} \\cdot \\min(step\\_num^{-0.5},\\ step\\_num \\cdot warmup\\_steps^{-1.5})",
       "role": "other",
       "used_in": "training",
-      "hyperparameters": ["d_model", "warmup_steps"],
+      "hyperparameters": [
+        "d_model",
+        "warmup_steps"
+      ],
       "undefined_symbols": [],
       "paper_section": "5.3, Eq. 3",
       "confidence": 0.99,
@@ -273,35 +380,147 @@
       "confidence": 0.99
     }
   ],
-
   "tensor_semantics": [
-    { "name": "Q", "shape_notation": "[B, T, d_k]", "dtype": "float32", "tensor_type": "intermediate", "module": "ScaledDotProductAttention", "confidence": 0.95 },
-    { "name": "K", "shape_notation": "[B, T, d_k]", "dtype": "float32", "tensor_type": "intermediate", "module": "ScaledDotProductAttention", "confidence": 0.95 },
-    { "name": "V", "shape_notation": "[B, T, d_v]", "dtype": "float32", "tensor_type": "intermediate", "module": "ScaledDotProductAttention", "confidence": 0.95 },
-    { "name": "attention_weights", "shape_notation": "[B, h, T, T]", "dtype": "float32", "tensor_type": "intermediate", "module": "MultiHeadAttention", "confidence": 0.90 },
-    { "name": "attention_output", "shape_notation": "[B, T, d_model]", "dtype": "float32", "tensor_type": "output", "module": "MultiHeadAttention", "confidence": 0.95 },
-    { "name": "encoder_output", "shape_notation": "[B, T_src, d_model]", "dtype": "float32", "tensor_type": "output", "module": "EncoderStack", "confidence": 0.97 },
-    { "name": "decoder_output", "shape_notation": "[B, T_tgt, d_model]", "dtype": "float32", "tensor_type": "output", "module": "DecoderStack", "confidence": 0.97 },
-    { "name": "logits", "shape_notation": "[B, T_tgt, vocab_size]", "dtype": "float32", "tensor_type": "output", "module": "PreSoftmaxLinear", "confidence": 0.95 },
-    { "name": "token_ids_src", "shape_notation": "[B, T_src]", "dtype": "int64", "tensor_type": "input", "module": "InputEmbedding", "confidence": 0.95 },
-    { "name": "token_ids_tgt", "shape_notation": "[B, T_tgt]", "dtype": "int64", "tensor_type": "input", "module": "OutputEmbedding", "confidence": 0.95 },
-    { "name": "causal_mask", "shape_notation": "[T_tgt, T_tgt]", "dtype": "bool", "tensor_type": "intermediate", "module": "MaskedMultiHeadSelfAttention_Decoder", "confidence": 0.92 },
-    { "name": "src_padding_mask", "shape_notation": "[B, 1, 1, T_src]", "dtype": "bool", "tensor_type": "intermediate", "module": "MultiHeadCrossAttention_Decoder", "confidence": 0.75, "notes": "Shape inferred from standard practice; paper does not explicitly describe padding mask shape." },
-    { "name": "W_Q", "shape_notation": "[d_model, d_k]", "dtype": "float32", "tensor_type": "parameter", "module": "MultiHeadAttention", "confidence": 0.97 },
-    { "name": "W_K", "shape_notation": "[d_model, d_k]", "dtype": "float32", "tensor_type": "parameter", "module": "MultiHeadAttention", "confidence": 0.97 },
-    { "name": "W_V", "shape_notation": "[d_model, d_v]", "dtype": "float32", "tensor_type": "parameter", "module": "MultiHeadAttention", "confidence": 0.97 },
-    { "name": "W_O", "shape_notation": "[h*d_v, d_model]", "dtype": "float32", "tensor_type": "parameter", "module": "MultiHeadAttention", "confidence": 0.97 }
+    {
+      "name": "Q",
+      "shape_notation": "[B, T, d_k]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "ScaledDotProductAttention",
+      "confidence": 0.95
+    },
+    {
+      "name": "K",
+      "shape_notation": "[B, T, d_k]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "ScaledDotProductAttention",
+      "confidence": 0.95
+    },
+    {
+      "name": "V",
+      "shape_notation": "[B, T, d_v]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "ScaledDotProductAttention",
+      "confidence": 0.95
+    },
+    {
+      "name": "attention_weights",
+      "shape_notation": "[B, h, T, T]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "MultiHeadAttention",
+      "confidence": 0.9
+    },
+    {
+      "name": "attention_output",
+      "shape_notation": "[B, T, d_model]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "MultiHeadAttention",
+      "confidence": 0.95
+    },
+    {
+      "name": "encoder_output",
+      "shape_notation": "[B, T_src, d_model]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "EncoderStack",
+      "confidence": 0.97
+    },
+    {
+      "name": "decoder_output",
+      "shape_notation": "[B, T_tgt, d_model]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "DecoderStack",
+      "confidence": 0.97
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, T_tgt, vocab_size]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "PreSoftmaxLinear",
+      "confidence": 0.95
+    },
+    {
+      "name": "token_ids_src",
+      "shape_notation": "[B, T_src]",
+      "dtype": "int64",
+      "tensor_type": "input",
+      "module": "InputEmbedding",
+      "confidence": 0.95
+    },
+    {
+      "name": "token_ids_tgt",
+      "shape_notation": "[B, T_tgt]",
+      "dtype": "int64",
+      "tensor_type": "input",
+      "module": "OutputEmbedding",
+      "confidence": 0.95
+    },
+    {
+      "name": "causal_mask",
+      "shape_notation": "[T_tgt, T_tgt]",
+      "dtype": "bool",
+      "tensor_type": "intermediate",
+      "module": "MaskedMultiHeadSelfAttention_Decoder",
+      "confidence": 0.92
+    },
+    {
+      "name": "src_padding_mask",
+      "shape_notation": "[B, 1, 1, T_src]",
+      "dtype": "bool",
+      "tensor_type": "intermediate",
+      "module": "MultiHeadCrossAttention_Decoder",
+      "confidence": 0.75,
+      "notes": "Shape inferred from standard practice; paper does not explicitly describe padding mask shape."
+    },
+    {
+      "name": "W_Q",
+      "shape_notation": "[d_model, d_k]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "MultiHeadAttention",
+      "confidence": 0.97
+    },
+    {
+      "name": "W_K",
+      "shape_notation": "[d_model, d_k]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "MultiHeadAttention",
+      "confidence": 0.97
+    },
+    {
+      "name": "W_V",
+      "shape_notation": "[d_model, d_v]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "MultiHeadAttention",
+      "confidence": 0.97
+    },
+    {
+      "name": "W_O",
+      "shape_notation": "[h*d_v, d_model]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "MultiHeadAttention",
+      "confidence": 0.97
+    }
   ],
-
   "training_pipeline": {
     "optimizer": {
       "name": "Adam",
-      "learning_rate": "schedule (see lr_schedule)",
+      "learning_rate": null,
       "beta1": 0.9,
       "beta2": 0.98,
-      "epsilon": 1e-9,
+      "epsilon": 1e-09,
       "weight_decay": null,
-      "confidence": 0.99
+      "confidence": 0.99,
+      "learning_rate_detail": "schedule (see lr_schedule)"
     },
     "lr_schedule": {
       "type": "warmup_rsqrt_decay",
@@ -311,7 +530,7 @@
       "confidence": 0.99
     },
     "batch_size": null,
-    "effective_batch_size": "~25000 source tokens + 25000 target tokens per batch",
+    "effective_batch_size": null,
     "training_steps": 100000,
     "epochs": null,
     "mixed_precision": null,
@@ -327,27 +546,94 @@
     "hardware": "8x NVIDIA P100 GPUs, single machine",
     "training_time_base": "12 hours (100K steps)",
     "training_time_big": "3.5 days (300K steps)",
-    "confidence": 0.95
+    "confidence": 0.95,
+    "effective_batch_size_detail": "~25000 source tokens + 25000 target tokens per batch"
   },
-
   "evaluation_protocol": {
     "datasets": [
-      { "name": "WMT 2014 English-German", "split": "test (newstest2014)", "size": 4500000, "publicly_available": true },
-      { "name": "WMT 2014 English-French", "split": "test (newstest2014)", "size": 36000000, "publicly_available": true },
-      { "name": "WSJ Penn Treebank", "split": "Section 23 (test)", "size": 40000, "publicly_available": true }
+      {
+        "name": "WMT 2014 English-German",
+        "split": "test (newstest2014)",
+        "size": 4500000,
+        "publicly_available": true
+      },
+      {
+        "name": "WMT 2014 English-French",
+        "split": "test (newstest2014)",
+        "size": 36000000,
+        "publicly_available": true
+      },
+      {
+        "name": "WSJ Penn Treebank",
+        "split": "Section 23 (test)",
+        "size": 40000,
+        "publicly_available": true
+      }
     ],
-    "metrics": ["BLEU", "F1 (constituency parsing)", "PPL (perplexity)", "FLOPs (training cost)"],
+    "metrics": [
+      "BLEU",
+      "F1 (constituency parsing)",
+      "PPL (perplexity)",
+      "FLOPs (training cost)"
+    ],
     "reported_results": [
-      { "metric": "BLEU", "dataset": "WMT 2014 EN-DE", "split": "test", "value": 28.4, "model": "Transformer (big)", "is_primary": true },
-      { "metric": "BLEU", "dataset": "WMT 2014 EN-DE", "split": "test", "value": 27.3, "model": "Transformer (base)", "is_primary": false },
-      { "metric": "BLEU", "dataset": "WMT 2014 EN-FR", "split": "test", "value": 41.8, "model": "Transformer (big)", "is_primary": true },
-      { "metric": "BLEU", "dataset": "WMT 2014 EN-FR", "split": "test", "value": 38.1, "model": "Transformer (base)", "is_primary": false },
-      { "metric": "F1", "dataset": "WSJ Penn Treebank", "split": "Section 23", "value": 92.7, "model": "Transformer (4 layers, semi-supervised)", "is_primary": false },
-      { "metric": "F1", "dataset": "WSJ Penn Treebank", "split": "Section 23", "value": 91.3, "model": "Transformer (4 layers, WSJ only)", "is_primary": false }
+      {
+        "metric": "BLEU",
+        "dataset": "WMT 2014 EN-DE",
+        "split": "test",
+        "value": 28.4,
+        "model": "Transformer (big)",
+        "is_primary": true
+      },
+      {
+        "metric": "BLEU",
+        "dataset": "WMT 2014 EN-DE",
+        "split": "test",
+        "value": 27.3,
+        "model": "Transformer (base)",
+        "is_primary": false
+      },
+      {
+        "metric": "BLEU",
+        "dataset": "WMT 2014 EN-FR",
+        "split": "test",
+        "value": 41.8,
+        "model": "Transformer (big)",
+        "is_primary": true
+      },
+      {
+        "metric": "BLEU",
+        "dataset": "WMT 2014 EN-FR",
+        "split": "test",
+        "value": 38.1,
+        "model": "Transformer (base)",
+        "is_primary": false
+      },
+      {
+        "metric": "F1",
+        "dataset": "WSJ Penn Treebank",
+        "split": "Section 23",
+        "value": 92.7,
+        "model": "Transformer (4 layers, semi-supervised)",
+        "is_primary": false
+      },
+      {
+        "metric": "F1",
+        "dataset": "WSJ Penn Treebank",
+        "split": "Section 23",
+        "value": 91.3,
+        "model": "Transformer (4 layers, WSJ only)",
+        "is_primary": false
+      }
     ],
     "baselines": [
-      "ByteNet", "Deep-Att + PosUnk", "GNMT + RL", "ConvS2S", "MoE",
-      "GNMT + RL Ensemble", "ConvS2S Ensemble"
+      "ByteNet",
+      "Deep-Att + PosUnk",
+      "GNMT + RL",
+      "ConvS2S",
+      "MoE",
+      "GNMT + RL Ensemble",
+      "ConvS2S Ensemble"
     ],
     "compute": "8x NVIDIA P100 GPUs",
     "special_conditions": [
@@ -364,27 +650,33 @@
     },
     "confidence": 0.97
   },
-
   "implementation_assumptions": [
     {
       "assumption": "Weight initialization follows Xavier/Glorot uniform initialization for linear layers.",
       "basis": "Literature default for Transformer implementations; paper does not specify.",
-      "confidence": 0.70,
-      "alternatives": ["Kaiming He initialization", "Normal distribution N(0, 0.02)"],
+      "confidence": 0.7,
+      "alternatives": [
+        "Kaiming He initialization",
+        "Normal distribution N(0, 0.02)"
+      ],
       "affects_section": "architecture"
     },
     {
       "assumption": "Dropout is applied to attention weights (attention dropout) as well as sub-layer outputs (residual dropout), both at rate P_drop=0.1.",
       "basis": "Section 5.4 describes 'dropout to output of each sub-layer' and 'sums of embeddings and positional encodings'. Attention dropout is standard practice and implied.",
-      "confidence": 0.80,
-      "alternatives": ["Dropout only on residual path, not attention weights"],
+      "confidence": 0.8,
+      "alternatives": [
+        "Dropout only on residual path, not attention weights"
+      ],
       "affects_section": "training_pipeline"
     },
     {
       "assumption": "Framework: PyTorch (primary) or TensorFlow. Original code is tensor2tensor (TensorFlow).",
       "basis": "Paper cites github.com/tensorflow/tensor2tensor. Modern reproductions use PyTorch.",
       "confidence": 0.85,
-      "alternatives": ["JAX/Flax"],
+      "alternatives": [
+        "JAX/Flax"
+      ],
       "affects_section": "training_pipeline"
     },
     {
@@ -398,7 +690,9 @@
       "assumption": "Vocabulary is shared between encoder and decoder (described as 'shared source-target vocabulary' for EN-DE).",
       "basis": "Section 5.1: 'shared source-target vocabulary of about 37000 tokens' for EN-DE.",
       "confidence": 0.97,
-      "alternatives": ["Separate encoder/decoder vocabularies"],
+      "alternatives": [
+        "Separate encoder/decoder vocabularies"
+      ],
       "affects_section": "architecture"
     },
     {
@@ -419,42 +713,50 @@
       "assumption": "Effective batch size of ~25k source + ~25k target tokens achieved via token-based batching, not fixed sample count.",
       "basis": "Section 5.1: 'Each training batch contained a set of sentence pairs containing approximately 25000 source tokens and 25000 target tokens.'",
       "confidence": 0.97,
-      "alternatives": ["Fixed batch size of 64 or 128 samples"],
+      "alternatives": [
+        "Fixed batch size of 64 or 128 samples"
+      ],
       "affects_section": "training_pipeline"
     }
   ],
-
   "ambiguities": [
     {
       "location": "Section 5.4",
       "description": "Paper says dropout applied to 'output of each sub-layer' and 'sums of the embeddings and positional encodings'. Unclear if attention weights themselves receive dropout.",
       "primary_assumption": "Attention dropout at same rate as residual dropout (0.1)",
-      "alternatives": ["No attention dropout"],
+      "alternatives": [
+        "No attention dropout"
+      ],
       "confidence": 0.78
     },
     {
       "location": "Section 3.4",
       "description": "Paper states weight matrix is shared between two embedding layers and pre-softmax linear. Unclear whether the encoder input embedding and decoder input embedding are the same matrix (i.e., three-way tie).",
       "primary_assumption": "Three-way weight tying: encoder_embed = decoder_embed = pre_softmax_linear^T",
-      "alternatives": ["Only decoder_embed and pre_softmax_linear are tied"],
+      "alternatives": [
+        "Only decoder_embed and pre_softmax_linear are tied"
+      ],
       "confidence": 0.82
     },
     {
       "location": "Section 5.1 / 5.2",
       "description": "Batch size per GPU vs effective batch size. '25000 source tokens' is the total batch, but token count per GPU and gradient accumulation strategy are unspecified.",
       "primary_assumption": "No gradient accumulation; full batch fits on 8 GPUs with data parallelism.",
-      "alternatives": ["Gradient accumulation over multiple steps"],
+      "alternatives": [
+        "Gradient accumulation over multiple steps"
+      ],
       "confidence": 0.75
     },
     {
       "location": "Section 3.5",
       "description": "Sinusoidal PE added to embeddings before dropout or after? Order slightly ambiguous.",
       "primary_assumption": "PE added to embeddings, then dropout applied to the sum.",
-      "alternatives": ["Dropout before PE addition"],
+      "alternatives": [
+        "Dropout before PE addition"
+      ],
       "confidence": 0.88
     }
   ],
-
   "confidence_annotations": {
     "architecture": 0.95,
     "mathematical_spec": 0.98,

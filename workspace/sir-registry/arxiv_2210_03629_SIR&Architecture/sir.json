@@ -19,7 +19,7 @@
     "arxiv_id": "2210.03629v3",
     "doi": null,
     "submission_date": "2022-10-06 (v1); last revised 2023-03-10 (v3)",
-    "abstract": "While large language models (LLMs) have demonstrated impressive performance across tasks in language understanding and interactive decision making, their abilities for reasoning and acting have primarily been studied as separate topics. We explore the use of LLMs to generate both reasoning traces and task-specific actions in an interleaved manner, allowing for greater synergy: reasoning traces help the model induce, track, and update action plans and handle exceptions, while actions allow it to interface with external sources such as knowledge bases or environments. Applied to HotpotQA, Fever, ALFWorld, and WebShop, ReAct outperforms baselines with improved interpretability and trustworthiness.",
+    "abstract": "While large language models (LLMs) have demonstrated impressive performance across tasks in language understanding and interactive decision making, their abilities for reasoning and acting have primarily been studied as separate topics. We explore the use of LLMs to generate both reasoning traces and task-specific actions in an interleaved manner, allowing for greater synergy: reasoning traces help the model induce, track, and update action plans and handle exceptions, while actions allow it…",
     "domain": "NLP",
     "key_claims": [
       "Interleaving reasoning traces ('thoughts') with task-specific actions produces synergy: reasoning helps guide/track/repair action plans, and actions ground reasoning in external information.",
@@ -29,7 +29,8 @@
       "ReAct trajectories are more human-interpretable and allow human-in-the-loop correction by editing 'thoughts' rather than model parameters or full action sequences."
     ],
     "parsed_at": "2026-07-22T00:00:00Z",
-    "arxivist_version": "1.0"
+    "arxivist_version": "1.0",
+    "abstract_full": "While large language models (LLMs) have demonstrated impressive performance across tasks in language understanding and interactive decision making, their abilities for reasoning and acting have primarily been studied as separate topics. We explore the use of LLMs to generate both reasoning traces and task-specific actions in an interleaved manner, allowing for greater synergy: reasoning traces help the model induce, track, and update action plans and handle exceptions, while actions allow it to interface with external sources such as knowledge bases or environments. Applied to HotpotQA, Fever, ALFWorld, and WebShop, ReAct outperforms baselines with improved interpretability and trustworthiness."
   },
   "architecture": {
     "primary_variant": "ReAct (Reason + Act) prompting loop over a frozen LLM",
@@ -40,7 +41,12 @@
         "input_shape": "context sequence c_t = (o_1, a_1, ..., o_{t-1}, a_{t-1}, o_t) as tokenized text",
         "output_shape": "next augmented action a_hat_t (text token sequence representing either a 'thought' or a domain action)",
         "parameters": {
-          "models_used": ["PaLM-540B", "PaLM-8B", "PaLM-62B (finetuned)", "GPT-3 text-davinci-002"],
+          "models_used": [
+            "PaLM-540B",
+            "PaLM-8B",
+            "PaLM-62B (finetuned)",
+            "GPT-3 text-davinci-002"
+          ],
           "prompting_mode": "few-shot in-context learning, 1-6 exemplars, no gradient updates in main experiments"
         },
         "paper_section": "Section 2; Section 3.1 footnote 1",
@@ -72,9 +78,17 @@
         "input_shape": "action string a_t in A (domain-specific), parsed from LLM output",
         "output_shape": "observation o_{t+1} returned by the environment/API",
         "parameters": {
-          "action_space_HotpotQA_FEVER": ["search[entity]", "lookup[string]", "finish[answer]"],
+          "action_space_HotpotQA_FEVER": [
+            "search[entity]",
+            "lookup[string]",
+            "finish[answer]"
+          ],
           "action_space_ALFWorld": "environment-defined text actions, e.g. go to X, open X, take X from Y, clean X with Y, put X in/on Y",
-          "action_space_WebShop": ["search[query]", "click[button/option]", "think[...] (treated as a thought, not an action)"]
+          "action_space_WebShop": [
+            "search[query]",
+            "click[button/option]",
+            "think[...] (treated as a thought, not an action)"
+          ]
         },
         "paper_section": "Section 3.1 (Action Space); Section 4 (ALFWorld/WebShop)",
         "confidence": 0.9,
@@ -121,43 +135,92 @@
       }
     ],
     "connections": [
-      { "from": "Context Aggregator / Working Memory", "to": "Frozen Policy LLM", "tensor_name": "context c_t" },
-      { "from": "Frozen Policy LLM", "to": "Thought Generator (Reasoning Trace Emitter)", "tensor_name": "aihat_t (if thought)" },
-      { "from": "Frozen Policy LLM", "to": "Action Executor", "tensor_name": "a_t (if domain action)" },
-      { "from": "Thought Generator (Reasoning Trace Emitter)", "to": "Context Aggregator / Working Memory", "tensor_name": "thought text" },
-      { "from": "Action Executor", "to": "Wikipedia Web API", "tensor_name": "search[entity] / lookup[string] / finish[answer]" },
-      { "from": "Wikipedia Web API", "to": "Context Aggregator / Working Memory", "tensor_name": "observation o_{t+1}" },
-      { "from": "Action Executor", "to": "Context Aggregator / Working Memory", "tensor_name": "observation o_{t+1} (ALFWorld/WebShop environment)" },
-      { "from": "Context Aggregator / Working Memory", "to": "CoT-SC Fallback Module", "tensor_name": "question/claim (on backoff trigger)" }
+      {
+        "from": "Context Aggregator / Working Memory",
+        "to": "Frozen Policy LLM",
+        "tensor_name": "context c_t"
+      },
+      {
+        "from": "Frozen Policy LLM",
+        "to": "Thought Generator (Reasoning Trace Emitter)",
+        "tensor_name": "aihat_t (if thought)"
+      },
+      {
+        "from": "Frozen Policy LLM",
+        "to": "Action Executor",
+        "tensor_name": "a_t (if domain action)"
+      },
+      {
+        "from": "Thought Generator (Reasoning Trace Emitter)",
+        "to": "Context Aggregator / Working Memory",
+        "tensor_name": "thought text"
+      },
+      {
+        "from": "Action Executor",
+        "to": "Wikipedia Web API",
+        "tensor_name": "search[entity] / lookup[string] / finish[answer]"
+      },
+      {
+        "from": "Wikipedia Web API",
+        "to": "Context Aggregator / Working Memory",
+        "tensor_name": "observation o_{t+1}"
+      },
+      {
+        "from": "Action Executor",
+        "to": "Context Aggregator / Working Memory",
+        "tensor_name": "observation o_{t+1} (ALFWorld/WebShop environment)"
+      },
+      {
+        "from": "Context Aggregator / Working Memory",
+        "to": "CoT-SC Fallback Module",
+        "tensor_name": "question/claim (on backoff trigger)"
+      }
     ],
     "variants": [
       {
         "name": "ReAct (dense-thought)",
-        "differences": { "thought_frequency": "alternates thought-action-observation at every step", "used_for": "HotpotQA, FEVER" }
+        "differences": {
+          "thought_frequency": "alternates thought-action-observation at every step",
+          "used_for": "HotpotQA, FEVER"
+        }
       },
       {
         "name": "ReAct (sparse-thought)",
-        "differences": { "thought_frequency": "thoughts appear only sparsely at the most relevant positions, LLM decides occurrence", "used_for": "ALFWorld, WebShop" }
+        "differences": {
+          "thought_frequency": "thoughts appear only sparsely at the most relevant positions, LLM decides occurrence",
+          "used_for": "ALFWorld, WebShop"
+        }
       },
       {
         "name": "Act (ablation, no thoughts)",
-        "differences": { "removes": "all 'thought'/aihat_t steps, keeps only actions and observations" }
+        "differences": {
+          "removes": "all 'thought'/aihat_t steps, keeps only actions and observations"
+        }
       },
       {
         "name": "CoT (ablation, reasoning-only)",
-        "differences": { "removes": "all actions and observations, reasoning-only chain-of-thought" }
+        "differences": {
+          "removes": "all actions and observations, reasoning-only chain-of-thought"
+        }
       },
       {
         "name": "CoT-SC (self-consistency ablation)",
-        "differences": { "adds": "21 sampled CoT trajectories at temperature 0.7 with majority vote" }
+        "differences": {
+          "adds": "21 sampled CoT trajectories at temperature 0.7 with majority vote"
+        }
       },
       {
         "name": "Standard (ablation)",
-        "differences": { "removes": "all thoughts, actions, and observations; direct answer prompting" }
+        "differences": {
+          "removes": "all thoughts, actions, and observations; direct answer prompting"
+        }
       },
       {
         "name": "ReAct-IM (Inner-Monologue-style ablation)",
-        "differences": { "restricts": "thoughts limited to (1) decomposing current goal and (2) current subgoal only; lacks subgoal-completion detection, next-subgoal determination, and commonsense-location reasoning", "used_for": "ALFWorld only" }
+        "differences": {
+          "restricts": "thoughts limited to (1) decomposing current goal and (2) current subgoal only; lacks subgoal-completion detection, next-subgoal determination, and commonsense-location reasoning",
+          "used_for": "ALFWorld only"
+        }
       }
     ]
   },
@@ -208,7 +271,9 @@
       "role": "other",
       "used_in": "inference",
       "hyperparameters": [],
-      "undefined_symbols": ["coverage(\\cdot,\\cdot) exact functional form not given in main text"],
+      "undefined_symbols": [
+        "coverage(\\cdot,\\cdot) exact functional form not given in main text"
+      ],
       "paper_section": "Section 4 'WebShop' paragraph",
       "confidence": 0.55
     }
@@ -275,46 +340,269 @@
   },
   "evaluation_protocol": {
     "datasets": [
-      { "name": "HotpotQA", "split": "validation (question-only setup)", "size": null, "publicly_available": true },
-      { "name": "FEVER", "split": "validation (question-only setup)", "size": null, "publicly_available": true },
-      { "name": "ALFWorld", "split": "134 unseen evaluation games", "size": 134, "publicly_available": true },
-      { "name": "WebShop", "split": "500 test instructions", "size": 500, "publicly_available": true }
+      {
+        "name": "HotpotQA",
+        "split": "validation (question-only setup)",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "FEVER",
+        "split": "validation (question-only setup)",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "ALFWorld",
+        "split": "134 unseen evaluation games",
+        "size": 134,
+        "publicly_available": true
+      },
+      {
+        "name": "WebShop",
+        "split": "500 test instructions",
+        "size": 500,
+        "publicly_available": true
+      }
     ],
-    "metrics": ["Exact Match (EM)", "Accuracy (Acc)", "Success Rate (SR/%)", "Average Score (WebShop attribute coverage)"],
+    "metrics": [
+      "Exact Match (EM)",
+      "Accuracy (Acc)",
+      "Success Rate (SR/%)",
+      "Average Score (WebShop attribute coverage)"
+    ],
     "reported_results": [
-      { "metric": "EM", "dataset": "HotpotQA", "split": "Standard", "value": 28.7, "is_primary": false },
-      { "metric": "EM", "dataset": "HotpotQA", "split": "CoT", "value": 29.4, "is_primary": false },
-      { "metric": "EM", "dataset": "HotpotQA", "split": "CoT-SC", "value": 33.4, "is_primary": false },
-      { "metric": "EM", "dataset": "HotpotQA", "split": "Act", "value": 25.7, "is_primary": false },
-      { "metric": "EM", "dataset": "HotpotQA", "split": "ReAct", "value": 27.4, "is_primary": true },
-      { "metric": "EM", "dataset": "HotpotQA", "split": "CoT-SC -> ReAct", "value": 34.2, "is_primary": true },
-      { "metric": "EM", "dataset": "HotpotQA", "split": "ReAct -> CoT-SC", "value": 35.1, "is_primary": true },
-      { "metric": "EM", "dataset": "HotpotQA", "split": "Supervised SoTA", "value": 67.5, "is_primary": false },
-      { "metric": "Acc", "dataset": "Fever", "split": "Standard", "value": 57.1, "is_primary": false },
-      { "metric": "Acc", "dataset": "Fever", "split": "CoT", "value": 56.3, "is_primary": false },
-      { "metric": "Acc", "dataset": "Fever", "split": "CoT-SC", "value": 60.4, "is_primary": false },
-      { "metric": "Acc", "dataset": "Fever", "split": "Act", "value": 58.9, "is_primary": false },
-      { "metric": "Acc", "dataset": "Fever", "split": "ReAct", "value": 60.9, "is_primary": true },
-      { "metric": "Acc", "dataset": "Fever", "split": "CoT-SC -> ReAct", "value": 64.6, "is_primary": true },
-      { "metric": "Acc", "dataset": "Fever", "split": "ReAct -> CoT-SC", "value": 62.0, "is_primary": true },
-      { "metric": "Acc", "dataset": "Fever", "split": "Supervised SoTA", "value": 89.5, "is_primary": false },
-      { "metric": "SR", "dataset": "ALFWorld", "split": "Act (best of 6)", "value": 45, "is_primary": false },
-      { "metric": "SR", "dataset": "ALFWorld", "split": "ReAct (avg)", "value": 57, "is_primary": false },
-      { "metric": "SR", "dataset": "ALFWorld", "split": "ReAct (best of 6)", "value": 71, "is_primary": true },
-      { "metric": "SR", "dataset": "ALFWorld", "split": "ReAct-IM (avg)", "value": 48, "is_primary": false },
-      { "metric": "SR", "dataset": "ALFWorld", "split": "ReAct-IM (best of 6)", "value": 53, "is_primary": false },
-      { "metric": "SR", "dataset": "ALFWorld", "split": "BUTLERg (best of 8)", "value": 22, "is_primary": false },
-      { "metric": "SR", "dataset": "ALFWorld", "split": "BUTLER (best of 8)", "value": 37, "is_primary": false },
-      { "metric": "Score", "dataset": "WebShop", "split": "Act", "value": 62.3, "is_primary": false },
-      { "metric": "Score", "dataset": "WebShop", "split": "ReAct", "value": 66.6, "is_primary": true },
-      { "metric": "Score", "dataset": "WebShop", "split": "IL", "value": 59.9, "is_primary": false },
-      { "metric": "Score", "dataset": "WebShop", "split": "IL+RL", "value": 62.4, "is_primary": false },
-      { "metric": "Score", "dataset": "WebShop", "split": "Human Expert", "value": 82.1, "is_primary": false },
-      { "metric": "SR", "dataset": "WebShop", "split": "Act", "value": 30.1, "is_primary": false },
-      { "metric": "SR", "dataset": "WebShop", "split": "ReAct", "value": 40.0, "is_primary": true },
-      { "metric": "SR", "dataset": "WebShop", "split": "IL", "value": 29.1, "is_primary": false },
-      { "metric": "SR", "dataset": "WebShop", "split": "IL+RL", "value": 28.7, "is_primary": false },
-      { "metric": "SR", "dataset": "WebShop", "split": "Human Expert", "value": 59.6, "is_primary": false }
+      {
+        "metric": "EM",
+        "dataset": "HotpotQA",
+        "split": "Standard",
+        "value": 28.7,
+        "is_primary": false
+      },
+      {
+        "metric": "EM",
+        "dataset": "HotpotQA",
+        "split": "CoT",
+        "value": 29.4,
+        "is_primary": false
+      },
+      {
+        "metric": "EM",
+        "dataset": "HotpotQA",
+        "split": "CoT-SC",
+        "value": 33.4,
+        "is_primary": false
+      },
+      {
+        "metric": "EM",
+        "dataset": "HotpotQA",
+        "split": "Act",
+        "value": 25.7,
+        "is_primary": false
+      },
+      {
+        "metric": "EM",
+        "dataset": "HotpotQA",
+        "split": "ReAct",
+        "value": 27.4,
+        "is_primary": true
+      },
+      {
+        "metric": "EM",
+        "dataset": "HotpotQA",
+        "split": "CoT-SC -> ReAct",
+        "value": 34.2,
+        "is_primary": true
+      },
+      {
+        "metric": "EM",
+        "dataset": "HotpotQA",
+        "split": "ReAct -> CoT-SC",
+        "value": 35.1,
+        "is_primary": true
+      },
+      {
+        "metric": "EM",
+        "dataset": "HotpotQA",
+        "split": "Supervised SoTA",
+        "value": 67.5,
+        "is_primary": false
+      },
+      {
+        "metric": "Acc",
+        "dataset": "Fever",
+        "split": "Standard",
+        "value": 57.1,
+        "is_primary": false
+      },
+      {
+        "metric": "Acc",
+        "dataset": "Fever",
+        "split": "CoT",
+        "value": 56.3,
+        "is_primary": false
+      },
+      {
+        "metric": "Acc",
+        "dataset": "Fever",
+        "split": "CoT-SC",
+        "value": 60.4,
+        "is_primary": false
+      },
+      {
+        "metric": "Acc",
+        "dataset": "Fever",
+        "split": "Act",
+        "value": 58.9,
+        "is_primary": false
+      },
+      {
+        "metric": "Acc",
+        "dataset": "Fever",
+        "split": "ReAct",
+        "value": 60.9,
+        "is_primary": true
+      },
+      {
+        "metric": "Acc",
+        "dataset": "Fever",
+        "split": "CoT-SC -> ReAct",
+        "value": 64.6,
+        "is_primary": true
+      },
+      {
+        "metric": "Acc",
+        "dataset": "Fever",
+        "split": "ReAct -> CoT-SC",
+        "value": 62.0,
+        "is_primary": true
+      },
+      {
+        "metric": "Acc",
+        "dataset": "Fever",
+        "split": "Supervised SoTA",
+        "value": 89.5,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "ALFWorld",
+        "split": "Act (best of 6)",
+        "value": 45.0,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "ALFWorld",
+        "split": "ReAct (avg)",
+        "value": 57.0,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "ALFWorld",
+        "split": "ReAct (best of 6)",
+        "value": 71.0,
+        "is_primary": true
+      },
+      {
+        "metric": "SR",
+        "dataset": "ALFWorld",
+        "split": "ReAct-IM (avg)",
+        "value": 48.0,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "ALFWorld",
+        "split": "ReAct-IM (best of 6)",
+        "value": 53.0,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "ALFWorld",
+        "split": "BUTLERg (best of 8)",
+        "value": 22.0,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "ALFWorld",
+        "split": "BUTLER (best of 8)",
+        "value": 37.0,
+        "is_primary": false
+      },
+      {
+        "metric": "Score",
+        "dataset": "WebShop",
+        "split": "Act",
+        "value": 62.3,
+        "is_primary": false
+      },
+      {
+        "metric": "Score",
+        "dataset": "WebShop",
+        "split": "ReAct",
+        "value": 66.6,
+        "is_primary": true
+      },
+      {
+        "metric": "Score",
+        "dataset": "WebShop",
+        "split": "IL",
+        "value": 59.9,
+        "is_primary": false
+      },
+      {
+        "metric": "Score",
+        "dataset": "WebShop",
+        "split": "IL+RL",
+        "value": 62.4,
+        "is_primary": false
+      },
+      {
+        "metric": "Score",
+        "dataset": "WebShop",
+        "split": "Human Expert",
+        "value": 82.1,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "WebShop",
+        "split": "Act",
+        "value": 30.1,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "WebShop",
+        "split": "ReAct",
+        "value": 40.0,
+        "is_primary": true
+      },
+      {
+        "metric": "SR",
+        "dataset": "WebShop",
+        "split": "IL",
+        "value": 29.1,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "WebShop",
+        "split": "IL+RL",
+        "value": 28.7,
+        "is_primary": false
+      },
+      {
+        "metric": "SR",
+        "dataset": "WebShop",
+        "split": "Human Expert",
+        "value": 59.6,
+        "is_primary": false
+      }
     ],
     "baselines": [
       "Standard prompting",
@@ -340,35 +628,48 @@
       "assumption": "PaLM-540B is not publicly accessible, so a faithful reproduction must substitute an accessible LLM (e.g. GPT-3/GPT-4 class or open-weight model) via API, matching the paper's own GPT-3 ablation methodology (Appendix A.1).",
       "basis": "explicitly stated in Reproducibility Statement",
       "confidence": 0.95,
-      "alternatives": ["Use GPT-3 text-davinci-002 as in Appendix A.1", "Use a modern open-weight LLM (e.g. Llama-family) with few-shot ReAct prompts"],
+      "alternatives": [
+        "Use GPT-3 text-davinci-002 as in Appendix A.1",
+        "Use a modern open-weight LLM (e.g. Llama-family) with few-shot ReAct prompts"
+      ],
       "affects_section": "architecture"
     },
     {
       "assumption": "Exact wording and full text of the in-context exemplar prompts (6 for HotpotQA, 3 for FEVER, 3-per-task-type x6 permutations for ALFWorld) are in Appendix C, which is not included in the parsed text; must be reconstructed from the illustrative examples shown in Figure 1 and Tables 6-9.",
       "basis": "inferred from context; Appendix C referenced but its full contents not present in parsed document",
       "confidence": 0.5,
-      "alternatives": ["Author-released reference implementation at https://react-lm.github.io/", "Hand-author new exemplars following the documented thought-type taxonomy"],
+      "alternatives": [
+        "Author-released reference implementation at https://react-lm.github.io/",
+        "Hand-author new exemplars following the documented thought-type taxonomy"
+      ],
       "affects_section": "training_pipeline / architecture"
     },
     {
       "assumption": "Wikipedia API backing search/lookup/finish must be implemented as a lightweight wrapper (e.g. Wikipedia REST API or `wikipedia` Python package) rather than a full neural retriever, to match the paper's intentionally weak retrieval design.",
       "basis": "common practice / explicit design rationale in Section 3.1",
       "confidence": 0.8,
-      "alternatives": ["Use the Wikipedia API python package", "Use a static dump indexed with a simple keyword lookup"],
+      "alternatives": [
+        "Use the Wikipedia API python package",
+        "Use a static dump indexed with a simple keyword lookup"
+      ],
       "affects_section": "architecture"
     },
     {
       "assumption": "Decoding temperature for all main ReAct/Act/CoT prompting results is 0 (greedy), since only CoT-SC explicitly states temperature 0.7.",
       "basis": "inferred from context (Section 3.2 Baselines paragraph, and GPT-3 experiments stating 'greedy decoding')",
       "confidence": 0.75,
-      "alternatives": ["Some small nonzero temperature with fixed seed"],
+      "alternatives": [
+        "Some small nonzero temperature with fixed seed"
+      ],
       "affects_section": "training_pipeline"
     },
     {
       "assumption": "Finetuning experiments (Appendix B.1) use a standard cross-entropy next-token objective with Adam-family optimizer, since PaLM finetuning defaults are not restated in this paper.",
       "basis": "literature default for PaLM finetuning (Chowdhery et al. 2022)",
       "confidence": 0.55,
-      "alternatives": ["Adafactor optimizer as used in original PaLM training"],
+      "alternatives": [
+        "Adafactor optimizer as used in original PaLM training"
+      ],
       "affects_section": "training_pipeline"
     },
     {
@@ -391,21 +692,28 @@
       "location": "Section 3.1, action space definition",
       "description": "search[entity] is stated to return 'the first 5 sentences from the corresponding entity wiki page if it exists, or else suggests top-5 similar entities' -- exact sentence-segmentation and similarity-ranking algorithm for the 'suggests similar entities' fallback is not specified.",
       "primary_assumption": "Use the native Wikipedia search-suggest API for the fallback and a standard sentence tokenizer (e.g. nltk/spacy) for the 5-sentence extraction.",
-      "alternatives": ["Custom fuzzy string-match fallback", "Use of a TF-IDF/BM25 ranked candidate list"],
+      "alternatives": [
+        "Custom fuzzy string-match fallback",
+        "Use of a TF-IDF/BM25 ranked candidate list"
+      ],
       "confidence": 0.6
     },
     {
       "location": "Section 4, 'For robustness, we construct 6 prompts for each task type through each permutation of 2 annotated trajectories from the 3 we annotate'",
       "description": "Exact identities of the 3 annotated ALFWorld trajectories per task type (6 task types) are not included in the parsed text (would be in Appendix C.4).",
       "primary_assumption": "Author-authored trajectories following the four documented thought categories (decompose goal, track subgoal completion, determine next subgoal, commonsense reasoning about object location).",
-      "alternatives": ["Reconstruct from the official released code repository (react-lm.github.io)"],
+      "alternatives": [
+        "Reconstruct from the official released code repository (react-lm.github.io)"
+      ],
       "confidence": 0.5
     },
     {
       "location": "Section 4, WebShop scoring metric",
       "description": "The 'average score' metric's precise computation (how partial attribute coverage is weighted/normalized per episode) is only described at a high level ('percentage of desired attributes covered by the chosen product averaged across all episodes').",
       "primary_assumption": "Score_i = (# matched attributes for chosen product) / (# requested attributes in instruction), averaged over the 500 test instructions.",
-      "alternatives": ["Weighted attribute importance scheme from original WebShop paper (Yao et al. 2022) rather than uniform averaging"],
+      "alternatives": [
+        "Weighted attribute importance scheme from original WebShop paper (Yao et al. 2022) rather than uniform averaging"
+      ],
       "confidence": 0.55
     },
     {
