@@ -4,14 +4,22 @@
   "provenance": {
     "title": "FutureSim: Replaying World Events to Evaluate Adaptive Agents",
     "authors": [
-      "Shashwat Goel", "Nikhil Chandak", "Arvindh Arun",
-      "Ameya Prabhu", "Steffen Staab", "Moritz Hardt",
-      "Maksym Andriushchenko", "Jonas Geiping"
+      "Shashwat Goel",
+      "Nikhil Chandak",
+      "Arvindh Arun",
+      "Ameya Prabhu",
+      "Steffen Staab",
+      "Moritz Hardt",
+      "Maksym Andriushchenko",
+      "Jonas Geiping"
     ],
     "affiliations": [
-      "ELLIS Institute Tübingen", "Max Planck Institute for Intelligent Systems",
-      "Institute for AI, University of Stuttgart", "Tübingen AI Center",
-      "University of Tübingen", "University of Southampton"
+      "ELLIS Institute Tübingen",
+      "Max Planck Institute for Intelligent Systems",
+      "Institute for AI, University of Stuttgart",
+      "Tübingen AI Center",
+      "University of Tübingen",
+      "University of Southampton"
     ],
     "arxiv_id": "2605.15188",
     "submission_date": "2026-05-14",
@@ -24,7 +32,10 @@
       "Memory, agentic search, and inference scaling all provide measurable improvements in the simulation",
       "The environment supports multi-agent dynamics and is reproducible, unlike live prediction-market evaluations"
     ],
-    "parsed_at": "2026-05-15T00:00:00Z"
+    "parsed_at": "2026-05-15T00:00:00Z",
+    "doi": null,
+    "domain": "Other",
+    "arxivist_version": "1.0"
   },
   "architecture": {
     "description": "FutureSim is a simulation environment (not a neural architecture). It consists of: (1) a chronological event replay engine, (2) a forecasting task state manager (CSV-based), (3) a news corpus retrieval system (LanceDB + Qwen3-8B embeddings), and (4) a sandboxed agent execution environment.",
@@ -32,7 +43,11 @@
       {
         "name": "Environment Engine",
         "role": "Manages simulation time progression and state updates",
-        "operations": ["next_day()", "state_update", "question_resolution"],
+        "operations": [
+          "next_day()",
+          "state_update",
+          "question_resolution"
+        ],
         "inputs": "current_date, agent_action",
         "outputs": "updated_state, resolved_questions, feedback",
         "confidence": 0.92
@@ -40,7 +55,10 @@
       {
         "name": "Task State Manager",
         "role": "Maintains CSV of forecasting questions with predictions and resolutions",
-        "operations": ["submit_forecast(question_id, outcomes)", "resolve_question(qid, ground_truth)"],
+        "operations": [
+          "submit_forecast(question_id, outcomes)",
+          "resolve_question(qid, ground_truth)"
+        ],
         "inputs": "question_id, outcome_distribution",
         "outputs": "updated market.csv",
         "confidence": 0.95
@@ -48,7 +66,10 @@
       {
         "name": "News Corpus (CCNews)",
         "role": "Date-gated offline snapshot of 7.36M news articles from 141 sources (Jan 2023–Mar 2026)",
-        "operations": ["search_news(query, from_date, to_date)", "date_gating"],
+        "operations": [
+          "search_news(query, from_date, to_date)",
+          "date_gating"
+        ],
         "inputs": "search query, date range",
         "outputs": "5 chunks of 512 tokens per query",
         "confidence": 0.95
@@ -56,15 +77,23 @@
       {
         "name": "Hybrid Retrieval System",
         "role": "LanceDB-backed semantic + keyword search over CCNews",
-        "operations": ["semantic_search (Qwen3-8B embeddings)", "keyword_search", "date_range_filter"],
+        "operations": [
+          "semantic_search (Qwen3-8B embeddings)",
+          "keyword_search",
+          "date_range_filter"
+        ],
         "inputs": "query string, from_date, to_date",
         "outputs": "ranked document chunks",
-        "confidence": 0.90
+        "confidence": 0.9
       },
       {
         "name": "Sandbox / Execution Environment",
         "role": "bwrap-isolated agent execution preventing future information leakage",
-        "operations": ["restrict_network", "date_gate_articles", "block_web_search"],
+        "operations": [
+          "restrict_network",
+          "date_gate_articles",
+          "block_web_search"
+        ],
         "inputs": "agent process",
         "outputs": "isolated workspace",
         "confidence": 0.88
@@ -72,15 +101,23 @@
       {
         "name": "Answer Matcher (DeepSeek v3.2)",
         "role": "LLM-based semantic answer equivalence checker for scoring",
-        "operations": ["resolved_answer_equivalence", "prediction_clustering"],
+        "operations": [
+          "resolved_answer_equivalence",
+          "prediction_clustering"
+        ],
         "inputs": "predicted_outcome, ground_truth",
         "outputs": "Yes/No match, cluster ID",
-        "confidence": 0.90
+        "confidence": 0.9
       },
       {
         "name": "Question Generation Pipeline",
         "role": "Automated pipeline generating free-form forecasting questions from news articles",
-        "operations": ["LLM question synthesis", "leakage_filter", "resolution_date_repair", "quality_filter"],
+        "operations": [
+          "LLM question synthesis",
+          "leakage_filter",
+          "resolution_date_repair",
+          "quality_filter"
+        ],
         "inputs": "timestamped news articles",
         "outputs": "330 forecasting questions with resolution dates and ground truths",
         "confidence": 0.88
@@ -90,72 +127,109 @@
       "submit_forecast(question_id, outcomes)  — register/update probability distribution over ≤5 outcomes",
       "next_day()  — advance simulation by one day; updates task+context state"
     ],
-    "confidence": 0.92
+    "confidence": 0.92,
+    "modules": [],
+    "connections": [],
+    "variants": []
   },
-  "mathematical_spec": {
-    "equations": [
-      {
-        "name": "Brier Skill Score",
-        "latex": "BSS(q) = 1 - \\sum_{o \\in \\Omega_q \\cup \\{y_q\\}} \\left( p_q(o) - \\mathbf{1}[o = y_q] \\right)^2",
-        "role": "Primary evaluation metric; proper scoring rule for subdistributions over free-form outcomes",
-        "range": "[-1, 1]; 1=perfect confident correct, 0=abstain, -1=all mass on wrong answer",
-        "symbols": {
-          "q": "forecasting question",
-          "Omega_q": "set of outcomes submitted by agent for question q",
-          "y_q": "ground-truth answer",
-          "p_q(o)": "probability assigned to outcome o (0 if not in Omega_q)",
-          "1[o=y_q]": "indicator that outcome o matches ground truth"
+  "mathematical_spec": [
+    {
+      "name": "equations",
+      "value": [
+        {
+          "name": "Brier Skill Score",
+          "latex": "BSS(q) = 1 - \\sum_{o \\in \\Omega_q \\cup \\{y_q\\}} \\left( p_q(o) - \\mathbf{1}[o = y_q] \\right)^2",
+          "role": "Primary evaluation metric; proper scoring rule for subdistributions over free-form outcomes",
+          "range": "[-1, 1]; 1=perfect confident correct, 0=abstain, -1=all mass on wrong answer",
+          "symbols": {
+            "q": "forecasting question",
+            "Omega_q": "set of outcomes submitted by agent for question q",
+            "y_q": "ground-truth answer",
+            "p_q(o)": "probability assigned to outcome o (0 if not in Omega_q)",
+            "1[o=y_q]": "indicator that outcome o matches ground truth"
+          },
+          "confidence": 0.98
         },
-        "confidence": 0.98
-      },
-      {
-        "name": "Top-1 Accuracy",
-        "latex": "Acc = \\frac{1}{|Q|} \\sum_{q \\in Q} \\mathbf{1}\\left[ \\arg\\max_o p_q(o) = y_q \\right]",
-        "role": "Secondary metric; fraction of questions where top predicted outcome is correct",
-        "confidence": 0.98
-      },
-      {
-        "name": "Time-Weighted Score",
-        "latex": "TW = 100 \\sum_{q \\in Q} \\frac{1}{|T_q|} \\sum_{t \\in T_q} BSS_t(q)",
-        "role": "Rewards early accurate predictions; penalizes early confident wrong predictions",
-        "symbols": {
-          "T_q": "set of days question q is open",
-          "BSS_t(q)": "Brier Skill Score of prediction held on day t (0 if no forecast submitted)"
+        {
+          "name": "Top-1 Accuracy",
+          "latex": "Acc = \\frac{1}{|Q|} \\sum_{q \\in Q} \\mathbf{1}\\left[ \\arg\\max_o p_q(o) = y_q \\right]",
+          "role": "Secondary metric; fraction of questions where top predicted outcome is correct",
+          "confidence": 0.98
         },
-        "confidence": 0.95
-      },
-      {
-        "name": "Time-Weighted Peer Score (multi-agent)",
-        "latex": "TWPeer_a = 100 \\sum_{q \\in Q} \\frac{1}{|T_q|} \\sum_{t \\in T_q} \\left( BSS_{a,t}(q) - BSS_{-a,t}(q) \\right)",
-        "role": "Relative scoring in multi-agent setting; compares each agent to others on same question",
-        "confidence": 0.92
-      },
-      {
-        "name": "Aggregate Prediction (multi-agent)",
-        "latex": "\\bar{p}_q(o) = \\frac{1}{n_q} \\sum_{a=1}^{n_q} p_q^{(a)}(o)",
-        "role": "Coordinate-wise mean of agent forecasts, exposed as crowd aggregate each day",
-        "confidence": 0.93
-      },
-      {
-        "name": "Total Variation Distance (multi-agent divergence)",
-        "latex": "d_{TV}(p_q, p'_q) = \\frac{1}{2} \\sum_{o \\in \\Omega_q \\cup \\Omega'_q} |p_q(o) - p'_q(o)|",
-        "role": "Measures divergence between agent predictions over time",
-        "confidence": 0.92
-      }
-    ],
-    "properness_proof": "BSS is proven strictly proper for subdistributions (Theorem C.1 in paper); expected score uniquely maximized when p = pi_bar (projection of true belief onto reported outcome set)",
-    "confidence": 0.96
-  },
-  "tensor_semantics": {
-    "note": "FutureSim is a simulation environment, not a deep learning model. Tensor semantics apply to the retrieval embedding component.",
-    "embeddings": {
+        {
+          "name": "Time-Weighted Score",
+          "latex": "TW = 100 \\sum_{q \\in Q} \\frac{1}{|T_q|} \\sum_{t \\in T_q} BSS_t(q)",
+          "role": "Rewards early accurate predictions; penalizes early confident wrong predictions",
+          "symbols": {
+            "T_q": "set of days question q is open",
+            "BSS_t(q)": "Brier Skill Score of prediction held on day t (0 if no forecast submitted)"
+          },
+          "confidence": 0.95
+        },
+        {
+          "name": "Time-Weighted Peer Score (multi-agent)",
+          "latex": "TWPeer_a = 100 \\sum_{q \\in Q} \\frac{1}{|T_q|} \\sum_{t \\in T_q} \\left( BSS_{a,t}(q) - BSS_{-a,t}(q) \\right)",
+          "role": "Relative scoring in multi-agent setting; compares each agent to others on same question",
+          "confidence": 0.92
+        },
+        {
+          "name": "Aggregate Prediction (multi-agent)",
+          "latex": "\\bar{p}_q(o) = \\frac{1}{n_q} \\sum_{a=1}^{n_q} p_q^{(a)}(o)",
+          "role": "Coordinate-wise mean of agent forecasts, exposed as crowd aggregate each day",
+          "confidence": 0.93
+        },
+        {
+          "name": "Total Variation Distance (multi-agent divergence)",
+          "latex": "d_{TV}(p_q, p'_q) = \\frac{1}{2} \\sum_{o \\in \\Omega_q \\cup \\Omega'_q} |p_q(o) - p'_q(o)|",
+          "role": "Measures divergence between agent predictions over time",
+          "confidence": 0.92
+        }
+      ],
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    },
+    {
+      "name": "properness_proof",
+      "value": "BSS is proven strictly proper for subdistributions (Theorem C.1 in paper); expected score uniquely maximized when p = pi_bar (projection of true belief onto reported outcome set)",
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    },
+    {
+      "name": "confidence",
+      "value": 0.96,
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "note",
+      "value": "FutureSim is a simulation environment, not a deep learning model. Tensor semantics apply to the retrieval embedding component.",
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    },
+    {
       "model": "Qwen3 Embedding 8B",
       "chunk_size": 512,
       "chunks_returned_per_query": 5,
-      "training_cutoff": "mid-2025 (does not embed future events)"
+      "training_cutoff": "mid-2025 (does not embed future events)",
+      "name": "embeddings",
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
     },
-    "confidence": 0.75
-  },
+    {
+      "name": "confidence",
+      "value": 0.75,
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    }
+  ],
   "training_pipeline": {
     "note": "No training pipeline — FutureSim is a benchmarking/simulation framework, not a trained model. Agents are evaluated at inference time only.",
     "question_generation": {
@@ -191,11 +265,36 @@
       "Other": "7.9%"
     },
     "agents_evaluated": [
-      {"name": "GPT 5.5", "harness": "Codex", "accuracy": 0.25, "brier_skill_score": 0.05},
-      {"name": "Claude Opus 4.6", "harness": "Claude Code", "accuracy": 0.20, "brier_skill_score": 0.02},
-      {"name": "DeepSeek V4 Pro", "harness": "Claude Code", "accuracy": 0.13, "brier_skill_score": -0.02},
-      {"name": "GLM 5.1", "harness": "Claude Code", "accuracy": 0.10, "brier_skill_score": -0.01},
-      {"name": "Qwen 3.6 Plus", "harness": "OpenCode", "accuracy": 0.05, "brier_skill_score": -0.07}
+      {
+        "name": "GPT 5.5",
+        "harness": "Codex",
+        "accuracy": 0.25,
+        "brier_skill_score": 0.05
+      },
+      {
+        "name": "Claude Opus 4.6",
+        "harness": "Claude Code",
+        "accuracy": 0.2,
+        "brier_skill_score": 0.02
+      },
+      {
+        "name": "DeepSeek V4 Pro",
+        "harness": "Claude Code",
+        "accuracy": 0.13,
+        "brier_skill_score": -0.02
+      },
+      {
+        "name": "GLM 5.1",
+        "harness": "Claude Code",
+        "accuracy": 0.1,
+        "brier_skill_score": -0.01
+      },
+      {
+        "name": "Qwen 3.6 Plus",
+        "harness": "OpenCode",
+        "accuracy": 0.05,
+        "brier_skill_score": -0.07
+      }
     ],
     "harness_versions": {
       "Claude Code": "2.1.132",
@@ -213,38 +312,68 @@
       "Inference scaling: GPT 5.5 at none/low/medium/high/xhigh reasoning effort",
       "Multi-agent: 3 simultaneous DeepSeek V3.2 agents with shared aggregate prediction"
     ],
-    "reported_results": {
-      "agentic_search_vs_single_query_accuracy": "31.2% vs 14.2% (one day before resolution)",
-      "daily_context_updates_vs_frozen_accuracy": "24.8% vs 17.9%",
-      "memory_benefit": "All 3 tested models perform worse without memory (qualitative traces show storage of post-resolution feedback)",
-      "inference_scaling": "Consistent improvement from none → high reasoning effort; diminishing returns at xhigh"
-    },
-    "confidence": 0.97
+    "reported_results": [],
+    "confidence": 0.97,
+    "datasets": [],
+    "metrics": [],
+    "unmapped_reported_results": [
+      {
+        "name": "agentic_search_vs_single_query_accuracy",
+        "value": "31.2% vs 14.2% (one day before resolution)"
+      },
+      {
+        "name": "daily_context_updates_vs_frozen_accuracy",
+        "value": "24.8% vs 17.9%"
+      },
+      {
+        "name": "memory_benefit",
+        "value": "All 3 tested models perform worse without memory (qualitative traces show storage of post-resolution feedback)"
+      },
+      {
+        "name": "inference_scaling",
+        "value": "Consistent improvement from none → high reasoning effort; diminishing returns at xhigh"
+      }
+    ]
   },
   "implementation_assumptions": [
     {
       "assumption": "LanceDB version not specified; assumed latest stable compatible with Qwen3-8B embedding dimension",
       "basis": "Common practice for vector DB integration",
-      "confidence": 0.70,
-      "alternatives": ["FAISS", "ChromaDB", "Weaviate"]
+      "confidence": 0.7,
+      "alternatives": [
+        "FAISS",
+        "ChromaDB",
+        "Weaviate"
+      ]
     },
     {
       "assumption": "Qwen3 Embedding 8B produces fixed-size embeddings (likely 4096-dim based on model size)",
       "basis": "Inferred from model architecture; paper does not state embedding dimension",
       "confidence": 0.62,
-      "alternatives": ["1024-dim", "2048-dim"]
+      "alternatives": [
+        "1024-dim",
+        "2048-dim"
+      ]
     },
     {
       "assumption": "Hybrid retrieval weights for semantic vs keyword search not specified; assume equal weighting or LanceDB default",
       "basis": "Paper says 'hybrid semantic + keyword search' without specifying fusion method",
       "confidence": 0.55,
-      "alternatives": ["weighted sum", "reciprocal rank fusion", "learned combination"]
+      "alternatives": [
+        "weighted sum",
+        "reciprocal rank fusion",
+        "learned combination"
+      ]
     },
     {
       "assumption": "bwrap sandbox configuration details beyond described rules inferred from standard practice",
       "basis": "Paper describes high-level sandboxing rules; implementation details in appendix are partial",
       "confidence": 0.72,
-      "alternatives": ["Docker isolation", "firejail", "nsjail"]
+      "alternatives": [
+        "Docker isolation",
+        "firejail",
+        "nsjail"
+      ]
     },
     {
       "assumption": "CCNews articles stored as JSONL files organized by date (articles/YYYY/MM/DD/articles.jsonl)",
@@ -256,7 +385,10 @@
       "assumption": "DeepSeek V3.2 answer matching prompt temperature set to 0 (deterministic) for reproducibility",
       "basis": "Standard practice for evaluation judges; not specified in paper",
       "confidence": 0.75,
-      "alternatives": ["temperature=0.1", "majority vote over 3 samples"]
+      "alternatives": [
+        "temperature=0.1",
+        "majority vote over 3 samples"
+      ]
     }
   ],
   "ambiguities": [
@@ -264,31 +396,40 @@
       "location": "Section 4.1, Search Corpus",
       "description": "Exact LanceDB version, embedding dimension, and hybrid retrieval fusion method not specified",
       "primary_assumption": "Latest stable LanceDB, Qwen3-8B default embedding dim, equal weight fusion",
-      "alternatives": ["Different fusion strategies", "Re-ranking step"],
-      "confidence": 0.60
+      "alternatives": [
+        "Different fusion strategies",
+        "Re-ranking step"
+      ],
+      "confidence": 0.6
     },
     {
       "location": "Appendix B.3",
       "description": "Full bwrap configuration flags not provided; only high-level sandboxing behavior described",
       "primary_assumption": "Standard namespace isolation with bind mounts for article directories",
-      "alternatives": ["Full network namespace", "User namespace remapping"],
+      "alternatives": [
+        "Full network namespace",
+        "User namespace remapping"
+      ],
       "confidence": 0.65
     },
     {
       "location": "Section 4.1",
       "description": "Outcome set size limit of ≤5 per question enforced at answer-matching time, unclear if enforced at submission time",
       "primary_assumption": "Enforced at submission time via environment validation",
-      "alternatives": ["Truncation at evaluation time"],
-      "confidence": 0.70
+      "alternatives": [
+        "Truncation at evaluation time"
+      ],
+      "confidence": 0.7
     }
   ],
   "confidence_annotations": {
-    "architecture": 0.90,
+    "architecture": 0.9,
     "mathematical_spec": 0.96,
     "tensor_semantics": 0.75,
     "training_pipeline": 0.85,
     "evaluation_protocol": 0.97,
     "implementation_assumptions": 0.68,
     "overall_sir_confidence": 0.85
-  }
+  },
+  "sir_version": 1
 }
