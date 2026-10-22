@@ -4,9 +4,9 @@
   "provenance": {
     "title": "Asynchronous Deep Double Duelling Q-Learning for Trading-Signal Execution in Limit Order Book Markets",
     "authors": [
-      {"name": "Peer Nagy", "affiliation": "Oxford-Man Institute of Quantitative Finance, University of Oxford"},
-      {"name": "Jan-Peter Calliess", "affiliation": "Oxford-Man Institute of Quantitative Finance, University of Oxford"},
-      {"name": "Stefan Zohren", "affiliation": "Oxford-Man Institute of Quantitative Finance, University of Oxford"}
+      "Peer Nagy",
+      "Jan-Peter Calliess",
+      "Stefan Zohren"
     ],
     "arxiv_id": "2301.08688",
     "submission_date": "2023-01-20",
@@ -20,9 +20,28 @@
       "First study applying the APEX algorithm to limit order book environments",
       "RL agent adapts aggression level (bid/mid/ask placement) based on signal quality — more passive with better signals to reduce transaction costs"
     ],
-    "parsed_at": "2026-06-07T00:00:00Z"
+    "parsed_at": "2026-06-07T00:00:00Z",
+    "author_details": [
+      {
+        "name": "Peer Nagy",
+        "affiliation": "Oxford-Man Institute of Quantitative Finance, University of Oxford"
+      },
+      {
+        "name": "Jan-Peter Calliess",
+        "affiliation": "Oxford-Man Institute of Quantitative Finance, University of Oxford"
+      },
+      {
+        "name": "Stefan Zohren",
+        "affiliation": "Oxford-Man Institute of Quantitative Finance, University of Oxford"
+      }
+    ],
+    "affiliations": [
+      "Oxford-Man Institute of Quantitative Finance, University of Oxford"
+    ],
+    "doi": null,
+    "domain": "RL",
+    "arxivist_version": "1.0"
   },
-
   "architecture": {
     "confidence": 0.82,
     "description": "Deep Duelling Double DQN with APEX (asynchronous prioritised experience replay, used uniformly). Q-network has feed-forward layers followed by an LSTM layer, split into value-stream and advantage-stream (duelling). A main network and a target network are maintained.",
@@ -58,7 +77,7 @@
         "description": "Combines value and advantage streams: Q(s,a) = V(s) + A(s,a) - mean(A(s,.)). Instantiated twice as main_network and target_network.",
         "input_shape": "[B, history_len, state_dim]",
         "output_shape": "[B, num_actions=7]",
-        "confidence": 0.90
+        "confidence": 0.9
       },
       {
         "name": "APEXTrainingFramework",
@@ -78,92 +97,187 @@
       "state_dim_per_step": 10,
       "history_len": 100,
       "confidence": 0.92
+    },
+    "modules": [],
+    "connections": [],
+    "variants": []
+  },
+  "mathematical_spec": [
+    {
+      "name": "confidence",
+      "value": 0.91,
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    },
+    {
+      "name": "equations",
+      "value": [
+        {
+          "id": "eq_signal",
+          "name": "Synthetic Directional Signal",
+          "latex": "d_t = \\phi d_{t-1} + (1-\\phi)\\epsilon_t, \\quad \\epsilon_t \\sim \\text{Dirichlet}(\\alpha(r_{t+h})), \\quad r_{t+h} = \\frac{p_{t+h} - p_t}{p_t}, \\quad p_{t+h} = \\frac{1}{h}\\sum_{i=1}^{h} p_{t+i}",
+          "role": "inference/signal-generation",
+          "hyperparameters": [
+            "phi (persistence=0.9)",
+            "h (horizon=10s)",
+            "a_H (signal quality)",
+            "a_L=1.0",
+            "k (threshold=4e-5)"
+          ],
+          "confidence": 0.97
+        },
+        {
+          "id": "eq_dirichlet_params",
+          "name": "Dirichlet Parameter Assignment",
+          "latex": "\\alpha(r_{t+h}) = \\begin{cases} (a^H, a^L, a^L) & \\text{if } r_{t+h} < -k \\\\ (a^L, a^H, a^L) & \\text{if } -k \\leq r_{t+h} < k \\\\ (a^L, a^L, a^H) & \\text{if } k \\leq r_{t+h} \\end{cases}",
+          "role": "signal-generation",
+          "confidence": 0.97
+        },
+        {
+          "id": "eq_mtm",
+          "name": "Mark-to-Market Portfolio Value",
+          "latex": "M_t = C_t + X_t p^m_t, \\quad \\Delta M_t = \\Delta C_t + X_{t-1}\\Delta p^m_t + \\Delta X_t p^m_t",
+          "role": "reward-computation",
+          "confidence": 0.98
+        },
+        {
+          "id": "eq_pnl_reward",
+          "name": "PnL Reward",
+          "latex": "R^{pnl}_{t+1} = \\ln(M_t) - \\ln(M_{t-1})",
+          "role": "reward-computation",
+          "confidence": 0.98
+        },
+        {
+          "id": "eq_dir_reward",
+          "name": "Directional Reward",
+          "latex": "R^{dir}_{t+1} = \\kappa [-1, 0, 1] \\cdot d_t X_t",
+          "role": "reward-computation",
+          "hyperparameters": [
+            "kappa (scale factor)",
+            "w_dir (initial weight, decayed by psi)"
+          ],
+          "confidence": 0.96
+        },
+        {
+          "id": "eq_total_reward",
+          "name": "Total Reward",
+          "latex": "r_{t+1} = w^{dir} R^{dir}_{t+1} + (1 - w^{dir}) R^{pnl}_{t+1}, \\quad w^{dir} \\leftarrow \\psi w^{dir}",
+          "role": "reward-computation",
+          "hyperparameters": [
+            "w_dir",
+            "psi (decay factor)"
+          ],
+          "confidence": 0.96
+        },
+        {
+          "id": "eq_qfunction",
+          "name": "Optimal Q-function (Double DQN target)",
+          "latex": "Q^*(s,a) = \\mathbb{E}[r_{t+1} + \\gamma \\max_{a'} Q^*(s_{t+1}, a') | a_t=a, s_t=s]",
+          "role": "training",
+          "hyperparameters": [
+            "gamma=0.99"
+          ],
+          "confidence": 0.95
+        },
+        {
+          "id": "eq_duelling",
+          "name": "Duelling Q-value Composition",
+          "latex": "Q(s,a) = V(s) + A(s,a) - \\frac{1}{|\\mathcal{A}|} \\sum_{a'} A(s,a')",
+          "role": "model-architecture",
+          "confidence": 0.9
+        }
+      ],
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
     }
-  },
-
-  "mathematical_spec": {
-    "confidence": 0.91,
-    "equations": [
-      {
-        "id": "eq_signal",
-        "name": "Synthetic Directional Signal",
-        "latex": "d_t = \\phi d_{t-1} + (1-\\phi)\\epsilon_t, \\quad \\epsilon_t \\sim \\text{Dirichlet}(\\alpha(r_{t+h})), \\quad r_{t+h} = \\frac{p_{t+h} - p_t}{p_t}, \\quad p_{t+h} = \\frac{1}{h}\\sum_{i=1}^{h} p_{t+i}",
-        "role": "inference/signal-generation",
-        "hyperparameters": ["phi (persistence=0.9)", "h (horizon=10s)", "a_H (signal quality)", "a_L=1.0", "k (threshold=4e-5)"],
-        "confidence": 0.97
-      },
-      {
-        "id": "eq_dirichlet_params",
-        "name": "Dirichlet Parameter Assignment",
-        "latex": "\\alpha(r_{t+h}) = \\begin{cases} (a^H, a^L, a^L) & \\text{if } r_{t+h} < -k \\\\ (a^L, a^H, a^L) & \\text{if } -k \\leq r_{t+h} < k \\\\ (a^L, a^L, a^H) & \\text{if } k \\leq r_{t+h} \\end{cases}",
-        "role": "signal-generation",
-        "confidence": 0.97
-      },
-      {
-        "id": "eq_mtm",
-        "name": "Mark-to-Market Portfolio Value",
-        "latex": "M_t = C_t + X_t p^m_t, \\quad \\Delta M_t = \\Delta C_t + X_{t-1}\\Delta p^m_t + \\Delta X_t p^m_t",
-        "role": "reward-computation",
-        "confidence": 0.98
-      },
-      {
-        "id": "eq_pnl_reward",
-        "name": "PnL Reward",
-        "latex": "R^{pnl}_{t+1} = \\ln(M_t) - \\ln(M_{t-1})",
-        "role": "reward-computation",
-        "confidence": 0.98
-      },
-      {
-        "id": "eq_dir_reward",
-        "name": "Directional Reward",
-        "latex": "R^{dir}_{t+1} = \\kappa [-1, 0, 1] \\cdot d_t X_t",
-        "role": "reward-computation",
-        "hyperparameters": ["kappa (scale factor)", "w_dir (initial weight, decayed by psi)"],
-        "confidence": 0.96
-      },
-      {
-        "id": "eq_total_reward",
-        "name": "Total Reward",
-        "latex": "r_{t+1} = w^{dir} R^{dir}_{t+1} + (1 - w^{dir}) R^{pnl}_{t+1}, \\quad w^{dir} \\leftarrow \\psi w^{dir}",
-        "role": "reward-computation",
-        "hyperparameters": ["w_dir", "psi (decay factor)"],
-        "confidence": 0.96
-      },
-      {
-        "id": "eq_qfunction",
-        "name": "Optimal Q-function (Double DQN target)",
-        "latex": "Q^*(s,a) = \\mathbb{E}[r_{t+1} + \\gamma \\max_{a'} Q^*(s_{t+1}, a') | a_t=a, s_t=s]",
-        "role": "training",
-        "hyperparameters": ["gamma=0.99"],
-        "confidence": 0.95
-      },
-      {
-        "id": "eq_duelling",
-        "name": "Duelling Q-value Composition",
-        "latex": "Q(s,a) = V(s) + A(s,a) - \\frac{1}{|\\mathcal{A}|} \\sum_{a'} A(s,a')",
-        "role": "model-architecture",
-        "confidence": 0.90
-      }
-    ]
-  },
-
-  "tensor_semantics": {
-    "confidence": 0.74,
-    "tensors": [
-      {"name": "state_obs", "shape": "[B, history_len=100, state_dim=10]", "dtype": "float32", "role": "input"},
-      {"name": "action", "shape": "[B]", "dtype": "int64", "role": "input"},
-      {"name": "reward", "shape": "[B]", "dtype": "float32", "role": "input"},
-      {"name": "next_state_obs", "shape": "[B, 100, 10]", "dtype": "float32", "role": "input"},
-      {"name": "done", "shape": "[B]", "dtype": "bool", "role": "input"},
-      {"name": "shared_features", "shape": "[B, hidden_dim]", "dtype": "float32", "role": "intermediate"},
-      {"name": "value", "shape": "[B, 1]", "dtype": "float32", "role": "intermediate"},
-      {"name": "advantage", "shape": "[B, 7]", "dtype": "float32", "role": "intermediate"},
-      {"name": "q_values", "shape": "[B, 7]", "dtype": "float32", "role": "output"},
-      {"name": "signal_dt", "shape": "[3]", "dtype": "float32", "role": "input", "note": "Dirichlet probability vector (down, neutral, up)"}
-    ],
-    "notes": "hidden_dim not explicitly stated; assumed 256 based on common practice for similar RL architectures."
-  },
-
+  ],
+  "tensor_semantics": [
+    {
+      "name": "confidence",
+      "value": 0.74,
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    },
+    {
+      "name": "tensors",
+      "value": [
+        {
+          "name": "state_obs",
+          "shape": "[B, history_len=100, state_dim=10]",
+          "dtype": "float32",
+          "role": "input"
+        },
+        {
+          "name": "action",
+          "shape": "[B]",
+          "dtype": "int64",
+          "role": "input"
+        },
+        {
+          "name": "reward",
+          "shape": "[B]",
+          "dtype": "float32",
+          "role": "input"
+        },
+        {
+          "name": "next_state_obs",
+          "shape": "[B, 100, 10]",
+          "dtype": "float32",
+          "role": "input"
+        },
+        {
+          "name": "done",
+          "shape": "[B]",
+          "dtype": "bool",
+          "role": "input"
+        },
+        {
+          "name": "shared_features",
+          "shape": "[B, hidden_dim]",
+          "dtype": "float32",
+          "role": "intermediate"
+        },
+        {
+          "name": "value",
+          "shape": "[B, 1]",
+          "dtype": "float32",
+          "role": "intermediate"
+        },
+        {
+          "name": "advantage",
+          "shape": "[B, 7]",
+          "dtype": "float32",
+          "role": "intermediate"
+        },
+        {
+          "name": "q_values",
+          "shape": "[B, 7]",
+          "dtype": "float32",
+          "role": "output"
+        },
+        {
+          "name": "signal_dt",
+          "shape": "[3]",
+          "dtype": "float32",
+          "role": "input",
+          "note": "Dirichlet probability vector (down, neutral, up)"
+        }
+      ],
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    },
+    {
+      "name": "notes",
+      "value": "hidden_dim not explicitly stated; assumed 256 based on common practice for similar RL architectures.",
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    }
+  ],
   "training_pipeline": {
     "confidence": 0.85,
     "framework": "PyTorch (via RLlib)",
@@ -171,7 +285,11 @@
     "optimizer": {
       "name": "Adam",
       "lr_schedule": "[[0, 2e-5], [1e6, 5e-6]]",
-      "confidence": 0.95
+      "confidence": 0.95,
+      "learning_rate": null,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null
     },
     "total_timesteps": 300000000,
     "gamma": 0.99,
@@ -187,10 +305,13 @@
     "prioritized_replay": false,
     "action_frequency": "0.1s (agent acts every 100ms)",
     "episode_duration": "1 hour (09:30–10:30, one trading day per episode)",
-    "inventory_bounds": {"posmin": -10, "posmax": 10},
+    "inventory_bounds": {
+      "posmin": -10,
+      "posmax": 10
+    },
     "signal_horizon_h": 10,
     "signal_persistence_phi": 0.9,
-    "return_threshold_k": 0.00004,
+    "return_threshold_k": 4e-05,
     "reward_directional_weight_initial": {
       "value": "not explicitly stated",
       "assumed": 0.5,
@@ -201,16 +322,15 @@
       "value": "not explicitly stated",
       "assumed": 0.9999,
       "basis": "must decay from initial w_dir to ~0 over 300M steps",
-      "confidence": 0.40
+      "confidence": 0.4
     },
     "reward_kappa": {
       "value": "not explicitly stated",
       "assumed": 1.0,
       "basis": "scale factor; set to 1.0 pending paper clarification",
-      "confidence": 0.40
+      "confidence": 0.4
     }
   },
-
   "evaluation_protocol": {
     "confidence": 0.95,
     "train_data": {
@@ -227,8 +347,47 @@
       "duration_months": 1.5,
       "num_episodes": 31
     },
-    "metrics": ["mean episodic log-return (mu)", "Sharpe ratio (S)", "cumulative out-performance vs baseline (pp)", "turnover"],
+    "metrics": [
+      "mean episodic log-return (mu)",
+      "Sharpe ratio (S)",
+      "cumulative out-performance vs baseline (pp)",
+      "turnover"
+    ],
     "baselines": [
+      "Heuristic Baseline",
+      "Buy & Hold"
+    ],
+    "reported_results": [],
+    "statistical_testing": "t-test across 31 episodes; p << 0.1 for all noise levels",
+    "confidence_intervals": "95% bootstrapped",
+    "datasets": [],
+    "unmapped_reported_results": [
+      {
+        "noise_level": "a=1.1 (high noise)",
+        "rl_mu": 0.0,
+        "rl_sharpe": -0.72,
+        "baseline_mu": -0.07,
+        "baseline_sharpe": -5.68,
+        "outperformance_pp": 32.2
+      },
+      {
+        "noise_level": "a=1.3 (mid noise)",
+        "rl_mu": 0.11,
+        "rl_sharpe": 7.34,
+        "baseline_mu": 0.0,
+        "baseline_sharpe": -0.04,
+        "outperformance_pp": 14.8
+      },
+      {
+        "noise_level": "a=1.6 (low noise)",
+        "rl_mu": 0.21,
+        "rl_sharpe": 14.69,
+        "baseline_mu": null,
+        "baseline_sharpe": null,
+        "outperformance_pp": 20.7
+      }
+    ],
+    "baseline_details": [
       {
         "name": "Heuristic Baseline",
         "description": "Crosses spread aggressively when signal indicates directional move; places passive order to reduce position when signal is neutral. Uses same action space and signal as RL agent."
@@ -237,37 +396,39 @@
         "name": "Buy & Hold",
         "description": "Passive buy-and-hold over the same test period."
       }
-    ],
-    "reported_results": [
-      {"noise_level": "a=1.1 (high noise)", "rl_mu": 0.00, "rl_sharpe": -0.72, "baseline_mu": -0.07, "baseline_sharpe": -5.68, "outperformance_pp": 32.2},
-      {"noise_level": "a=1.3 (mid noise)", "rl_mu": 0.11, "rl_sharpe": 7.34, "baseline_mu": 0.0, "baseline_sharpe": -0.04, "outperformance_pp": 14.8},
-      {"noise_level": "a=1.6 (low noise)", "rl_mu": 0.21, "rl_sharpe": 14.69, "baseline_mu": null, "baseline_sharpe": null, "outperformance_pp": 20.7}
-    ],
-    "statistical_testing": "t-test across 31 episodes; p << 0.1 for all noise levels",
-    "confidence_intervals": "95% bootstrapped"
+    ]
   },
-
   "implementation_assumptions": [
     {
       "id": "IA-01",
       "assumption": "Hidden dimension of FF layers and LSTM set to 256",
       "basis": "common practice for similar DQN architectures in finance RL",
       "confidence": 0.55,
-      "alternatives": [128, 512]
+      "alternatives": [
+        "128",
+        "512"
+      ]
     },
     {
       "id": "IA-02",
       "assumption": "Initial directional reward weight w_dir = 0.5, decayed by psi = 0.9999 per step",
       "basis": "paper states it decays from initial weight toward 0; values inferred from needing to reach near-zero over ~300M steps",
-      "confidence": 0.40,
-      "alternatives": ["w_dir=0.3, psi=0.99999", "w_dir=1.0, psi=0.999"]
+      "confidence": 0.4,
+      "alternatives": [
+        "w_dir=0.3, psi=0.99999",
+        "w_dir=1.0, psi=0.999"
+      ]
     },
     {
       "id": "IA-03",
       "assumption": "kappa (directional reward scale) = 1.0",
       "basis": "not stated; default scale assumption",
-      "confidence": 0.40,
-      "alternatives": [0.1, 0.5, 2.0]
+      "confidence": 0.4,
+      "alternatives": [
+        "0.1",
+        "0.5",
+        "2.0"
+      ]
     },
     {
       "id": "IA-04",
@@ -281,7 +442,9 @@
       "assumption": "Adam optimizer used (RLlib default with APEX)",
       "basis": "RLlib APEX default; paper does not contradict",
       "confidence": 0.75,
-      "alternatives": ["RMSProp"]
+      "alternatives": [
+        "RMSProp"
+      ]
     },
     {
       "id": "IA-06",
@@ -298,38 +461,47 @@
       "alternatives": []
     }
   ],
-
   "ambiguities": [
     {
       "location": "Section 5, Neural Network Architecture",
       "description": "Hidden dimension of FF layers not stated. Only '3 feed-forward layers followed by an LSTM layer' mentioned.",
       "primary_assumption": 256,
-      "alternatives": [128, 512],
+      "alternatives": [
+        128,
+        512
+      ],
       "confidence": 0.55
     },
     {
       "location": "Section 4.2, Reward Function",
       "description": "Initial value of w_dir and decay rate psi not given numerically.",
       "primary_assumption": "w_dir=0.5, psi=0.9999",
-      "alternatives": ["w_dir=1.0, psi=0.99999"],
-      "confidence": 0.40
+      "alternatives": [
+        "w_dir=1.0, psi=0.99999"
+      ],
+      "confidence": 0.4
     },
     {
       "location": "Section 4.2, Reward Function",
       "description": "kappa (scale of directional reward) not numerically specified.",
       "primary_assumption": 1.0,
-      "alternatives": [0.1, 0.5],
-      "confidence": 0.40
+      "alternatives": [
+        0.1,
+        0.5
+      ],
+      "confidence": 0.4
     },
     {
       "location": "Section 4.2, State Space",
       "description": "Exact state_dim per timestep not given as a number; reconstructed as 10 from listing of state components.",
       "primary_assumption": 10,
-      "alternatives": [11, 9],
+      "alternatives": [
+        11,
+        9
+      ],
       "confidence": 0.72
     }
   ],
-
   "confidence_annotations": {
     "architecture": 0.82,
     "mathematical_spec": 0.91,
