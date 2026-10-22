@@ -11,3 +11,5 @@ This registry indexes the paper implementation artifacts checked into `workspace
 
 
 | A Noise-Aware Quantum Algorithm for Credit Valuation Adjustments on Real Quantum Hardware | [Paper](https://arxiv.org/abs/2607.12990) | [arxiv_2607_12990_DN](../workspace/paper-repos/arxiv_2607_12990_DN/README.md) | [SIR](../workspace/sir-registry/arxiv_2607_12990_DN_SIR/sir.json) |
+| A Quantum Approach to Synthetic Minority Oversampling Technique (SMOTE) | [Paper](https://arxiv.org/abs/2402.17398) | [QSMOTE_ArXivist](../workspace/paper-repos/QSMOTE_ArXivist) | [SIR](../workspace/paper-repos/QSMOTE_ArXivist/QSMOTR_SIR.json) |
+| AGENTICAITA: A Proof-of-Concept About Deliberative Multi-Agent Reasoning for Autonomous Trading Systems | [Paper](https://arxiv.org/abs/2605.12532) | [arxiv_2605_012532](../workspace/paper-repos/arxiv_2605_012532/README.md); [arxiv_2605_12532](../workspace/paper-repos/paper-repos/arxiv_2605_12532/README.md) | [SIR](../workspace/sir-registry/sir-registry/arxiv_2605_12532/sir.json) |
