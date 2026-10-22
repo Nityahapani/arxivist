@@ -1,1 +1,38 @@
-{"paper_id":"arxiv_1904_08378","title":"Dynamic Evaluation of Transformer Language Models","arxiv_url":"https://arxiv.org/abs/1904.08378"}
+{
+  "paper_id": "arxiv_1904_08378",
+  "title": "Dynamic Evaluation of Transformer Language Models",
+  "arxiv_url": "https://arxiv.org/abs/1904.08378",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Dynamic Evaluation of Transformer Language Models",
+    "authors": [],
+    "affiliations": [],
+    "arxiv_id": "1904.08378",
+    "doi": null,
+    "submission_date": null,
+    "abstract": "",
+    "domain": "NLP",
+    "arxivist_version": "1.0",
+    "parsed_at_note": "Original parse timestamp was absent or invalid; using the earliest recorded repository commit timestamp.",
+    "parsed_at": "2026-08-02T19:19:27+05:00"
+  },
+  "architecture": {
+    "modules": [],
+    "connections": [],
+    "variants": []
+  },
+  "mathematical_spec": [],
+  "tensor_semantics": [],
+  "training_pipeline": {},
+  "evaluation_protocol": {
+    "datasets": [],
+    "metrics": [],
+    "reported_results": [],
+    "confidence": 0.0
+  },
+  "implementation_assumptions": [],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "overall_sir_confidence": 0.0
+  }
+}
