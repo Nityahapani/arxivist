@@ -3,7 +3,10 @@
   "version": 1,
   "provenance": {
     "title": "Beyond Softmax: A Natural Parameterization for Categorical Random Variables",
-    "authors": ["Alessandro Manenti", "Cesare Alippi"],
+    "authors": [
+      "Alessandro Manenti",
+      "Cesare Alippi"
+    ],
     "affiliations": [
       "Università della Svizzera italiana (USI), IDSIA, Lugano, Switzerland",
       "Politecnico di Milano, Milan, Italy"
@@ -12,7 +15,7 @@
     "submission_date": "2025-09 (v2: 12 May 2026)",
     "venue": "Proceedings of the 43rd International Conference on Machine Learning (ICML 2026), Seoul, South Korea. PMLR 306.",
     "abstract_truncated": "Latent categorical variables are frequently found in deep learning architectures. We revisit the softmax function, demonstrate its limitations from an information-geometric perspective, and replace it with the catnat function—a hierarchical sequence of binary splits—that yields a diagonal Fisher Information Matrix, improving gradient-based optimization.",
-    "domain": "ML / Optimization / Probabilistic Models",
+    "domain": "Other",
     "parsed_at": "2026-07-16T00:00:00Z",
     "key_claims": [
       "The standard softmax function has a dense Fisher Information Matrix (FIM) that induces geometric distortions in parameter space.",
@@ -20,9 +23,12 @@
       "The natural activation function ν further simplifies the diagonal FIM entries, making them independent of the local score si (Corollary 4.3).",
       "catnat consistently outperforms softmax and sparsemax across Graph Structure Learning (GSL), Variational Autoencoders (VAE), and Reinforcement Learning (RL) experiments.",
       "catnat is a drop-in replacement for softmax: same API shape, compatible with existing gradient estimators and training stabilization techniques."
-    ]
+    ],
+    "doi": null,
+    "abstract": "",
+    "domain_detail": "ML / Optimization / Probabilistic Models",
+    "arxivist_version": "1.0"
   },
-
   "architecture": {
     "confidence": 0.91,
     "overview": "catnat replaces the softmax mapping π: R^S → Δ^{K-1} with a hierarchical binary tree of depth H = log2(K). Each internal node applies a scalar activation a(s_i) ∈ [0,1] to produce a Bernoulli branching probability. Leaf probabilities are products of ancestor Bernoulli factors.",
@@ -33,7 +39,8 @@
         "input_shape": "[B, input_dim]",
         "output_shape": "[B, S]  where S = K-1 for catnat (K for softmax)",
         "op_type": "Neural network (task-specific; CNN for VAE, GCN for GSL, CNN for RL)",
-        "confidence": 0.85
+        "confidence": 0.85,
+        "operation_type": "Maps input x ∈ X to unnormalized scores s ∈ R^S"
       },
       {
         "name": "catnat Parameterization (π)",
@@ -48,7 +55,8 @@
           "node_probability": "a_i = a(s_i) ∈ [0,1]",
           "leaf_probability": "p_{b1,...,bH} = ∏_{h=1}^{H} a_{b1,...,b_{h-1}}^{b_h} * (1 - a_{b1,...,b_{h-1}})^{1-b_h}"
         },
-        "confidence": 0.97
+        "confidence": 0.97,
+        "operation_type": "Maps unnormalized scores to a valid probability vector over K classes via a binary tree"
       },
       {
         "name": "Natural Activation ν(x)",
@@ -58,20 +66,23 @@
           "C": "shift parameter (default 0); not a tunable hyperparameter",
           "A": "slope parameter (set to 2π so that ∂ν/∂s|_{s=0} = ∂σ/∂s|_{s=0}); not a tunable hyperparameter"
         },
-        "confidence": 0.97
+        "confidence": 0.97,
+        "operation_type": "Scalar activation applied at each internal tree node; chosen to make the diagonal FIM entries constant w.r.t. local score"
       },
       {
         "name": "Sampler",
         "role": "Samples categorical variable C from Cat(p1,...,pK)",
         "gradient_method_gsl_rl": "Score Function (REINFORCE) with LOO or multi-sample baseline",
         "gradient_method_vae": "Gumbel-Softmax (Straight-Through) reparameterization trick",
-        "confidence": 0.93
+        "confidence": 0.93,
+        "operation_type": "Samples categorical variable C from Cat(p1,...,pK)"
       },
       {
         "name": "Decoder / Predictor (f_ψ)",
         "role": "Task-specific network consuming (x, C) to produce output y",
         "op_type": "GNN (GSL), Transposed CNN (VAE), Actor-Critic CNN (RL)",
-        "confidence": 0.88
+        "confidence": 0.88,
+        "operation_type": "Task-specific network consuming (x, C) to produce output y"
       }
     ],
     "variants": [
@@ -86,124 +97,198 @@
         "primary": true
       }
     ],
-    "baselines": ["softmax", "sparsemax"],
+    "baselines": [
+      "softmax",
+      "sparsemax"
+    ],
     "parameter_count_note": "catnat uses K-1 parameters for K classes (vs K for softmax), eliminating the overparameterization of the probability simplex.",
     "ambiguities": [
       {
         "location": "Section 4.2.1",
         "description": "The paper requires K to be a power of 2 for a balanced binary tree. The paper does not explicitly address non-power-of-2 K.",
         "primary_assumption": "K is always chosen to be a power of 2 in experiments (K ∈ {8,16,32} for VAE)",
-        "alternatives": ["Padding to next power of 2", "Unbalanced tree"],
+        "alternatives": [
+          "Padding to next power of 2",
+          "Unbalanced tree"
+        ],
         "confidence": 0.62
       }
-    ]
+    ],
+    "connections": []
   },
-
-  "mathematical_spec": {
-    "confidence": 0.97,
-    "equations": [
-      {
-        "id": "EQ1",
-        "name": "Model Pipeline",
-        "latex": "(a)\\ \\vec{s} = g_\\theta(x),\\ (b)\\ \\vec{p} = \\pi(\\vec{s}),\\ (c)\\ \\vec{C} \\sim \\text{Cat}(p_1,\\ldots,p_K),\\ (d)\\ y = f_\\psi(x, \\vec{C})",
-        "role": "Defines the full inference pipeline from input to output",
-        "phase": "both"
-      },
-      {
-        "id": "EQ2",
-        "name": "Softmax",
-        "latex": "p_i = \\frac{e^{s_i}}{\\sum_{k=1}^{K} e^{s_k}}",
-        "role": "Baseline parameterization being replaced",
-        "phase": "inference"
-      },
-      {
-        "id": "EQ3",
-        "name": "Softmax FIM (Proposition 4.1)",
-        "latex": "G_{\\text{smx}}(s)_{ij} = \\begin{cases} p_i(1-p_i) & i=j \\\\ -p_i p_j & i \\neq j \\end{cases}",
-        "role": "Shows the dense, coupled structure of softmax's FIM — the core motivation for catnat",
-        "phase": "analysis"
-      },
-      {
-        "id": "EQ4",
-        "name": "catnat Leaf Probability",
-        "latex": "p_{b_1,\\ldots,b_H} = \\prod_{h=1}^{H} a_{[b_1,\\ldots,b_{h-1}]}^{b_h} \\left(1 - a_{[b_1,\\ldots,b_{h-1}]}\\right)^{1-b_h}",
-        "role": "Core formula: each leaf probability is a product of ancestor Bernoulli factors",
-        "phase": "inference"
-      },
-      {
-        "id": "EQ5",
-        "name": "catnat FIM — Diagonal (Theorem 4.2)",
-        "latex": "G_a(s)_{ij} = \\begin{cases} 0 & i \\neq j \\\\ P(a_i) \\left(\\frac{\\partial a_i}{\\partial s_i}\\right)^2 \\frac{1}{a_i(1-a_i)} & i = j \\end{cases}",
-        "role": "Proves catnat's FIM is diagonal, eliminating cross-score coupling",
-        "phase": "analysis"
-      },
-      {
-        "id": "EQ6",
-        "name": "Natural Activation Function",
-        "latex": "\\nu(x) = \\begin{cases} 0 & x \\leq C - \\frac{A}{2} \\\\ \\frac{1 + \\sin\\!\\left(\\frac{\\pi(x-C)}{A}\\right)}{2} & C - \\frac{A}{2} \\leq x \\leq C + \\frac{A}{2} \\\\ 1 & x \\geq C + \\frac{A}{2} \\end{cases}",
-        "role": "Activation that makes the diagonal FIM entries constant (independent of local score)",
-        "phase": "inference",
-        "hyperparameters": {"C": 0, "A": "2π"}
-      },
-      {
-        "id": "EQ7",
-        "name": "catnat FIM with Natural Activation (Corollary 4.3)",
-        "latex": "G_\\nu(s)_{ij} = \\begin{cases} 0 & i \\neq j \\\\ P(a_i) \\cdot \\frac{\\pi^2}{A^2} & i = j,\\ |s_i - C_i| < \\frac{A}{2} \\end{cases}",
-        "role": "Simplest diagonal FIM: each entry is proportional only to P(a_i), the probability of reaching node i",
-        "phase": "analysis"
-      },
-      {
-        "id": "EQ8",
-        "name": "Pulled-back FIM for catnat w.r.t. network params θ",
-        "latex": "G^{\\text{catnat}}_\\theta(\\theta; x) = \\sum_{i=1}^{S} G_a(\\vec{s})_{ii} \\nabla_\\theta s_i (\\nabla_\\theta s_i)^\\top",
-        "role": "Shows that catnat removes all cross-score statistical coupling from the network-level FIM",
-        "phase": "analysis"
-      },
-      {
-        "id": "EQ9",
-        "name": "Score Function Gradient Estimator (REINFORCE with baseline)",
-        "latex": "\\nabla_\\theta \\mathbb{E}_{A \\sim P_\\theta(A)}[(\\mathcal{L}(A) - b) \\nabla_\\theta \\log P_\\theta(A)]",
-        "role": "Used to train latent graph parameters in GSL experiment",
-        "phase": "training"
-      },
-      {
-        "id": "EQ10",
-        "name": "Energy Score Loss",
-        "latex": "\\mathcal{L}_{\\text{ES}} = \\frac{1}{M}\\sum_{m=1}^M \\|f_\\psi(x, A_m) - y\\|_2 - \\frac{1}{2M(M-1)} \\sum_{m \\neq n} \\|f_\\psi(x, A_m) - f_\\psi(x, A_n)\\|_2",
-        "role": "Proper scoring rule used for GSL training; multivariate extension of CRPS",
-        "phase": "training"
-      },
-      {
-        "id": "EQ11",
-        "name": "VAE ELBO",
-        "latex": "\\mathcal{L}_{\\text{ELBO}} = \\mathcal{L}_{\\text{recon}} + \\mathcal{L}_{\\text{KL}}",
-        "role": "Training objective for the categorical VAE experiment",
-        "phase": "training"
-      },
-      {
-        "id": "EQ12",
-        "name": "PPO Clipped Surrogate Objective",
-        "latex": "J(\\theta) = \\hat{\\mathbb{E}}_t[L^{\\text{CLIP}}_t(\\theta) - c_1 L^{\\text{VF}}_t(\\theta) + c_2 H[\\pi_\\theta](s_t)]",
-        "role": "RL training objective; catnat replaces softmax in the policy head only",
-        "phase": "training"
-      }
-    ]
-  },
-
-  "tensor_semantics": {
-    "confidence": 0.82,
-    "tensors": [
-      {"name": "x", "shape": "[B, input_dim]", "role": "input", "dtype": "float32"},
-      {"name": "s (scores)", "shape": "[B, K-1]", "role": "intermediate", "dtype": "float32", "note": "K-1 scores for catnat (one per internal tree node); K scores for softmax"},
-      {"name": "a_i (node activations)", "shape": "[B, K-1]", "role": "intermediate", "dtype": "float32", "note": "Bernoulli probabilities at internal tree nodes"},
-      {"name": "p (leaf probabilities)", "shape": "[B, K]", "role": "output of π", "dtype": "float32"},
-      {"name": "C (categorical sample)", "shape": "[B, K]", "role": "intermediate", "dtype": "float32 (Gumbel-ST) or int (REINFORCE)", "note": "One-hot in discrete case; dense relaxation for Gumbel-Softmax"},
-      {"name": "y (output)", "shape": "[B, output_dim]", "role": "output", "dtype": "float32"},
-      {"name": "s_VAE", "shape": "[B, N, K]", "role": "intermediate", "note": "VAE: N categorical variables each with K classes"},
-      {"name": "C_VAE", "shape": "[B, N, K]", "role": "intermediate", "note": "VAE latent sample tensor"}
-    ]
-  },
-
+  "mathematical_spec": [
+    {
+      "name": "confidence",
+      "value": 0.97,
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    },
+    {
+      "name": "equations",
+      "value": [
+        {
+          "id": "EQ1",
+          "name": "Model Pipeline",
+          "latex": "(a)\\ \\vec{s} = g_\\theta(x),\\ (b)\\ \\vec{p} = \\pi(\\vec{s}),\\ (c)\\ \\vec{C} \\sim \\text{Cat}(p_1,\\ldots,p_K),\\ (d)\\ y = f_\\psi(x, \\vec{C})",
+          "role": "Defines the full inference pipeline from input to output",
+          "phase": "both"
+        },
+        {
+          "id": "EQ2",
+          "name": "Softmax",
+          "latex": "p_i = \\frac{e^{s_i}}{\\sum_{k=1}^{K} e^{s_k}}",
+          "role": "Baseline parameterization being replaced",
+          "phase": "inference"
+        },
+        {
+          "id": "EQ3",
+          "name": "Softmax FIM (Proposition 4.1)",
+          "latex": "G_{\\text{smx}}(s)_{ij} = \\begin{cases} p_i(1-p_i) & i=j \\\\ -p_i p_j & i \\neq j \\end{cases}",
+          "role": "Shows the dense, coupled structure of softmax's FIM — the core motivation for catnat",
+          "phase": "analysis"
+        },
+        {
+          "id": "EQ4",
+          "name": "catnat Leaf Probability",
+          "latex": "p_{b_1,\\ldots,b_H} = \\prod_{h=1}^{H} a_{[b_1,\\ldots,b_{h-1}]}^{b_h} \\left(1 - a_{[b_1,\\ldots,b_{h-1}]}\\right)^{1-b_h}",
+          "role": "Core formula: each leaf probability is a product of ancestor Bernoulli factors",
+          "phase": "inference"
+        },
+        {
+          "id": "EQ5",
+          "name": "catnat FIM — Diagonal (Theorem 4.2)",
+          "latex": "G_a(s)_{ij} = \\begin{cases} 0 & i \\neq j \\\\ P(a_i) \\left(\\frac{\\partial a_i}{\\partial s_i}\\right)^2 \\frac{1}{a_i(1-a_i)} & i = j \\end{cases}",
+          "role": "Proves catnat's FIM is diagonal, eliminating cross-score coupling",
+          "phase": "analysis"
+        },
+        {
+          "id": "EQ6",
+          "name": "Natural Activation Function",
+          "latex": "\\nu(x) = \\begin{cases} 0 & x \\leq C - \\frac{A}{2} \\\\ \\frac{1 + \\sin\\!\\left(\\frac{\\pi(x-C)}{A}\\right)}{2} & C - \\frac{A}{2} \\leq x \\leq C + \\frac{A}{2} \\\\ 1 & x \\geq C + \\frac{A}{2} \\end{cases}",
+          "role": "Activation that makes the diagonal FIM entries constant (independent of local score)",
+          "phase": "inference",
+          "hyperparameters": {
+            "C": 0,
+            "A": "2π"
+          }
+        },
+        {
+          "id": "EQ7",
+          "name": "catnat FIM with Natural Activation (Corollary 4.3)",
+          "latex": "G_\\nu(s)_{ij} = \\begin{cases} 0 & i \\neq j \\\\ P(a_i) \\cdot \\frac{\\pi^2}{A^2} & i = j,\\ |s_i - C_i| < \\frac{A}{2} \\end{cases}",
+          "role": "Simplest diagonal FIM: each entry is proportional only to P(a_i), the probability of reaching node i",
+          "phase": "analysis"
+        },
+        {
+          "id": "EQ8",
+          "name": "Pulled-back FIM for catnat w.r.t. network params θ",
+          "latex": "G^{\\text{catnat}}_\\theta(\\theta; x) = \\sum_{i=1}^{S} G_a(\\vec{s})_{ii} \\nabla_\\theta s_i (\\nabla_\\theta s_i)^\\top",
+          "role": "Shows that catnat removes all cross-score statistical coupling from the network-level FIM",
+          "phase": "analysis"
+        },
+        {
+          "id": "EQ9",
+          "name": "Score Function Gradient Estimator (REINFORCE with baseline)",
+          "latex": "\\nabla_\\theta \\mathbb{E}_{A \\sim P_\\theta(A)}[(\\mathcal{L}(A) - b) \\nabla_\\theta \\log P_\\theta(A)]",
+          "role": "Used to train latent graph parameters in GSL experiment",
+          "phase": "training"
+        },
+        {
+          "id": "EQ10",
+          "name": "Energy Score Loss",
+          "latex": "\\mathcal{L}_{\\text{ES}} = \\frac{1}{M}\\sum_{m=1}^M \\|f_\\psi(x, A_m) - y\\|_2 - \\frac{1}{2M(M-1)} \\sum_{m \\neq n} \\|f_\\psi(x, A_m) - f_\\psi(x, A_n)\\|_2",
+          "role": "Proper scoring rule used for GSL training; multivariate extension of CRPS",
+          "phase": "training"
+        },
+        {
+          "id": "EQ11",
+          "name": "VAE ELBO",
+          "latex": "\\mathcal{L}_{\\text{ELBO}} = \\mathcal{L}_{\\text{recon}} + \\mathcal{L}_{\\text{KL}}",
+          "role": "Training objective for the categorical VAE experiment",
+          "phase": "training"
+        },
+        {
+          "id": "EQ12",
+          "name": "PPO Clipped Surrogate Objective",
+          "latex": "J(\\theta) = \\hat{\\mathbb{E}}_t[L^{\\text{CLIP}}_t(\\theta) - c_1 L^{\\text{VF}}_t(\\theta) + c_2 H[\\pi_\\theta](s_t)]",
+          "role": "RL training objective; catnat replaces softmax in the policy head only",
+          "phase": "training"
+        }
+      ],
+      "latex": "",
+      "role": "other",
+      "confidence": 0.0
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "confidence",
+      "value": 0.82,
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    },
+    {
+      "name": "tensors",
+      "value": [
+        {
+          "name": "x",
+          "shape": "[B, input_dim]",
+          "role": "input",
+          "dtype": "float32"
+        },
+        {
+          "name": "s (scores)",
+          "shape": "[B, K-1]",
+          "role": "intermediate",
+          "dtype": "float32",
+          "note": "K-1 scores for catnat (one per internal tree node); K scores for softmax"
+        },
+        {
+          "name": "a_i (node activations)",
+          "shape": "[B, K-1]",
+          "role": "intermediate",
+          "dtype": "float32",
+          "note": "Bernoulli probabilities at internal tree nodes"
+        },
+        {
+          "name": "p (leaf probabilities)",
+          "shape": "[B, K]",
+          "role": "output of π",
+          "dtype": "float32"
+        },
+        {
+          "name": "C (categorical sample)",
+          "shape": "[B, K]",
+          "role": "intermediate",
+          "dtype": "float32 (Gumbel-ST) or int (REINFORCE)",
+          "note": "One-hot in discrete case; dense relaxation for Gumbel-Softmax"
+        },
+        {
+          "name": "y (output)",
+          "shape": "[B, output_dim]",
+          "role": "output",
+          "dtype": "float32"
+        },
+        {
+          "name": "s_VAE",
+          "shape": "[B, N, K]",
+          "role": "intermediate",
+          "note": "VAE: N categorical variables each with K classes"
+        },
+        {
+          "name": "C_VAE",
+          "shape": "[B, N, K]",
+          "role": "intermediate",
+          "note": "VAE latent sample tensor"
+        }
+      ],
+      "shape_notation": "unspecified",
+      "tensor_type": "intermediate",
+      "confidence": 0.0
+    }
+  ],
   "training_pipeline": {
     "confidence": 0.88,
     "experiments": [
@@ -216,9 +301,33 @@
         "gradient_estimator": "REINFORCE (Score Function) with Leave-One-Out (LOO) multi-sample baseline",
         "M_samples": 32,
         "lr_search": {
-          "coarse": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5],
-          "refined_sigmoid": [0.025, 0.03, 0.037, 0.045, 0.055, 0.067, 0.082],
-          "refined_natural": [0.012, 0.015, 0.018, 0.022, 0.027, 0.033, 0.041]
+          "coarse": [
+            0.005,
+            0.01,
+            0.02,
+            0.05,
+            0.1,
+            0.2,
+            0.5
+          ],
+          "refined_sigmoid": [
+            0.025,
+            0.03,
+            0.037,
+            0.045,
+            0.055,
+            0.067,
+            0.082
+          ],
+          "refined_natural": [
+            0.012,
+            0.015,
+            0.018,
+            0.022,
+            0.027,
+            0.033,
+            0.041
+          ]
         },
         "seeds": 10,
         "framework": "PyTorch",
@@ -234,18 +343,47 @@
         "batch_size": 128,
         "epochs": "not specified (validation-based early selection)",
         "lr_search": {
-          "coarse": [0.0003, 0.001, 0.003, 0.01, 0.03],
-          "refined": [0.0045, 0.0056, 0.0069, 0.0085, 0.01, 0.013, 0.016, 0.02]
+          "coarse": [
+            0.0003,
+            0.001,
+            0.003,
+            0.01,
+            0.03
+          ],
+          "refined": [
+            0.0045,
+            0.0056,
+            0.0069,
+            0.0085,
+            0.01,
+            0.013,
+            0.016,
+            0.02
+          ]
         },
         "seeds": 5,
         "evaluation_samples": 512,
-        "latent_configs": {"N": [10, 20, 30], "K": [8, 16, 32]},
+        "latent_configs": {
+          "N": [
+            10,
+            20,
+            30
+          ],
+          "K": [
+            8,
+            16,
+            32
+          ]
+        },
         "prior": "Uniform categorical: Cat(1/K, ..., 1/K)"
       },
       {
         "name": "Reinforcement Learning (RL)",
         "algorithm": "PPO (Proximal Policy Optimization)",
-        "environments": ["Breakout-v5 (Atari)", "Seaquest-v5 (Atari)"],
+        "environments": [
+          "Breakout-v5 (Atari)",
+          "Seaquest-v5 (Atari)"
+        ],
         "optimizer": "Adam",
         "adam_epsilon": "1e-5",
         "total_timesteps": "8 million",
@@ -261,7 +399,6 @@
       }
     ]
   },
-
   "evaluation_protocol": {
     "confidence": 0.95,
     "datasets": [
@@ -287,13 +424,13 @@
       }
     ],
     "metrics": [
-      {"name": "Energy Score (ES)", "task": "GSL", "direction": "lower_is_better"},
-      {"name": "PP-MAE (Point Prediction MAE)", "task": "GSL", "direction": "lower_is_better"},
-      {"name": "PP-MSE (Point Prediction MSE)", "task": "GSL", "direction": "lower_is_better"},
-      {"name": "MAE on θ (latent calibration error)", "task": "GSL", "direction": "lower_is_better"},
-      {"name": "NLL (Negative Log-Likelihood, 512 IS)", "task": "VAE", "direction": "lower_is_better"},
-      {"name": "ELBO", "task": "VAE (alt codebase)", "direction": "higher_is_better"},
-      {"name": "Final Episodic Return", "task": "RL", "direction": "higher_is_better"}
+      "Energy Score (ES)",
+      "PP-MAE (Point Prediction MAE)",
+      "PP-MSE (Point Prediction MSE)",
+      "MAE on θ (latent calibration error)",
+      "NLL (Negative Log-Likelihood, 512 IS)",
+      "ELBO",
+      "Final Episodic Return"
     ],
     "primary_results_summary": {
       "GSL": "catnat-ν outperforms softmax, sparsemax, catnat-σ on all 5 entropy settings and all 4 metrics. Largest gains in MAE on θ (latent calibration).",
@@ -302,21 +439,63 @@
       "RL_Breakout": "catnat-ν: 406±34 vs softmax: 398±25 (modest improvement)",
       "RL_Seaquest": "catnat-ν: 2164±533 vs softmax: 1875±312 (substantial improvement)"
     },
-    "statistical_testing": "Welch's t-test, p < 0.05 for bold entries"
+    "statistical_testing": "Welch's t-test, p < 0.05 for bold entries",
+    "metric_details": [
+      {
+        "name": "Energy Score (ES)",
+        "task": "GSL",
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "PP-MAE (Point Prediction MAE)",
+        "task": "GSL",
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "PP-MSE (Point Prediction MSE)",
+        "task": "GSL",
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "MAE on θ (latent calibration error)",
+        "task": "GSL",
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "NLL (Negative Log-Likelihood, 512 IS)",
+        "task": "VAE",
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "ELBO",
+        "task": "VAE (alt codebase)",
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "Final Episodic Return",
+        "task": "RL",
+        "direction": "higher_is_better"
+      }
+    ],
+    "reported_results": []
   },
-
   "implementation_assumptions": [
     {
       "assumption": "K must be a power of 2 to use a balanced binary tree",
       "basis": "All experiments use K ∈ {2, 8, 16, 32}; paper does not discuss unbalanced trees",
       "confidence": 0.62,
-      "alternatives": ["Pad K to next power of 2", "Use unbalanced tree with sentinel leaves"]
+      "alternatives": [
+        "Pad K to next power of 2",
+        "Use unbalanced tree with sentinel leaves"
+      ]
     },
     {
       "assumption": "Gumbel noise is applied to log-probabilities of leaf nodes p_k in the catnat case (not to node activations a_i)",
       "basis": "Paper says catnat is compatible with Gumbel-Softmax but does not specify where noise is injected",
       "confidence": 0.65,
-      "alternatives": ["Apply Gumbel noise to intermediate node logits"]
+      "alternatives": [
+        "Apply Gumbel noise to intermediate node logits"
+      ]
     },
     {
       "assumption": "Score initialization for GSL uses U(0, 0.1) (as stated in Appendix E.5)",
@@ -333,8 +512,10 @@
     {
       "assumption": "Kernel sizes, strides, and channel counts for VAE conv layers are not specified; standard MNIST VAE defaults assumed",
       "basis": "Paper references open-source codebase at github.com/jxmorris12/categorical-vae",
-      "confidence": 0.70,
-      "alternatives": ["Fetch from referenced codebase for exact configuration"]
+      "confidence": 0.7,
+      "alternatives": [
+        "Fetch from referenced codebase for exact configuration"
+      ]
     },
     {
       "assumption": "RL CNN backbone matches Mnih et al. (2013/2015) DQN architecture exactly as described: 32×8×8 stride 4, 64×4×4 stride 2, 64×3×3 stride 1, FC-512",
@@ -349,7 +530,6 @@
       "alternatives": []
     }
   ],
-
   "confidence_annotations": {
     "architecture": 0.91,
     "mathematical_spec": 0.97,
@@ -359,36 +539,42 @@
     "implementation_assumptions": 0.72,
     "overall_sir_confidence": 0.88
   },
-
   "ambiguities": [
     {
       "location": "Section 4.2.1 / throughout",
       "description": "The binary tree requires K to be a power of 2. The paper is silent on non-power-of-2 K.",
       "primary_assumption": "K constrained to powers of 2",
-      "alternatives": ["Pad to next power of 2 with dummy classes", "Unbalanced tree"],
+      "alternatives": [
+        "Pad to next power of 2 with dummy classes",
+        "Unbalanced tree"
+      ],
       "confidence": 0.62
     },
     {
       "location": "Section 5.2 / Appendix F.3",
       "description": "Where exactly Gumbel noise is added in the catnat-Gumbel-Softmax hybrid: at leaf logits or at node activation logits.",
       "primary_assumption": "Gumbel noise added at leaf log-probabilities",
-      "alternatives": ["Noise at node logits s_i"],
+      "alternatives": [
+        "Noise at node logits s_i"
+      ],
       "confidence": 0.65
     },
     {
       "location": "Section 4.2.3",
       "description": "Number of scores S: for catnat S = K-1, but the paper uses S interchangeably with K in some places.",
       "primary_assumption": "S = K-1 for catnat (one per internal node)",
-      "alternatives": ["S = K (padding unused)"],
+      "alternatives": [
+        "S = K (padding unused)"
+      ],
       "confidence": 0.85
     }
   ],
-
   "code_references": {
     "catnat_pytorch": "https://github.com/allemanenti/catnat-torch",
     "catnat_jax": "https://github.com/allemanenti/catnat-jax",
     "vae_codebase_primary": "https://github.com/jxmorris12/categorical-vae",
     "vae_codebase_secondary": "https://github.com/alanjeffares/discreteVAE",
     "ppo_codebase": "https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/ (Huang et al. 2022)"
-  }
+  },
+  "sir_version": 1
 }
