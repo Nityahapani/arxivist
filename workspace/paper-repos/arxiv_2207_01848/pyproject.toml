@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tabpfn-paper-reproduction"
+version = "0.1.0"
+description = "Independent reproduction of Hollmann et al. (2022), arXiv:2207.01848"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.2",
+  "numpy>=1.26",
+  "scikit-learn>=1.3",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+openml = ["openml>=0.14"]
+
+[project.scripts]
+tabpfn-repro = "tabpfn_repro.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
