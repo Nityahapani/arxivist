@@ -1,0 +1,11 @@
+{
+  "paper": {"title": "DINOv2 smoke-test configuration", "arxiv_id": "2304.07193"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"image_size": 32, "n_classes": 4, "n_train": 128, "n_test": 64},
+  "model": {"global_size": 32, "local_size": 16, "patch": 8, "dim": 32, "depth": 2, "heads": 2, "drop_path": 0.0,
+            "n_prototypes": 64, "head_hidden": 64, "head_bottleneck": 16},
+  "train": {"steps": 4, "batch_size": 8, "n_local": 2, "blur": false, "lr": 0.0005, "warmup": 1, "layer_decay": 0.9,
+            "wd_start": 0.04, "wd_end": 0.2, "momentum_start": 0.992, "teacher_temp_start": 0.04, "teacher_temp_end": 0.07,
+            "teacher_temp_warmup": 2, "student_temp": 0.1, "mask_ratio": [0.1, 0.5], "mask_prob": 0.5,
+            "ibot_weight": 1.0, "koleo_weight": 0.1, "clip_grad": 3.0, "log_every": 2}
+}
