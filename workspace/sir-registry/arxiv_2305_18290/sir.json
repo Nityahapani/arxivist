@@ -1,0 +1,254 @@
+{
+  "paper_id": "arxiv_2305_18290",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Direct Preference Optimization: Your Language Model is Secretly a Reward Model",
+    "authors": [
+      "Rafael Rafailov",
+      "Archit Sharma",
+      "Eric Mitchell",
+      "Stefano Ermon",
+      "Christopher D. Manning",
+      "Chelsea Finn"
+    ],
+    "affiliations": [
+      "Stanford University",
+      "CZ Biohub"
+    ],
+    "arxiv_id": "2305.18290",
+    "doi": null,
+    "submission_date": "2023-05-29",
+    "abstract": "RLHF fits a reward model to human preferences and then fine-tunes a language model with RL to maximise it under a KL constraint. DPO uses a change of variables between reward functions and optimal policies to solve the same KL-constrained problem with a simple classification loss on preference pairs, with no reward model or sampling during training. DPO matches or exceeds PPO-based RLHF on sentiment control, summarisation, and single-turn dialogue.",
+    "domain": "NLP",
+    "key_claims": [
+      "The optimal KL-constrained policy is pi*(y|x) ∝ pi_ref(y|x) exp(r(x,y)/beta), so reward can be written in terms of the policy.",
+      "Substituting into the Bradley-Terry model yields a maximum-likelihood objective directly on the policy (Eq. 7).",
+      "DPO's gradient weights each pair by how much the implicit reward model mis-orders it.",
+      "DPO achieves a better reward/KL frontier than PPO on controlled sentiment generation and matches or improves win rates on TL;DR summarisation and Anthropic HH dialogue."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "DPO with beta = 0.1, reference policy = SFT model",
+    "modules": [
+      {
+        "name": "Policy",
+        "operation_type": "causal_lm",
+        "input_shape": "[B, T]",
+        "output_shape": "[B, T, V]",
+        "parameters": {
+          "trainable": true
+        },
+        "paper_section": "Section 4",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "ReferencePolicy",
+        "operation_type": "causal_lm",
+        "input_shape": "[B, T]",
+        "output_shape": "[B, T, V]",
+        "parameters": {
+          "trainable": false,
+          "init": "SFT model"
+        },
+        "paper_section": "Section 4",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "DPOLoss",
+        "operation_type": "loss",
+        "input_shape": "[B]",
+        "output_shape": "[]",
+        "parameters": {
+          "beta": 0.1
+        },
+        "paper_section": "Eq. 7",
+        "confidence": 0.97,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "Policy",
+        "to": "ReferencePolicy",
+        "tensor_name": null
+      },
+      {
+        "from": "ReferencePolicy",
+        "to": "DPOLoss",
+        "tensor_name": null
+      }
+    ],
+    "variants": []
+  },
+  "mathematical_spec": [
+    {
+      "name": "Bradley-Terry",
+      "latex": "p^*(y_1 \\succ y_2 \\mid x) = \\sigma(r^*(x, y_1) - r^*(x, y_2))",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3, Eq. 1",
+      "confidence": 0.97
+    },
+    {
+      "name": "Optimal policy",
+      "latex": "\\pi_r(y\\mid x) = \\frac{1}{Z(x)}\\,\\pi_{ref}(y\\mid x) \\exp\\left(\\tfrac{1}{\\beta} r(x,y)\\right)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4, Eq. 4",
+      "confidence": 0.97
+    },
+    {
+      "name": "DPO objective",
+      "latex": "\\mathcal{L}_{DPO} = -\\mathbb{E}\\left[\\log\\sigma\\left(\\beta\\log\\frac{\\pi_\\theta(y_w\\mid x)}{\\pi_{ref}(y_w\\mid x)} - \\beta\\log\\frac{\\pi_\\theta(y_l\\mid x)}{\\pi_{ref}(y_l\\mid x)}\\right)\\right]",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [
+        "beta"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 4, Eq. 7",
+      "confidence": 0.98
+    },
+    {
+      "name": "Gradient",
+      "latex": "\\nabla\\mathcal{L} = -\\beta\\,\\mathbb{E}\\left[\\sigma(\\hat r(x,y_l) - \\hat r(x,y_w))\\left(\\nabla\\log\\pi(y_w\\mid x) - \\nabla\\log\\pi(y_l\\mid x)\\right)\\right]",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "chosen_ids",
+      "shape_notation": "[B, T]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "Policy",
+      "confidence": 0.9
+    },
+    {
+      "name": "rejected_ids",
+      "shape_notation": "[B, T]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "Policy",
+      "confidence": 0.9
+    },
+    {
+      "name": "sequence_logps",
+      "shape_notation": "[2B]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "DPOLoss",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "RMSprop",
+      "learning_rate": 1e-06,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null,
+      "confidence": 0.85
+    },
+    "lr_schedule": {
+      "type": "linear warmup 150 steps",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.85
+    },
+    "batch_size": 64,
+    "effective_batch_size": 64,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.85
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "IMDb (controlled sentiment generation)",
+        "split": "prompts = review prefixes",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Reddit TL;DR (summarisation)",
+        "split": "preference pairs",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Anthropic Helpful-Harmless",
+        "split": "single-turn dialogue preferences",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Ground-truth reward vs sequence KL (frontier)",
+      "GPT-4 win rate vs reference",
+      "Reward accuracy"
+    ],
+    "reported_results": [],
+    "baselines": [
+      "PPO (RLHF)",
+      "PPO-GT",
+      "Unlikelihood",
+      "Preferred-FT",
+      "Best of N",
+      "SFT"
+    ],
+    "compute": "Up to 8 × A100 for the 2.8B–6B models.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "No numeric targets are hard-coded; read targets from Figure 2 (reward/KL frontier), Figure 3 (TL;DR and HH win rates) and Table 2 of the paper.",
+      "basis": "Results are mostly reported as plots.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 6"
+    },
+    {
+      "assumption": "A synthetic controlled-generation task with a known reward stands in for IMDb + sentiment classifier.",
+      "basis": "Allows exact ground-truth reward and CPU smoke tests.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 6.1"
+    },
+    {
+      "assumption": "Smoke SFT uses uniform random tokens.",
+      "basis": "Paper uses in-domain SFT or Preferred-FT.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 6"
+    }
+  ],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "architecture": 0.95,
+    "mathematical_spec": 0.98,
+    "tensor_semantics": 0.9,
+    "training_pipeline": 0.85,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.8,
+    "overall_sir_confidence": 0.9
+  }
+}
