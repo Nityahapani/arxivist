@@ -1,0 +1,269 @@
+{
+  "paper_id": "arxiv_2307_08621",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Retentive Network: A Successor to Transformer for Large Language Models",
+    "authors": [
+      "Yutao Sun",
+      "Li Dong",
+      "Shaohan Huang",
+      "Shuming Ma",
+      "Yuqing Xia",
+      "Jilong Xue",
+      "Jianyong Wang",
+      "Furu Wei"
+    ],
+    "affiliations": [
+      "Microsoft Research",
+      "Tsinghua University"
+    ],
+    "arxiv_id": "2307.08621",
+    "doi": null,
+    "submission_date": "2023-07-17",
+    "abstract": "RetNet is a foundation architecture for large language models that achieves training parallelism, low-cost inference, and good performance. The retention mechanism supports three computation paradigms: parallel (for training), recurrent (O(1) inference), and chunkwise recurrent (linear-complexity long-sequence modelling). RetNet achieves favourable scaling results, parallel training, low-cost deployment, and efficient inference compared with Transformers.",
+    "domain": "NLP",
+    "key_claims": [
+      "Retention can be computed in parallel, recurrent, and chunkwise-recurrent forms that are mathematically equivalent.",
+      "Multi-scale decay rates gamma = 1 - 2^(-5-i) per head, with GroupNorm and a swish gate, make retention competitive with attention.",
+      "At 7B scale and 8k length, RetNet decodes 8.4x faster and saves 70% of memory compared with a Transformer using KV caches.",
+      "RetNet's perplexity scaling is competitive with Transformers above roughly 2B parameters."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "RetNet LM: multi-scale retention (value dim 2d, swish gate, GroupNorm) + GELU FFN, pre-LN",
+    "modules": [
+      {
+        "name": "MultiScaleRetention",
+        "operation_type": "retention",
+        "input_shape": "[B, T, d]",
+        "output_shape": "[B, T, d]",
+        "parameters": {
+          "gammas": "1 - 2^(-5-i)",
+          "v_dim": "2d",
+          "gate": "swish",
+          "norm": "GroupNorm per head"
+        },
+        "paper_section": "Section 2.2, Eq. 8",
+        "confidence": 0.93,
+        "notes": null
+      },
+      {
+        "name": "FFN",
+        "operation_type": "mlp",
+        "input_shape": "[B, T, d]",
+        "output_shape": "[B, T, d]",
+        "parameters": {
+          "activation": "gelu"
+        },
+        "paper_section": "Section 2.3, Eq. 9",
+        "confidence": 0.93,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "MultiScaleRetention",
+        "to": "FFN",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "RetNet-2.7B",
+        "differences": {
+          "d_model": 2560,
+          "n_layers": 32
+        }
+      },
+      {
+        "name": "RetNet-6.7B",
+        "differences": {
+          "d_model": 4096,
+          "n_layers": 32
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Recurrent retention",
+      "latex": "s_n = \\gamma s_{n-1} + K_n^\\top v_n,\\; o_n = Q_n s_n",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2.1, Eq. 1-2/6",
+      "confidence": 0.97
+    },
+    {
+      "name": "Parallel retention",
+      "latex": "\\mathrm{Retention}(X) = (QK^\\top \\odot D)V,\\; D_{nm} = \\gamma^{n-m}\\,[n \\ge m]",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2.1, Eq. 5",
+      "confidence": 0.97
+    },
+    {
+      "name": "Chunkwise retention",
+      "latex": "R_i = K_{[i]}^\\top (V_{[i]} \\odot \\zeta) + \\gamma^B R_{i-1}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2.1, Eq. 7",
+      "confidence": 0.93
+    },
+    {
+      "name": "Gated MSR",
+      "latex": "\\mathrm{MSR}(X) = (\\mathrm{swish}(XW_G) \\odot \\mathrm{GN}(\\mathrm{head}_1,\\dots,\\mathrm{head}_h)) W_O",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2.2, Eq. 8",
+      "confidence": 0.93
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "ids",
+      "shape_notation": "[B, T]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "MultiScaleRetention",
+      "confidence": 0.9
+    },
+    {
+      "name": "state",
+      "shape_notation": "[B, H, d_k, d_v]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "MultiScaleRetention",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, T, V]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "FFN",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW (0.9, 0.98)",
+      "learning_rate": 0.0006,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.05,
+      "confidence": 0.55
+    },
+    "lr_schedule": {
+      "type": "linear warmup then decay",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.55
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.55
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "The Pile, C4, The Stack (mixture)",
+        "split": "LM pretraining",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Validation perplexity",
+      "Zero/few-shot accuracy",
+      "Decoding latency / throughput / memory",
+      "Training throughput"
+    ],
+    "reported_results": [
+      {
+        "metric": "Decoding speed-up vs Transformer (7B, 8k)",
+        "dataset": "-",
+        "split": "inference",
+        "value": 8.4,
+        "is_primary": true
+      },
+      {
+        "metric": "Decoding memory saving (%) vs Transformer (7B, 8k)",
+        "dataset": "-",
+        "split": "inference",
+        "value": 70.0,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "Transformer (with KV cache, FlashAttention)",
+      "RWKV",
+      "H3",
+      "Hyena",
+      "Linear Transformer"
+    ],
+    "compute": "512 × AMD MI200 GPUs for the scaling experiments.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "The paper's three retention normalisations (QK^T/sqrt(d), decay-matrix normalisation, score normalisation) are reduced to key scaling d^-1/2; GroupNorm's scale invariance makes the others numerically, not functionally, relevant.",
+      "basis": "Keeps the three forms exactly equivalent in tests.",
+      "confidence": 0.7,
+      "alternatives": [
+        "implement all normalisations in parallel form"
+      ],
+      "affects_section": "Section 2.2"
+    },
+    {
+      "assumption": "xPos-style Θ is implemented as RoPE without the xPos length-extrapolation scaling.",
+      "basis": "Paper describes Θ_n = e^{inθ}.",
+      "confidence": 0.8,
+      "alternatives": [],
+      "affects_section": "Eq. 3-4"
+    },
+    {
+      "assumption": "AdamW (0.9, 0.98), wd 0.05, LR 6e-4, warmup 375, 25k steps for 1.3B.",
+      "basis": "Read from Table 7 as best recalled; verify before paper-scale runs.",
+      "confidence": 0.5,
+      "alternatives": [],
+      "affects_section": "Section 3.1"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 2.2",
+      "description": "Exact placement and form of normalisations in chunkwise form.",
+      "primary_assumption": "key scaling only",
+      "alternatives": [
+        "full normalisation"
+      ],
+      "confidence": 0.6
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.95,
+    "mathematical_spec": 0.96,
+    "tensor_semantics": 0.92,
+    "training_pipeline": 0.55,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.6,
+    "overall_sir_confidence": 0.85
+  }
+}
