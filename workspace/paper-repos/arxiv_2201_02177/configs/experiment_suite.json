@@ -1,0 +1,151 @@
+{
+  "paper": {
+    "title": "Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets",
+    "arxiv_id": "2201.02177",
+    "version": "v1"
+  },
+  "reproduction_notes": [
+    "All 12 Appendix A.1.1 binary operations are included.",
+    "The paper does not give every sampled training fraction, outlier-task identity, visualization checkpoint, or sharpness training step in text; choices made here are documented in README.md and the SIR.",
+    "Run times for the complete multi-seed, 100k-to-1M-step grid are substantial; use --steps and --limit only for smoke checks, not as paper results."
+  ],
+  "defaults": {
+    "seeds": [0, 1, 2],
+    "train_fractions": [
+      0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50,
+      0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95
+    ],
+    "device": "auto",
+    "training": {
+      "steps": 100000,
+      "optimizer": "adamw",
+      "learning_rate": 0.001,
+      "beta1": 0.9,
+      "beta2": 0.98,
+      "weight_decay": 1.0,
+      "weight_decay_mode": "zero",
+      "update_noise_std": 0.0,
+      "warmup_steps": 10,
+      "batch_size": null,
+      "full_batch": false,
+      "eval_interval": 100,
+      "eval_batch_size": 2048
+    },
+    "model": {
+      "n_layers": 2,
+      "n_heads": 4,
+      "d_model": 128,
+      "dropout": 0.0,
+      "weight_noise": 0.0,
+      "max_context_len": 50
+    }
+  },
+  "suites": {
+    "figure1_modular_division": {
+      "operation": "mod_divide",
+      "train_fractions": [0.5],
+      "seeds": [0, 1, 2],
+      "training": {
+        "steps": 1000000,
+        "optimizer": "adam",
+        "weight_decay": 0.0,
+        "weight_decay_mode": "none"
+      },
+      "description": "Figure 1 learning curves: modular division mod 97, 50% random train split, Adam without weight decay."
+    },
+    "figure1_s5_learning_time": {
+      "operation": "s5_product",
+      "train_fractions": [
+        0.15, 0.20, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30, 0.31,
+        0.32, 0.35, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90
+      ],
+      "seeds": [0, 1, 2, 3, 4, 5, 6],
+      "training": {
+        "steps": 500000,
+        "optimizer": "adam",
+        "weight_decay": 0.0,
+        "weight_decay_mode": "none"
+      },
+      "description": "Figure 1 time-to-99% curve; 7 seeds and 500k-step budget as described in Appendix A.1.2. Fractions densely sample the reported 25-30% transition."
+    },
+    "figure2_variety": {
+      "operations": [
+        "mod_add", "mod_subtract", "mod_divide", "mod_hybrid_div_sub",
+        "mod_squares_sum", "mod_quadratic", "mod_quadratic_plus_x",
+        "mod_cubic_xy", "mod_cubic_xy2_y", "s5_product", "s5_conjugation", "s5_xyx"
+      ],
+      "description": "Figure 2 right / Section 3.2: best validation accuracy across all 12 Appendix A.1.1 operations.",
+      "training": {"steps": 100000}
+    },
+    "figure2_ablations": {
+      "operation": "s5_product",
+      "description": "Figure 2 left / Section 3.3: nine optimizer and regularization conditions on the S5 product task.",
+      "training": {"steps": 100000},
+      "variants": [
+        {
+          "name": "adam_full_batch",
+          "training": {"optimizer": "adam", "weight_decay": 0.0, "weight_decay_mode": "none", "full_batch": true, "batch_size": null}
+        },
+        {
+          "name": "adam_minibatch",
+          "training": {"optimizer": "adam", "weight_decay": 0.0, "weight_decay_mode": "none", "full_batch": false, "batch_size": null}
+        },
+        {
+          "name": "adam_full_batch_update_noise",
+          "training": {"optimizer": "adam", "weight_decay": 0.0, "weight_decay_mode": "none", "full_batch": true, "batch_size": null, "update_noise_std": 1.0}
+        },
+        {
+          "name": "adam_residual_dropout_0p1",
+          "training": {"optimizer": "adam", "weight_decay": 0.0, "weight_decay_mode": "none", "full_batch": false, "batch_size": null},
+          "model": {"dropout": 0.1}
+        },
+        {
+          "name": "adamw_decay_to_zero",
+          "training": {"optimizer": "adamw", "weight_decay": 1.0, "weight_decay_mode": "zero", "full_batch": false, "batch_size": null}
+        },
+        {
+          "name": "adamw_decay_to_init",
+          "training": {"optimizer": "adamw", "weight_decay": 1.0, "weight_decay_mode": "init", "full_batch": false, "batch_size": null}
+        },
+        {
+          "name": "adam_lr_3e-4",
+          "training": {"optimizer": "adam", "learning_rate": 0.0003, "weight_decay": 0.0, "weight_decay_mode": "none", "full_batch": false, "batch_size": null}
+        },
+        {
+          "name": "adam_lr_3e-3",
+          "training": {"optimizer": "adam", "learning_rate": 0.003, "weight_decay": 0.0, "weight_decay_mode": "none", "full_batch": false, "batch_size": null}
+        },
+        {
+          "name": "adam_weight_noise_0p01",
+          "training": {"optimizer": "adam", "weight_decay": 0.0, "weight_decay_mode": "none", "full_batch": false, "batch_size": null},
+          "model": {"weight_noise": 0.01}
+        }
+      ]
+    },
+    "figure3_embeddings": {
+      "description": "Figure 3: representative models for modular addition and S5 product; outputs are unembedding-weight t-SNE projections.",
+      "runs": [
+        {"name": "addition-embedding", "operation": "mod_add", "train_fraction": 0.5, "seed": 0, "variant": "default"},
+        {"name": "s5-embedding", "operation": "s5_product", "train_fraction": 0.5, "seed": 0, "variant": "default"}
+      ],
+      "training": {"steps": 100000},
+      "save_checkpoint": true
+    },
+    "appendix_a4_outliers": {
+      "operation": "mod_add",
+      "description": "Appendix A.4 / Figure 6: outlier counts k=[0,10,100,1000,2000,3000]. The paper's text does not identify which binary operation was used; modular addition is an explicit reproduction choice.",
+      "train_fractions": [0.50, 0.60, 0.70, 0.80, 0.90, 0.95],
+      "k_outliers_values": [0, 10, 100, 1000, 2000, 3000],
+      "seeds": [0, 1, 2],
+      "training": {"steps": 100000}
+    },
+    "appendix_a5_sharpness": {
+      "operation": "s5_product",
+      "description": "Appendix A.5 / Figure 7: 20 random initializations at 70% data; compute the Keskar-style local sharpness approximation on each trained model.",
+      "train_fractions": [0.70],
+      "seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      "training": {"steps": 100000},
+      "save_checkpoint": true
+    }
+  }
+}
