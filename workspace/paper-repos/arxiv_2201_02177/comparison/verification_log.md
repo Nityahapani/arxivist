@@ -1,6 +1,6 @@
 # Verification log — arXiv:2201.02177
 
-**Date:** 2026-10-23  
+**Date:** 2026-10-23
 **Status:** Implementation and smoke verification complete; paper-scale experiment matrix not run.
 
 | Check | Result | Evidence |

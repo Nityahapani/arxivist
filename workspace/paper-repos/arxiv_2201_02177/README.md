@@ -1,6 +1,6 @@
 # Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets
 
-**Paper:** Alethea Power, Yuri Burda, Harri Edwards, Igor Babuschkin, and Vedant Misra (2022), [arXiv:2201.02177](https://arxiv.org/abs/2201.02177).  
+**Paper:** Alethea Power, Yuri Burda, Harri Edwards, Igor Babuschkin, and Vedant Misra (2022), [arXiv:2201.02177](https://arxiv.org/abs/2201.02177).
 **Code:** independent PyTorch reproduction, informed by the paper and the authors' public [`openai/grok`](https://github.com/openai/grok) implementation. This is not the authors' repository and does not claim access to their original run logs.
 
 ## Reproduction status

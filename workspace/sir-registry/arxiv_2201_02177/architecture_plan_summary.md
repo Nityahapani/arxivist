@@ -1,7 +1,7 @@
 # Architecture / Reproduction Plan — Grokking (arXiv:2201.02177)
 
-**Paper:** [Power et al., *Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets*](https://arxiv.org/abs/2201.02177)  
-**Implementation:** [Independent reimplementation](../../paper-repos/arxiv_2201_02177/README.md)  
+**Paper:** [Power et al., *Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets*](https://arxiv.org/abs/2201.02177)
+**Implementation:** [Independent reimplementation](../../paper-repos/arxiv_2201_02177/README.md)
 **Evidence source:** paper v1, especially Sections 2–3 and Appendix A.1–A.5; authors' public [`openai/grok`](https://github.com/openai/grok) source used only to resolve implementation details. This repository is not the authors' official code.
 
 ## Core model
