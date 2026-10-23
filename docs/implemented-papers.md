@@ -1,6 +1,6 @@
 # Implemented paper registry
 
-> Catalog snapshot: **2026-10-23** · **67 paper entries** across **69 implementation locations**.
+> Catalog snapshot: **2026-10-23** · **92 paper entries** across **94 implementation locations**.
 
 This registry indexes the paper implementation artifacts checked into `workspace/paper-repos/`, the NeRF project under `workspace/`, and the DDPM reproduction notebook under `ladnmark_paper_reproductions/`. Duplicate code locations for the same arXiv paper are grouped into one entry.
 
