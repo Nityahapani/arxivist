@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "Mamba-2 MQAR (Section 9.1, Fig. 8 analogue): state size 64, 2 layers", "arxiv_id": "2405.21060"},
+  "run_name": "mqar_mamba2_N64", "seed": 0, "device": "auto",
+  "data": {"vocab": 8192, "n_kv": 64, "n_queries": 64},
+  "model": {"d_model": 256, "n_layers": 2, "d_state": 64, "head_dim": 64, "expand": 2, "chunk": 64},
+  "train": {"steps": 20000, "batch_size": 64, "lr": 0.001, "weight_decay": 0.1, "warmup": 1000, "log_every": 100},
+  "note": "Fig. 8 sweeps model dimension (32-256) and state size (16/64/256) on MQAR at sequence lengths 256-1024. LM scaling (Section 9.2) uses the Pile with GPT-3 style recipes and is not wired up here (needs tokenized corpus). LR and step counts are assumptions; consult Appendix D."
+}

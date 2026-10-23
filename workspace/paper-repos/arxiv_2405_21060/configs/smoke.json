@@ -1,0 +1,7 @@
+{
+  "paper": {"title": "Mamba-2 smoke-test configuration (MQAR)", "arxiv_id": "2405.21060"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"vocab": 64, "n_kv": 4, "n_queries": 4},
+  "model": {"d_model": 32, "n_layers": 2, "d_state": 16, "head_dim": 16, "expand": 2, "chunk": 8},
+  "train": {"steps": 10, "batch_size": 16, "lr": 0.003, "weight_decay": 0.1, "warmup": 2, "log_every": 5}
+}
