@@ -1,0 +1,297 @@
+{
+  "paper_id": "arxiv_1901_08573",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Theoretically Principled Trade-off between Robustness and Accuracy",
+    "authors": [
+      "Hongyang Zhang",
+      "Yaodong Yu",
+      "Jiantao Jiao",
+      "Eric P. Xing",
+      "Laurent El Ghaoui",
+      "Michael I. Jordan"
+    ],
+    "affiliations": [
+      "Carnegie Mellon University",
+      "University of Virginia",
+      "University of California, Berkeley",
+      "Petuum Inc."
+    ],
+    "arxiv_id": "1901.08573",
+    "doi": null,
+    "submission_date": "2019-01-24",
+    "abstract": "The paper decomposes robust error into natural error plus boundary error and derives a tight differentiable upper bound using classification-calibrated surrogate losses. This motivates TRADES, which minimises natural cross-entropy plus a regulariser (weighted by 1/lambda) pushing the decision boundary away from data via KL divergence between clean and adversarial predictions. TRADES won the NeurIPS 2018 Adversarial Vision Challenge.",
+    "domain": "CV",
+    "key_claims": [
+      "Robust error decomposes into natural error and boundary error, with a tight upper bound in terms of surrogate losses.",
+      "TRADES minimises CE(f(X), Y) + (1/lambda) max KL(f(X) || f(X')) over an eps-ball, trading off accuracy and robustness.",
+      "On CIFAR-10 with WRN-34-10 and eps=0.031, TRADES (1/lambda=6) attains 84.92% natural and 56.61% robust accuracy under FGSM^k (PGD-20).",
+      "TRADES won first place in the NeurIPS 2018 Adversarial Vision Challenge (robust model track)."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "WideResNet-34-10 on CIFAR-10, L_inf eps=0.031, beta=1/lambda=6, 10-step KL inner maximisation",
+    "modules": [
+      {
+        "name": "WideResNet34x10",
+        "operation_type": "wide_resnet",
+        "input_shape": "[B, 3, 32, 32]",
+        "output_shape": "[B, 10]",
+        "parameters": {
+          "depth": 34,
+          "widen": 10
+        },
+        "paper_section": "Section 5.2",
+        "confidence": 0.92,
+        "notes": null
+      },
+      {
+        "name": "KLInnerMax",
+        "operation_type": "adversarial_attack",
+        "input_shape": "[B, 3, 32, 32]",
+        "output_shape": "[B, 3, 32, 32]",
+        "parameters": {
+          "eps": 0.031,
+          "step": 0.007,
+          "steps": 10,
+          "init": "x + 0.001 N(0,I)"
+        },
+        "paper_section": "Algorithm 1; Section 5.2",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "TRADESLoss",
+        "operation_type": "loss",
+        "input_shape": "logits(x), logits(x')",
+        "output_shape": "scalar",
+        "parameters": {
+          "beta": 6.0
+        },
+        "paper_section": "Eq. 5",
+        "confidence": 0.95,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "KLInnerMax",
+        "to": "WideResNet34x10",
+        "tensor_name": "x_adv"
+      },
+      {
+        "from": "WideResNet34x10",
+        "to": "TRADESLoss",
+        "tensor_name": "logits"
+      }
+    ],
+    "variants": [
+      {
+        "name": "1/lambda = 1",
+        "differences": {
+          "beta": 1.0
+        }
+      },
+      {
+        "name": "1/lambda = 6",
+        "differences": {
+          "beta": 6.0
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Error decomposition",
+      "latex": "R_{rob}(f) = R_{nat}(f) + R_{bdy}(f)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.9
+    },
+    {
+      "name": "TRADES objective",
+      "latex": "\\min_f \\mathbb{E}\\big[\\mathcal{L}(f(X),Y) + \\max_{X'\\in\\mathbb{B}(X,\\epsilon)} \\mathcal{L}(f(X),f(X'))/\\lambda\\big]",
+      "role": "objective",
+      "used_in": "training",
+      "hyperparameters": [
+        "lambda",
+        "epsilon"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 4, Eq. 5",
+      "confidence": 0.95
+    },
+    {
+      "name": "Multi-class surrogate",
+      "latex": "\\mathcal{L}(f(X),f(X')) = \\mathrm{KL}(f(X)\\,\\|\\,f(X'))",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4",
+      "confidence": 0.9
+    },
+    {
+      "name": "Projected ascent",
+      "latex": "x' \\leftarrow \\Pi_{\\mathbb{B}(x,\\epsilon)}(x' + \\eta\\,\\mathrm{sign}(\\nabla_{x'} \\mathrm{KL}))",
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [
+        "eta",
+        "K"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Algorithm 1",
+      "confidence": 0.88
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "x",
+      "shape_notation": "[B, 3, 32, 32]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "WideResNet34x10",
+      "confidence": 0.9
+    },
+    {
+      "name": "x_adv",
+      "shape_notation": "[B, 3, 32, 32]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "KLInnerMax",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, 10]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "WideResNet34x10",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "SGD (momentum 0.9)",
+      "learning_rate": 0.1,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.0002,
+      "confidence": 0.75
+    },
+    "lr_schedule": {
+      "type": "step decay x0.1 at epoch 75 (authors' script)",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.75
+    },
+    "batch_size": 128,
+    "effective_batch_size": 128,
+    "training_steps": null,
+    "epochs": 76,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "random crop (pad 4)",
+      "horizontal flip"
+    ],
+    "curriculum": null,
+    "confidence": 0.75
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "CIFAR-10",
+        "split": "train / test",
+        "size": 60000,
+        "publicly_available": true
+      },
+      {
+        "name": "MNIST",
+        "split": "train / test",
+        "size": 70000,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Natural accuracy",
+      "Robust accuracy under FGSM^k (PGD-20) white-box attack, eps=0.031"
+    ],
+    "reported_results": [
+      {
+        "metric": "Natural accuracy, WRN-34-10, 1/lambda=6",
+        "dataset": "CIFAR-10",
+        "split": "test",
+        "value": 84.92,
+        "is_primary": true
+      },
+      {
+        "metric": "Robust accuracy (FGSM^k), WRN-34-10, 1/lambda=6",
+        "dataset": "CIFAR-10",
+        "split": "test",
+        "value": 56.61,
+        "is_primary": true
+      }
+    ],
+    "baselines": [
+      "Madry et al. PGD adversarial training",
+      "Natural training"
+    ],
+    "compute": "WRN-34-10 adversarial training with 10-step inner loop: roughly 1-2 GPU-days on a single modern GPU.",
+    "special_conditions": [],
+    "confidence": 0.88
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Train 76 epochs with LR 0.1 decayed x0.1 at epoch 75, batch 128, weight decay 2e-4.",
+      "basis": "Taken from the authors' public CIFAR-10 script; the paper text does not fully specify the schedule.",
+      "confidence": 0.75,
+      "alternatives": [
+        "100 epochs with decays at 75/90"
+      ],
+      "affects_section": "Section 5.2"
+    },
+    {
+      "assumption": "PGD-20 on cross-entropy, step 0.003, random uniform start in the eps-ball.",
+      "basis": "Paper reports FGSM^k with 20 iterations and step 0.003; random start is a common convention.",
+      "confidence": 0.75,
+      "alternatives": [
+        "No random start"
+      ],
+      "affects_section": "Table 5"
+    },
+    {
+      "assumption": "No normalisation layer; inputs in [0, 1] so eps=0.031 is in pixel units.",
+      "basis": "Matches the threat model description.",
+      "confidence": 0.85,
+      "alternatives": [],
+      "affects_section": "Section 5"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 5.2",
+      "description": "Exact LR schedule / number of epochs not stated in the text.",
+      "primary_assumption": "76 epochs, decay at 75",
+      "alternatives": [
+        "100 epochs"
+      ],
+      "confidence": 0.65
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.92,
+    "mathematical_spec": 0.93,
+    "tensor_semantics": 0.9,
+    "training_pipeline": 0.75,
+    "evaluation_protocol": 0.88,
+    "implementation_assumptions": 0.75,
+    "overall_sir_confidence": 0.86
+  }
+}
