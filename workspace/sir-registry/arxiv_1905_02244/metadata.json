@@ -1,0 +1,48 @@
+{
+  "paper_id": "arxiv_1905_02244",
+  "title": "Searching for MobileNetV3",
+  "authors": [
+    "Andrew Howard",
+    "Mark Sandler",
+    "Grace Chu",
+    "Liang-Chieh Chen",
+    "Bo Chen",
+    "Mingxing Tan",
+    "Weijun Wang",
+    "Yukun Zhu",
+    "Ruoming Pang",
+    "Vijay Vasudevan",
+    "Quoc V. Le",
+    "Hartwig Adam"
+  ],
+  "domain": "CV",
+  "arxiv_id": "1905.02244",
+  "version": 1,
+  "created_at": "2026-10-23T12:00:00+05:30",
+  "last_updated": "2026-10-23T12:00:00+05:30",
+  "sir_confidence": 0.82,
+  "stages_with_data": [
+    "paper_analysis",
+    "sir_registry",
+    "independent_reproduction"
+  ],
+  "has_comparison_report": true,
+  "repo_path": "workspace/paper-repos/arxiv_1905_02244",
+  "update_history": [
+    {
+      "version": 1,
+      "timestamp": "2026-10-23T12:00:00+05:30",
+      "reason": "initial SIR and reproduction scaffold (AI-generated, bot-authored)",
+      "changed_sections": [
+        "provenance",
+        "architecture",
+        "mathematical_spec",
+        "tensor_semantics",
+        "training_pipeline",
+        "evaluation_protocol",
+        "implementation_assumptions",
+        "ambiguities"
+      ]
+    }
+  ]
+}

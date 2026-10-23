@@ -1,0 +1,305 @@
+{
+  "paper_id": "arxiv_1905_02244",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Searching for MobileNetV3",
+    "authors": [
+      "Andrew Howard",
+      "Mark Sandler",
+      "Grace Chu",
+      "Liang-Chieh Chen",
+      "Bo Chen",
+      "Mingxing Tan",
+      "Weijun Wang",
+      "Yukun Zhu",
+      "Ruoming Pang",
+      "Vijay Vasudevan",
+      "Quoc V. Le",
+      "Hartwig Adam"
+    ],
+    "affiliations": [
+      "Google AI",
+      "Google Brain"
+    ],
+    "arxiv_id": "1905.02244",
+    "doi": null,
+    "submission_date": "2019-05-06",
+    "abstract": "MobileNetV3 is tuned to mobile CPUs through hardware-aware network architecture search (platform-aware NAS plus NetAdapt) complemented by manual improvements: a redesigned efficient last stage, the h-swish nonlinearity, and squeeze-and-excite with hard-sigmoid. MobileNetV3-Large is 3.2% more accurate on ImageNet than MobileNetV2 while reducing latency by 20%; MobileNetV3-Small is 6.6% more accurate with comparable latency. A new LR-ASPP segmentation decoder is also proposed.",
+    "domain": "CV",
+    "key_claims": [
+      "MobileNetV3-Large is 3.2% more accurate on ImageNet than MobileNetV2 while reducing latency by 20%.",
+      "MobileNetV3-Small is 6.6% more accurate than MobileNetV2 at comparable latency.",
+      "h-swish, x * ReLU6(x+3)/6, approximates swish with lower cost on mobile hardware.",
+      "Moving the final 1x1 expansion after global pooling (efficient last stage) saves about 7 ms (11% of runtime) with no accuracy loss.",
+      "MobileNetV3-Large reaches 75.2% and MobileNetV3-Small 67.4% ImageNet top-1."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "MobileNetV3-Large 1.0 (Table 1): 15 bneck blocks, SE with hard-sigmoid, h-swish in later layers, efficient last stage",
+    "modules": [
+      {
+        "name": "Stem",
+        "operation_type": "conv",
+        "input_shape": "[B, 3, 224, 224]",
+        "output_shape": "[B, 16, 112, 112]",
+        "parameters": {
+          "kernel": 3,
+          "stride": 2,
+          "nl": "h-swish"
+        },
+        "paper_section": "Table 1",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "Bnecks",
+        "operation_type": "inverted_residual",
+        "input_shape": "[B, 16, 112, 112]",
+        "output_shape": "[B, 160, 7, 7]",
+        "parameters": {
+          "table": "Table 1",
+          "se_gate": "hard-sigmoid",
+          "se_reduce": "1/4 of expansion"
+        },
+        "paper_section": "Table 1; Section 5.3",
+        "confidence": 0.94,
+        "notes": null
+      },
+      {
+        "name": "EfficientLastStage",
+        "operation_type": "conv_pool_fc",
+        "input_shape": "[B, 160, 7, 7]",
+        "output_shape": "[B, 1000]",
+        "parameters": {
+          "conv1x1": 960,
+          "pool": "global average",
+          "fc": 1280,
+          "nbn": true
+        },
+        "paper_section": "Section 5.1; Fig. 5",
+        "confidence": 0.93,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "Stem",
+        "to": "Bnecks",
+        "tensor_name": null
+      },
+      {
+        "from": "Bnecks",
+        "to": "EfficientLastStage",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "MobileNetV3-Small",
+        "differences": {
+          "table": "Table 2",
+          "last_conv": 576,
+          "fc": 1024
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "h-swish",
+      "latex": "\\mathrm{h\\text{-}swish}(x) = x\\,\\frac{\\mathrm{ReLU6}(x+3)}{6}",
+      "role": "activation",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 5.2",
+      "confidence": 0.97
+    },
+    {
+      "name": "hard sigmoid",
+      "latex": "\\mathrm{h\\text{-}sigmoid}(x) = \\mathrm{ReLU6}(x+3)/6",
+      "role": "activation",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 5.2-5.3",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "image",
+      "shape_notation": "[B, 3, 224, 224]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "Stem",
+      "confidence": 0.9
+    },
+    {
+      "name": "features",
+      "shape_notation": "[B, 960, 7, 7]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "EfficientLastStage",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, 1000]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "EfficientLastStage",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "RMSProp (momentum 0.9)",
+      "learning_rate": 0.1,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 1e-05,
+      "confidence": 0.65
+    },
+    "lr_schedule": {
+      "type": "step decay every 3 epochs (rate ambiguous in text)",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.65
+    },
+    "batch_size": 4096,
+    "effective_batch_size": 4096,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "Inception preprocessing"
+    ],
+    "curriculum": null,
+    "confidence": 0.65
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "ImageNet ILSVRC-2012",
+        "split": "train / val",
+        "size": 1281167,
+        "publicly_available": true
+      },
+      {
+        "name": "COCO (SSDLite)",
+        "split": "detection",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Cityscapes (LR-ASPP)",
+        "split": "segmentation",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Top-1 accuracy",
+      "Pixel 1 latency (ms)",
+      "MAdds",
+      "Params"
+    ],
+    "reported_results": [
+      {
+        "metric": "Top-1, MobileNetV3-Large 1.0",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 75.2,
+        "is_primary": true
+      },
+      {
+        "metric": "Top-1, MobileNetV3-Small 1.0",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 67.4,
+        "is_primary": false
+      },
+      {
+        "metric": "Params (M), MobileNetV3-Large 1.0",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 5.4,
+        "is_primary": false
+      },
+      {
+        "metric": "Params (M), MobileNetV3-Small 1.0",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 2.5,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "MobileNetV2",
+      "MnasNet",
+      "ProxylessNAS"
+    ],
+    "compute": "TPU pod in the paper; reproduction feasible on 8 GPUs over several days.",
+    "special_conditions": [],
+    "confidence": 0.85
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Interpret 'learning rate decay rate of 0.01 every 3 epochs' as multiplying LR by 0.97 every 3 epochs.",
+      "basis": "The literal wording is ambiguous; 0.97/3-epoch is a common reading in public reimplementations.",
+      "confidence": 0.5,
+      "alternatives": [
+        "x0.01 every 3 epochs",
+        "cosine"
+      ],
+      "affects_section": "Section 6.1"
+    },
+    {
+      "assumption": "Interpret 'dropout of 0.8' as keep-probability 0.8 (dropout rate 0.2) before the classifier.",
+      "basis": "TensorFlow convention of keep_prob.",
+      "confidence": 0.7,
+      "alternatives": [
+        "drop rate 0.8"
+      ],
+      "affects_section": "Section 6.1"
+    },
+    {
+      "assumption": "Use eps=0.0316 (≈ sqrt(1e-3)) to mimic TensorFlow's epsilon placement.",
+      "basis": "Framework-difference adjustment.",
+      "confidence": 0.6,
+      "alternatives": [],
+      "affects_section": "Section 6.1"
+    },
+    {
+      "assumption": "~600 epochs (187,500 steps at batch 4096).",
+      "basis": "Not stated in the paper.",
+      "confidence": 0.4,
+      "alternatives": [],
+      "affects_section": "Section 6.1"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 6.1",
+      "description": "LR decay wording and epoch count.",
+      "primary_assumption": "0.97 every 3 epochs; ~600 epochs",
+      "alternatives": [
+        "x0.01 every 3 epochs"
+      ],
+      "confidence": 0.45
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.95,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.92,
+    "training_pipeline": 0.55,
+    "evaluation_protocol": 0.85,
+    "implementation_assumptions": 0.6,
+    "overall_sir_confidence": 0.82
+  }
+}
