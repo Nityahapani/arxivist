@@ -1,0 +1,7 @@
+{
+  "paper": {"title": "DPO smoke-test configuration (synthetic controlled generation)", "arxiv_id": "2305.18290"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"vocab": 16, "prompt_len": 4, "response_len": 8, "n_positive": 4, "reward_scale": 10.0, "n_pairs": 256, "n_eval": 64},
+  "model": {"d_model": 32, "n_layers": 1, "n_heads": 2, "d_ff": 64},
+  "train": {"sft_steps": 5, "sft_lr": 0.003, "steps": 10, "batch_size": 16, "lr": 0.0003, "warmup_steps": 2, "beta": 0.1, "log_every": 5}
+}
