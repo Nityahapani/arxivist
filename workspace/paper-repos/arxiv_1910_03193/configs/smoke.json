@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "DeepONet smoke-test configuration", "arxiv_id": "1910.03193"},
+  "seed": 0,
+  "device": "cpu",
+  "data": {"operator": "antiderivative", "m": 20, "length_scale": 0.2, "n_grid": 201,
+           "n_train_functions": 64, "points_per_function": 4, "n_test_functions": 16, "test_points_per_function": 10},
+  "train": {"steps": 60, "lr": 0.001, "batch_size": 64, "eval_every": 20},
+  "models": [{"name": "unstacked", "kind": "deeponet_unstacked", "p": 10, "branch_hidden": [10], "trunk_hidden": [10, 10]}]
+}
