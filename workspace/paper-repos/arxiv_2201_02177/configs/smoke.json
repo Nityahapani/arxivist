@@ -1,0 +1,38 @@
+{
+  "paper": {"title": "Grokking smoke-test configuration", "arxiv_id": "2201.02177"},
+  "defaults": {
+    "seeds": [0],
+    "train_fractions": [0.5],
+    "device": "cpu",
+    "training": {
+      "steps": 12,
+      "optimizer": "adamw",
+      "learning_rate": 0.001,
+      "beta1": 0.9,
+      "beta2": 0.98,
+      "weight_decay": 1.0,
+      "weight_decay_mode": "zero",
+      "warmup_steps": 3,
+      "batch_size": 64,
+      "full_batch": false,
+      "eval_interval": 4,
+      "eval_batch_size": 512
+    },
+    "model": {
+      "n_layers": 1,
+      "n_heads": 2,
+      "d_model": 32,
+      "dropout": 0.0,
+      "weight_noise": 0.0,
+      "max_context_len": 50
+    }
+  },
+  "suites": {
+    "smoke": {
+      "operation": "mod_add",
+      "train_fractions": [0.5],
+      "seeds": [0],
+      "training": {"steps": 12}
+    }
+  }
+}

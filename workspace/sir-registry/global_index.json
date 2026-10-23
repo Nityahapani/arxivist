@@ -1,6 +1,6 @@
 {
   "index_version": 1,
-  "total_papers": 1,
+  "total_papers": 2,
   "papers": [
     {
       "paper_id": "paper_2605-09842v1",
@@ -12,6 +12,17 @@
       "has_notebook": false,
       "has_comparison": false,
       "last_updated": "2026-07-26T23:56:51+05:30"
+    },
+    {
+      "paper_id": "arxiv_2201_02177",
+      "title": "Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets",
+      "domain": "Other",
+      "sir_version": 1,
+      "sir_confidence": 0.9,
+      "has_repo": true,
+      "has_notebook": false,
+      "has_comparison": true,
+      "last_updated": "2026-10-23T12:00:00+05:30"
     }
   ]
 }

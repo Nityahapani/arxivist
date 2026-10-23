@@ -1,0 +1,500 @@
+{
+  "paper_id": "arxiv_2201_02177",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets",
+    "authors": [
+      "Alethea Power",
+      "Yuri Burda",
+      "Harri Edwards",
+      "Igor Babuschkin",
+      "Vedant Misra"
+    ],
+    "affiliations": [
+      "OpenAI",
+      "Google (Vedant Misra; affiliation at the time of the work)"
+    ],
+    "arxiv_id": "2201.02177",
+    "doi": null,
+    "submission_date": "2022-01-06",
+    "abstract": "Neural networks can memorize small algorithmic datasets yet generalize only after many further optimization steps (grokking). On finite binary-operation tables, the authors demonstrate delayed generalization, show that smaller training sets require rapidly increasing optimization, compare optimizers and regularizers (with weight decay especially improving data efficiency), and visualize learned symbol embeddings using a small decoder-only Transformer.",
+    "domain": "Other",
+    "key_claims": [
+      "A small decoder-only Transformer can first memorize a small algorithmic training set and later generalize to held-out equations after prolonged optimization.",
+      "For S5 product, decreasing the training fraction near 25-30% sharply increases the median updates needed to reach 99% validation accuracy.",
+      "Weight decay substantially improves data efficiency on the studied binary-operation tasks.",
+      "The learned output-layer symbol embeddings can reflect structure of modular arithmetic and S5.",
+      "In modular division mod 97 with 50% training data, near-perfect training accuracy precedes near-perfect validation performance by orders of magnitude in updates."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "2-layer decoder-only Transformer, width 128, 4 attention heads, causal attention, sinusoidal positional encoding, 4x ReLU feed-forward blocks; about 4e5 non-embedding parameters",
+    "modules": [
+      {
+        "name": "AtomicEquationTokenizer",
+        "operation_type": "tokenization",
+        "input_shape": "one equation (x, operator, y, =, answer)",
+        "output_shape": "[B, 5] token IDs (answer is predicted from the '=' position)",
+        "parameters": {
+          "symbol_tokenization": "Each residue or S5 permutation is one symbol token; operator and equals sign are separate tokens.",
+          "modular_symbols": 97,
+          "s5_symbols": 120,
+          "paper_equation_length": 5
+        },
+        "paper_section": "Sections 2-3; Appendix A.1.1",
+        "confidence": 0.95,
+        "notes": "The released authors' code wraps equations with EOS tokens. The reproduction uses an EOS prefix and trains the answer prediction only, matching the paper's loss description."
+      },
+      {
+        "name": "SymbolEmbedding",
+        "operation_type": "embedding",
+        "input_shape": "[B, 5] integer token IDs",
+        "output_shape": "[B, 5, 128]",
+        "parameters": {
+          "vocabulary": "2 special tokens + 12 operation tokens + 97 residues + 120 permutations",
+          "embedding_width": 128,
+          "tied_to_unembedding": false
+        },
+        "paper_section": "Appendix A.1.2",
+        "confidence": 0.9,
+        "notes": "The official implementation uses an embedding table and separate linear output projection."
+      },
+      {
+        "name": "SinusoidalPositionEncoding",
+        "operation_type": "positional_encoding",
+        "input_shape": "[B, 5, 128]",
+        "output_shape": "[B, 5, 128]",
+        "parameters": {
+          "type": "sinusoidal",
+          "maximum_context_length": 50
+        },
+        "paper_section": "Official code implementation; Transformer details in Appendix A.1.2",
+        "confidence": 0.88,
+        "notes": "The article states decoder-only Transformer with causal masking but does not spell out positional encoding; sinusoidal encoding matches the authors' released code."
+      },
+      {
+        "name": "CausalTransformerDecoder",
+        "operation_type": "transformer_decoder",
+        "input_shape": "[B, 5, 128]",
+        "output_shape": "[B, 5, 128]",
+        "parameters": {
+          "layers": 2,
+          "width": 128,
+          "heads": 4,
+          "key_width_per_head": 32,
+          "feed_forward_width": 512,
+          "activation": "ReLU",
+          "normalization": "post-residual LayerNorm",
+          "attention_mask": "causal",
+          "default_dropout": 0.0,
+          "linear_biases": false
+        },
+        "paper_section": "Appendix A.1.2",
+        "confidence": 0.95,
+        "notes": "The paper reports approximately 4e5 non-embedding parameters. The block layout follows the authors' released implementation."
+      },
+      {
+        "name": "AnswerUnembedding",
+        "operation_type": "linear",
+        "input_shape": "[B, 128] hidden state at the equals-sign position",
+        "output_shape": "[B, vocabulary_size] logits",
+        "parameters": {
+          "output_vocabulary": "shared atomic-symbol vocabulary",
+          "bias": false,
+          "weight_matrix": "[vocabulary_size, 128]"
+        },
+        "paper_section": "Sections 2-3; Appendix A.1.2",
+        "confidence": 0.93,
+        "notes": "Cross-entropy is applied to the target answer symbol; the paper describes loss and accuracy on the answer portion only."
+      }
+    ],
+    "connections": [
+      {"from": "AtomicEquationTokenizer", "to": "SymbolEmbedding", "tensor_name": "input_token_ids"},
+      {"from": "SymbolEmbedding", "to": "SinusoidalPositionEncoding", "tensor_name": "symbol_embeddings"},
+      {"from": "SinusoidalPositionEncoding", "to": "CausalTransformerDecoder", "tensor_name": "positioned_embeddings"},
+      {"from": "CausalTransformerDecoder", "to": "AnswerUnembedding", "tensor_name": "hidden_state_at_equals"}
+    ],
+    "variants": [
+      {
+        "name": "Default paper configuration",
+        "differences": {
+          "optimizer": "AdamW",
+          "learning_rate": 0.001,
+          "weight_decay": 1.0,
+          "betas": [0.9, 0.98],
+          "warmup_updates": 10,
+          "batch_size": "min(512, half the training-set size)"
+        }
+      },
+      {
+        "name": "Section 3.1 late-generalization run",
+        "differences": {
+          "optimizer": "Adam",
+          "weight_decay": 0.0,
+          "optimization_budget": 1000000
+        }
+      },
+      {
+        "name": "Section 3.3 ablations",
+        "differences": {
+          "conditions": [
+            "full-batch Adam",
+            "minibatch Adam",
+            "full-batch Adam with unit-Gaussian update noise",
+            "residual dropout 0.1",
+            "AdamW weight decay 1 toward zero",
+            "AdamW weight decay 1 toward initialization",
+            "Adam learning rate 3e-4",
+            "Adam learning rate 3e-3",
+            "Gaussian weight noise standard deviation 0.01"
+          ]
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Answer-token cross-entropy",
+      "latex": "\\mathcal{L}(\\theta) = -\\log p_\\theta(c \\mid \\langle x \\rangle, \\langle op \\rangle, \\langle y \\rangle, \\langle = \\rangle)",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.2",
+      "confidence": 0.95
+    },
+    {
+      "name": "Modular addition",
+      "latex": "x \\circ y = x+y \\pmod{97}, \\quad 0\\le x,y<97",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.99
+    },
+    {
+      "name": "Modular subtraction",
+      "latex": "x \\circ y = x-y \\pmod{97}, \\quad 0\\le x,y<97",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.99
+    },
+    {
+      "name": "Modular division",
+      "latex": "x \\circ y = x y^{-1} \\pmod{97}, \\quad 0\\le x<97, \\quad 0<y<97",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97", "y is nonzero"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.98
+    },
+    {
+      "name": "Hybrid division/subtraction",
+      "latex": "x \\circ y = \\begin{cases}xy^{-1} \\pmod{97}, & y \\text{ odd} \\\\ x-y \\pmod{97}, & y \\text{ even}\\end{cases}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.98
+    },
+    {
+      "name": "Sum of squares",
+      "latex": "x \\circ y = x^2+y^2 \\pmod{97}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.99
+    },
+    {
+      "name": "Quadratic form",
+      "latex": "x \\circ y = x^2+xy+y^2 \\pmod{97}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.99
+    },
+    {
+      "name": "Quadratic form plus x",
+      "latex": "x \\circ y = x^2+xy+y^2+x \\pmod{97}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.99
+    },
+    {
+      "name": "Cubic polynomial 1",
+      "latex": "x \\circ y = x^3+xy \\pmod{97}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.99
+    },
+    {
+      "name": "Cubic polynomial 2",
+      "latex": "x \\circ y = x^3+xy^2+y \\pmod{97}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["p=97"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.99
+    },
+    {
+      "name": "S5 product",
+      "latex": "x \\circ y = x y, \\quad x,y\\in S_5",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["|S5|=120"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.95
+    },
+    {
+      "name": "S5 conjugation",
+      "latex": "x \\circ y = x y x^{-1}, \\quad x,y\\in S_5",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["|S5|=120"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.95
+    },
+    {
+      "name": "S5 x-y-x operation",
+      "latex": "x \\circ y = x y x, \\quad x,y\\in S_5",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": ["|S5|=120"],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1.1",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "input_token_ids",
+      "shape_notation": "[B, 5]",
+      "dtype": "int64",
+      "tensor_type": "input",
+      "module": "AtomicEquationTokenizer",
+      "confidence": 0.95
+    },
+    {
+      "name": "symbol_embeddings",
+      "shape_notation": "[B, 5, 128]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "SymbolEmbedding",
+      "confidence": 0.9
+    },
+    {
+      "name": "causal_attention_scores",
+      "shape_notation": "[B, 4, 5, 5]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "CausalTransformerDecoder",
+      "confidence": 0.88
+    },
+    {
+      "name": "final_hidden_states",
+      "shape_notation": "[B, 5, 128]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "CausalTransformerDecoder",
+      "confidence": 0.95
+    },
+    {
+      "name": "answer_logits",
+      "shape_notation": "[B, V] at the equals-sign position",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "AnswerUnembedding",
+      "confidence": 0.95
+    },
+    {
+      "name": "unembedding_weight",
+      "shape_notation": "[V, 128]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "AnswerUnembedding",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW (default experiments); Adam for Section 3.1 late-generalization runs",
+      "learning_rate": 0.001,
+      "beta1": 0.9,
+      "beta2": 0.98,
+      "weight_decay": 1.0,
+      "confidence": 0.94
+    },
+    "lr_schedule": {
+      "type": "linear warmup for first 10 updates, then constant; no annealing in paper's final default configuration",
+      "warmup_steps": 10,
+      "total_steps": 100000,
+      "confidence": 0.93
+    },
+    "batch_size": 512,
+    "effective_batch_size": 512,
+    "training_steps": 100000,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.92
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {"name": "Modular-operation truth tables (p=97)", "split": "random equation-level train/validation partition; train fractions varied", "size": 9409, "publicly_available": true},
+      {"name": "Modular division truth table (p=97; divisor nonzero)", "split": "random equation-level train/validation partition", "size": 9312, "publicly_available": true},
+      {"name": "S5 binary-operation truth tables", "split": "random ordered-pair train/validation partition; train fractions varied", "size": 14400, "publicly_available": true},
+      {"name": "Noisy training truth tables for Appendix A.4", "split": "training answers on k sampled rows replaced; validation answers kept clean", "size": null, "publicly_available": true}
+    ],
+    "metrics": [
+      "Exact answer accuracy on training equations",
+      "Exact answer accuracy on held-out validation equations",
+      "Answer-token cross-entropy",
+      "First optimization update at which validation accuracy reaches 99%",
+      "Best validation accuracy within the optimization budget",
+      "Keskar-style local sharpness approximation phi",
+      "Spearman correlation between validation accuracy and sharpness"
+    ],
+    "reported_results": [
+      {"metric": "Approximate training exact-answer accuracy before 1000 updates", "dataset": "modular division mod 97; 50% training fraction", "split": "train", "value": 0.99, "is_primary": true},
+      {"metric": "Approximate validation exact-answer accuracy reached around 1,000,000 updates", "dataset": "modular division mod 97; 50% training fraction", "split": "validation", "value": 0.99, "is_primary": true},
+      {"metric": "Spearman rho (validation accuracy versus sharpness phi)", "dataset": "S5 product; multiple initializations", "split": "validation", "value": -0.79548, "is_primary": true},
+      {"metric": "Upper bound reported for Spearman-correlation p-value", "dataset": "S5 product; multiple initializations", "split": "validation", "value": 0.000014, "is_primary": false}
+    ],
+    "baselines": [
+      "Adam with no weight decay",
+      "Full-batch Adam",
+      "Minibatch Adam",
+      "AdamW with weight decay toward initialization",
+      "Adam with dropout, update noise, or weight noise"
+    ],
+    "compute": "The paper reports optimization-update budgets (1e5, 5e5, and 1e6) but not a hardware type or wall-clock compute budget.",
+    "special_conditions": [
+      "The default paper configuration uses AdamW, learning rate 1e-3, weight decay 1, betas (0.9,0.98), 10-update linear warmup, and batch size 512 or half the training set, whichever is smaller.",
+      "Section 3.1 uses Adam without weight decay and a 1e6-update budget; Section 3.1.1 uses a 5e5-update budget and seven seeds.",
+      "Other dataset-size and ablation runs use three seeds; the complete operation list is in Appendix A.1.1.",
+      "The paper reports a 40-50% increase in median generalization time for a 1 percentage-point data reduction around 25-30% training data on S5 product.",
+      "The reproduction manifest makes explicit choices for unspecified data-fraction grids, the Appendix A.4 operation, visualization checkpoints, and sharpness checkpoint step."
+    ],
+    "confidence": 0.91
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Use the released authors' S5 product convention (x*y)[i]=y[x[i]]) for permutation arrays and the same product operation consistently in S5 variants.",
+      "basis": "The public OpenAI grok data.py computes the product as c=b[a]; the paper does not specify an array-composition convention.",
+      "confidence": 0.9,
+      "alternatives": ["Use the opposite but isomorphic permutation-composition convention."],
+      "affects_section": "Appendix A.1.1; Figures 2-3; Appendix A.5"
+    },
+    {
+      "assumption": "Train on the answer token only, with an EOS prefix in the input; do not add a loss term for a trailing EOS token.",
+      "basis": "The paper says loss and accuracy are calculated only on the answer part; the official implementation wraps EOS tokens and its right-side slice also includes the trailing EOS.",
+      "confidence": 0.86,
+      "alternatives": ["Match the official implementation's loss over answer plus trailing EOS."],
+      "affects_section": "Appendix A.1.2; all training experiments"
+    },
+    {
+      "assumption": "Use 5-percentage-point grids from 5% to 95% for the variety and ablation curves, with denser S5 time-to-generalization samples around 25-32%.",
+      "basis": "The article describes the curve trends and calls out 25-30%, but does not list every fraction used.",
+      "confidence": 0.72,
+      "alternatives": ["Recover the original unreported fraction list from author-run artifacts, if available."],
+      "affects_section": "Figures 1-2"
+    },
+    {
+      "assumption": "Use modular addition for the Appendix A.4 outlier study because the paper does not identify the operation in the text or caption.",
+      "basis": "Appendix A.4 names a modified binary operation but omits its identity; the configuration records this choice explicitly.",
+      "confidence": 0.55,
+      "alternatives": ["Run the same k-outlier grid on S5 product or modular division."],
+      "affects_section": "Appendix A.4; Figure 6"
+    },
+    {
+      "assumption": "Use 50% train fraction and seed 0 for representative Figure 3 embedding visualizations; use 70% train fraction, 100k updates, and seeds 0-19 for the Figure 7 sharpness suite.",
+      "basis": "The exact visualization checkpoint is not specified; the authors' compute_sharpness script lists S5 checkpoints with train fraction T-70 and seed IDs 0-19, while the paper specifies only a fixed step count with about half the models grokked.",
+      "confidence": 0.77,
+      "alternatives": ["Select a different fixed step count or a fraction that empirically yields approximately half grokked models."],
+      "affects_section": "Figure 3; Appendix A.5; Figure 7"
+    },
+    {
+      "assumption": "Use t-SNE with PCA initialization, perplexity 30, and random state 0 for deterministic embedding plots.",
+      "basis": "The paper identifies t-SNE but does not report its numerical hyperparameters.",
+      "confidence": 0.68,
+      "alternatives": ["Use different t-SNE initialization, perplexity, or random seed."],
+      "affects_section": "Section 3.4; Figure 3"
+    },
+    {
+      "assumption": "Export modular-addition truth table as the Figure 5-style example rather than claiming an exact reconstruction of the paper's pictured table.",
+      "basis": "Appendix A.2 says the figure is one of the operation tables but does not identify the operation or symbol-to-letter assignment in the text.",
+      "confidence": 0.6,
+      "alternatives": ["Select another operation and/or reproduce the exact pictured symbol assignment if it can be recovered."],
+      "affects_section": "Appendix A.2; Figure 5"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Appendix A.4 / Figure 6",
+      "description": "The paper describes an outlier-augmented binary operation but does not identify which operation is used in the extracted text/caption.",
+      "primary_assumption": "Use modular addition and disclose the choice.",
+      "alternatives": ["S5 product", "Modular division"],
+      "confidence": 0.55
+    },
+    {
+      "location": "Appendix A.1.1; S5 operations",
+      "description": "The article does not state how permutations are encoded as arrays or which composition convention is used.",
+      "primary_assumption": "Use the authors' released code convention c=b[a] for the product and apply it consistently to the S5 operations.",
+      "alternatives": ["Use the opposite convention; it is isomorphic but changes labels and representation."],
+      "confidence": 0.9
+    },
+    {
+      "location": "Appendix A.1.2; answer loss",
+      "description": "The prose says answer-only loss, while the released source's EOS-wrapped shifted target slice includes the answer and trailing EOS.",
+      "primary_assumption": "Use answer-token-only loss to match the paper's prose; log this as a deviation from the source implementation detail.",
+      "alternatives": ["Train on the answer plus trailing EOS as in the released source."],
+      "confidence": 0.86
+    },
+    {
+      "location": "Figures 1-3 and Appendix A.5",
+      "description": "Not all data fractions, visualization checkpoints, and the fixed sharpness-evaluation step are specified in the paper text.",
+      "primary_assumption": "Use the explicit grids and checkpoint choices in configs/experiment_suite.json; preserve the paper's reported budgets and seed counts where stated.",
+      "alternatives": ["Recover and use private/original experiment logs if they become available."],
+      "confidence": 0.72
+    },
+    {
+      "location": "Appendix A.2 / Figure 5",
+      "description": "The paper identifies the pictured example as a binary operation table, but the text does not specify which operation or symbol-to-letter assignment is depicted.",
+      "primary_assumption": "Export a modular-addition truth table as a Figure-5-style artifact and do not claim it is the exact pictured table.",
+      "alternatives": ["Recover the exact operation and symbol permutation from the figure or author data."],
+      "confidence": 0.6
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.94,
+    "mathematical_spec": 0.97,
+    "tensor_semantics": 0.9,
+    "training_pipeline": 0.92,
+    "evaluation_protocol": 0.88,
+    "implementation_assumptions": 0.82,
+    "overall_sir_confidence": 0.9
+  }
+}
