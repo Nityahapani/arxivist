@@ -1,0 +1,305 @@
+{
+  "paper_id": "arxiv_2005_12872",
+  "sir_version": 1,
+  "provenance": {
+    "title": "End-to-End Object Detection with Transformers",
+    "authors": [
+      "Nicolas Carion",
+      "Francisco Massa",
+      "Gabriel Synnaeve",
+      "Nicolas Usunier",
+      "Alexander Kirillov",
+      "Sergey Zagoruyko"
+    ],
+    "affiliations": [
+      "Facebook AI"
+    ],
+    "arxiv_id": "2005.12872",
+    "doi": null,
+    "submission_date": "2020-05-26",
+    "abstract": "DETR views object detection as a direct set prediction problem, removing hand-designed components such as non-maximum suppression and anchor generation. A set-based global loss forces unique predictions via bipartite matching, and a transformer encoder-decoder reasons about object relations and global image context to output the final set of predictions in parallel from a fixed set of learned object queries. DETR matches a well-optimised Faster R-CNN on COCO.",
+    "domain": "CV",
+    "key_claims": [
+      "Detection can be trained end-to-end as set prediction with a Hungarian-matching loss, without NMS or anchors.",
+      "A transformer encoder-decoder with learned object queries predicts all objects in parallel.",
+      "DETR R50 reaches 42.0 AP on COCO val, comparable to a tuned Faster R-CNN, with better large-object performance and worse small-object performance.",
+      "Auxiliary decoding losses at every decoder layer help training.",
+      "DETR extends to panoptic segmentation with a mask head."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "DETR R50: ResNet-50, 6+6 layer transformer (d=256, 8 heads, FFN 2048), 100 queries",
+    "modules": [
+      {
+        "name": "Backbone",
+        "operation_type": "resnet",
+        "input_shape": "[B, 3, H, W]",
+        "output_shape": "[B, 2048, H/32, W/32]",
+        "parameters": {
+          "arch": "ResNet-50",
+          "frozen_bn": true
+        },
+        "paper_section": "Section 3.2",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "InputProjection",
+        "operation_type": "conv1x1",
+        "input_shape": "[B, 2048, h, w]",
+        "output_shape": "[B, 256, h, w]",
+        "parameters": {},
+        "paper_section": "Section 3.2",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "Encoder",
+        "operation_type": "transformer_encoder",
+        "input_shape": "[B, hw, 256]",
+        "output_shape": "[B, hw, 256]",
+        "parameters": {
+          "layers": 6,
+          "heads": 8,
+          "ff": 2048,
+          "pos": "2D sine added at every layer"
+        },
+        "paper_section": "Section 3.2; Fig. 10",
+        "confidence": 0.93,
+        "notes": null
+      },
+      {
+        "name": "Decoder",
+        "operation_type": "transformer_decoder",
+        "input_shape": "[B, 100, 256]",
+        "output_shape": "[L, B, 100, 256]",
+        "parameters": {
+          "layers": 6,
+          "queries": 100,
+          "parallel_decoding": true
+        },
+        "paper_section": "Section 3.2; Fig. 10",
+        "confidence": 0.93,
+        "notes": null
+      },
+      {
+        "name": "PredictionHeads",
+        "operation_type": "ffn",
+        "input_shape": "[L, B, 100, 256]",
+        "output_shape": "[L, B, 100, C+1], [L, B, 100, 4]",
+        "parameters": {
+          "box_mlp_layers": 3,
+          "box_activation": "sigmoid"
+        },
+        "paper_section": "Section 3.2",
+        "confidence": 0.93,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "Backbone",
+        "to": "InputProjection",
+        "tensor_name": null
+      },
+      {
+        "from": "InputProjection",
+        "to": "Encoder",
+        "tensor_name": null
+      },
+      {
+        "from": "Encoder",
+        "to": "Decoder",
+        "tensor_name": null
+      },
+      {
+        "from": "Decoder",
+        "to": "PredictionHeads",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "DETR-DC5",
+        "differences": {
+          "backbone": "dilated C5, stride 16"
+        }
+      },
+      {
+        "name": "DETR-R101",
+        "differences": {
+          "backbone": "ResNet-101"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Optimal matching",
+      "latex": "\\hat\\sigma = \\arg\\min_{\\sigma \\in \\mathfrak{S}_N} \\sum_i \\mathcal{L}_{match}(y_i, \\hat y_{\\sigma(i)})",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.1, Eq. 1",
+      "confidence": 0.97
+    },
+    {
+      "name": "Hungarian loss",
+      "latex": "\\mathcal{L}_{Hungarian} = \\sum_i \\left[-\\log \\hat p_{\\hat\\sigma(i)}(c_i) + \\mathbb{1}_{c_i \\neq \\varnothing} \\mathcal{L}_{box}(b_i, \\hat b_{\\hat\\sigma(i)})\\right]",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.1, Eq. 2",
+      "confidence": 0.97
+    },
+    {
+      "name": "Box loss",
+      "latex": "\\mathcal{L}_{box} = \\lambda_{iou}\\mathcal{L}_{GIoU} + \\lambda_{L1}\\|b - \\hat b\\|_1,\\; \\lambda_{L1}=5,\\; \\lambda_{iou}=2",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.1; Section 4",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "image",
+      "shape_notation": "[B, 3, H, W]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "Backbone",
+      "confidence": 0.9
+    },
+    {
+      "name": "memory",
+      "shape_notation": "[B, hw, 256]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "Encoder",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits, boxes",
+      "shape_notation": "[L, B, 100, C+1], [L, B, 100, 4]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "PredictionHeads",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": 0.0001,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.0001,
+      "confidence": 0.9
+    },
+    "lr_schedule": {
+      "type": "step x0.1 at epoch 200 (300 ep) or 400 (500 ep)",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.9
+    },
+    "batch_size": 64,
+    "effective_batch_size": 64,
+    "training_steps": null,
+    "epochs": 500,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "scale (shortest side 480-800, max 1333)",
+      "random crop",
+      "horizontal flip"
+    ],
+    "curriculum": null,
+    "confidence": 0.9
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "COCO 2017 detection",
+        "split": "train 118k / val 5k",
+        "size": 118000,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "COCO AP",
+      "AP50",
+      "AP75",
+      "AP_S / AP_M / AP_L",
+      "FPS",
+      "GFLOPs"
+    ],
+    "reported_results": [
+      {
+        "metric": "AP, DETR R50",
+        "dataset": "COCO val2017",
+        "split": "val",
+        "value": 42.0,
+        "is_primary": true
+      },
+      {
+        "metric": "AP, DETR-DC5 R50",
+        "dataset": "COCO val2017",
+        "split": "val",
+        "value": 43.3,
+        "is_primary": false
+      },
+      {
+        "metric": "AP, DETR R101",
+        "dataset": "COCO val2017",
+        "split": "val",
+        "value": 43.5,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "Faster R-CNN (FPN, R50/R101, 3x and 9x+ schedules)"
+    ],
+    "compute": "16 × V100 GPUs; about 3 days for the 300-epoch R50 schedule.",
+    "special_conditions": [],
+    "confidence": 0.85
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Backbone is randomly initialised here; paper uses ImageNet-pretrained ResNet.",
+      "basis": "torchvision weights not available offline.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 3.2"
+    },
+    {
+      "assumption": "Synthetic coloured rectangles in smoke runs; COCO loader and augmentations not included.",
+      "basis": "Offline environment.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "Epochs converted to iterations with ~1848 iterations/epoch at batch 64.",
+      "basis": "COCO train has ~118k images.",
+      "confidence": 0.8,
+      "alternatives": [],
+      "affects_section": "Appendix A.4"
+    }
+  ],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "architecture": 0.95,
+    "mathematical_spec": 0.96,
+    "tensor_semantics": 0.92,
+    "training_pipeline": 0.88,
+    "evaluation_protocol": 0.85,
+    "implementation_assumptions": 0.8,
+    "overall_sir_confidence": 0.9
+  }
+}
