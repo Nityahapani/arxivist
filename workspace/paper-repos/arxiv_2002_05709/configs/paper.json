@@ -1,0 +1,12 @@
+{
+  "paper": {"title": "SimCLR CIFAR-10 protocol (Appendix B.9)", "arxiv_id": "2002.05709"},
+  "run_name": "cifar10_resnet50_bs1024",
+  "seed": 0,
+  "device": "auto",
+  "data": {"name": "cifar10", "root": "data", "image_size": 32},
+  "model": {"arch": "resnet50", "width_mult": 1, "proj_dim": 128, "cifar_stem": true},
+  "train": {"steps": 48800, "batch_size": 1024, "lr_per_256": 0.3, "weight_decay": 1e-6, "temperature": 0.5,
+            "color_strength": 0.5, "blur": false, "warmup_fraction": 0.01, "log_every": 100},
+  "linear_eval": {"steps": 5000, "lr": 0.1, "batch_size": 1024},
+  "note": "48,800 steps ≈ 1,000 epochs at batch 1,024 on 50k images. Paper sweeps batch size {256..4096}, epochs {100..1000}, temperature {0.1, 0.5, 1.0} and colour strength {0.25, 0.5, 0.75, 1.0} for CIFAR-10; values here are one representative setting. Warmup = 10 epochs. ImageNet protocol (batch 4096, LR 4.8, tau 0.1, 100-1000 epochs, blur on) requires a TPU/GPU cluster and an ImageNet loader."
+}
