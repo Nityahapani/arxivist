@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "ALiBi smoke-test configuration", "arxiv_id": "2108.12409"},
+  "seed": 0, "device": "cpu",
+  "data": {"name": "synthetic", "vocab": 32, "n_train_tokens": 20000, "n_valid_tokens": 4000},
+  "model": {"positions": ["alibi", "sinusoidal"], "d_model": 32, "n_layers": 2, "n_heads": 4, "d_ff": 64},
+  "train": {"seq_len": 32, "batch_size": 16, "steps": 40, "lr": 0.003, "warmup": 10, "log_every": 20},
+  "eval": {"lengths": [32, 64, 128], "max_windows": 10}
+}
