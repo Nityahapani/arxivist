@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "RoFormer vs BERT-style absolute positions, MLM pretraining (Section 4.5.1 analogue)", "arxiv_id": "2104.09864"},
+  "run_name": "roformer_vs_bert_mlm", "seed": 0, "device": "auto",
+  "data": {"vocab": 30522},
+  "model": {"positions": ["rope", "sinusoidal"], "d_model": 768, "n_layers": 12, "n_heads": 12, "d_ff": 3072, "dropout": 0.1, "linear": false},
+  "train": {"steps": 100000, "batch_size": 64, "seq_len": 512, "lr": 0.0001, "weight_decay": 0.01, "warmup": 10000, "log_every": 100},
+  "note": "The paper pretrains RoFormer (BERT-base sized) on BookCorpus + Wikipedia for the English MLM comparison, fine-tunes on GLUE, evaluates Performer+RoPE on Enwik8, and pretrains a Chinese RoFormer on ~34GB of Chinese text for CAIL2019-SCM. The train loop here uses synthetic periodic sequences; real corpora require a tokenized data loader. LR/warmup values are assumptions; consult Section 4 for exact settings."
+}

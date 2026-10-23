@@ -1,0 +1,7 @@
+{
+  "paper": {"title": "RoFormer smoke-test configuration", "arxiv_id": "2104.09864"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"vocab": 20},
+  "model": {"positions": ["rope", "sinusoidal"], "d_model": 32, "n_layers": 2, "n_heads": 4, "d_ff": 64, "dropout": 0.0, "linear": false},
+  "train": {"steps": 10, "batch_size": 16, "seq_len": 32, "lr": 0.001, "weight_decay": 0.01, "warmup": 2, "log_every": 5}
+}
