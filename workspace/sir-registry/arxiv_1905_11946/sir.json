@@ -1,0 +1,360 @@
+{
+  "paper_id": "arxiv_1905_11946",
+  "sir_version": 1,
+  "provenance": {
+    "title": "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks",
+    "authors": [
+      "Mingxing Tan",
+      "Quoc V. Le"
+    ],
+    "affiliations": [
+      "Google Research, Brain Team"
+    ],
+    "arxiv_id": "1905.11946",
+    "doi": null,
+    "submission_date": "2019-05-28",
+    "abstract": "The paper studies model scaling and proposes compound scaling, which uniformly scales network depth, width, and resolution with a single coefficient phi. Using neural architecture search to obtain a baseline (EfficientNet-B0) and scaling it up yields EfficientNet-B1 to B7. EfficientNet-B7 achieves 84.3% ImageNet top-1 while being 8.4x smaller and 6.1x faster on inference than the best existing ConvNet, and the models transfer well.",
+    "domain": "CV",
+    "key_claims": [
+      "Balancing depth, width, and resolution scaling is critical; scaling a single dimension saturates quickly.",
+      "Compound scaling d = alpha^phi, w = beta^phi, r = gamma^phi with alpha * beta^2 * gamma^2 ≈ 2 scales FLOPs by about 2^phi.",
+      "EfficientNet-B7 reaches 84.3% ImageNet top-1 with 66M parameters, 8.4x smaller and 6.1x faster than GPipe.",
+      "EfficientNet-B0 reaches 77.1% top-1 with 5.3M parameters and 0.39B FLOPs.",
+      "EfficientNets transfer well, achieving state-of-the-art accuracy on 5 of 8 transfer datasets with fewer parameters."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "EfficientNet-B0 (MBConv + SE, SiLU) scaled with alpha=1.2, beta=1.1, gamma=1.15",
+    "modules": [
+      {
+        "name": "Stem",
+        "operation_type": "conv",
+        "input_shape": "[B, 3, 224, 224]",
+        "output_shape": "[B, 32, 112, 112]",
+        "parameters": {
+          "kernel": 3,
+          "stride": 2
+        },
+        "paper_section": "Table 1",
+        "confidence": 0.97,
+        "notes": null
+      },
+      {
+        "name": "MBConvStages",
+        "operation_type": "mbconv",
+        "input_shape": "[B, 32, 112, 112]",
+        "output_shape": "[B, 320, 7, 7]",
+        "parameters": {
+          "blocks": "Table 1",
+          "se_ratio": 0.25,
+          "activation": "SiLU/Swish"
+        },
+        "paper_section": "Table 1; Section 4",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "Head",
+        "operation_type": "conv_pool_fc",
+        "input_shape": "[B, 320, 7, 7]",
+        "output_shape": "[B, 1000]",
+        "parameters": {
+          "conv1x1": 1280,
+          "dropout": "0.2-0.5"
+        },
+        "paper_section": "Table 1",
+        "confidence": 0.95,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "Stem",
+        "to": "MBConvStages",
+        "tensor_name": null
+      },
+      {
+        "from": "MBConvStages",
+        "to": "Head",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "EfficientNet-B0",
+        "differences": {
+          "width": 1.0,
+          "depth": 1.0,
+          "resolution": 224,
+          "dropout": 0.2
+        }
+      },
+      {
+        "name": "EfficientNet-B1",
+        "differences": {
+          "width": 1.0,
+          "depth": 1.1,
+          "resolution": 240,
+          "dropout": 0.2
+        }
+      },
+      {
+        "name": "EfficientNet-B2",
+        "differences": {
+          "width": 1.1,
+          "depth": 1.2,
+          "resolution": 260,
+          "dropout": 0.3
+        }
+      },
+      {
+        "name": "EfficientNet-B3",
+        "differences": {
+          "width": 1.2,
+          "depth": 1.4,
+          "resolution": 300,
+          "dropout": 0.3
+        }
+      },
+      {
+        "name": "EfficientNet-B4",
+        "differences": {
+          "width": 1.4,
+          "depth": 1.8,
+          "resolution": 380,
+          "dropout": 0.4
+        }
+      },
+      {
+        "name": "EfficientNet-B5",
+        "differences": {
+          "width": 1.6,
+          "depth": 2.2,
+          "resolution": 456,
+          "dropout": 0.4
+        }
+      },
+      {
+        "name": "EfficientNet-B6",
+        "differences": {
+          "width": 1.8,
+          "depth": 2.6,
+          "resolution": 528,
+          "dropout": 0.5
+        }
+      },
+      {
+        "name": "EfficientNet-B7",
+        "differences": {
+          "width": 2.0,
+          "depth": 3.1,
+          "resolution": 600,
+          "dropout": 0.5
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Compound scaling",
+      "latex": "d = \\alpha^\\phi,\\; w = \\beta^\\phi,\\; r = \\gamma^\\phi,\\; \\text{s.t. } \\alpha\\beta^2\\gamma^2 \\approx 2,\\; \\alpha,\\beta,\\gamma \\ge 1",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [
+        "phi"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.3, Eq. 3",
+      "confidence": 0.97
+    },
+    {
+      "name": "Grid-searched constants",
+      "latex": "\\alpha = 1.2,\\; \\beta = 1.1,\\; \\gamma = 1.15",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4",
+      "confidence": 0.95
+    },
+    {
+      "name": "Swish / SiLU",
+      "latex": "\\mathrm{swish}(x) = x\\,\\sigma(x)",
+      "role": "activation",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 5.2",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "image",
+      "shape_notation": "[B, 3, r, r]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "Stem",
+      "confidence": 0.9
+    },
+    {
+      "name": "features",
+      "shape_notation": "[B, 1280w, r/32, r/32]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "Head",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, 1000]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "Head",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "RMSProp (decay 0.9, momentum 0.9)",
+      "learning_rate": 0.256,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 1e-05,
+      "confidence": 0.75
+    },
+    "lr_schedule": {
+      "type": "exponential: x0.97 every 2.4 epochs",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.75
+    },
+    "batch_size": 4096,
+    "effective_batch_size": 4096,
+    "training_steps": null,
+    "epochs": 350,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "AutoAugment"
+    ],
+    "curriculum": null,
+    "confidence": 0.75
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "ImageNet ILSVRC-2012",
+        "split": "train / val",
+        "size": 1281167,
+        "publicly_available": true
+      },
+      {
+        "name": "CIFAR-10/100, Birdsnap, Stanford Cars, Flowers, FGVC Aircraft, Oxford-IIIT Pets, Food-101",
+        "split": "transfer",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Top-1 / top-5 accuracy",
+      "Parameters",
+      "FLOPs",
+      "CPU latency"
+    ],
+    "reported_results": [
+      {
+        "metric": "Top-1, EfficientNet-B0",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 77.1,
+        "is_primary": false
+      },
+      {
+        "metric": "Top-1, EfficientNet-B7",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 84.3,
+        "is_primary": true
+      },
+      {
+        "metric": "Params (M), EfficientNet-B0",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 5.3,
+        "is_primary": false
+      },
+      {
+        "metric": "Params (M), EfficientNet-B7",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 66.0,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "ResNet",
+      "GPipe",
+      "NASNet",
+      "AmoebaNet",
+      "MobileNetV2"
+    ],
+    "compute": "B0: TPU v3 pod or 8 GPUs for days; B7: large TPU pod.",
+    "special_conditions": [],
+    "confidence": 0.85
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Batch 4096 and 350 epochs from the authors' public TPU recipe.",
+      "basis": "Paper text does not state batch size or epochs.",
+      "confidence": 0.6,
+      "alternatives": [],
+      "affects_section": "Section 5.2"
+    },
+    {
+      "assumption": "Label smoothing 0.1 (public recipe).",
+      "basis": "Not mentioned in the paper.",
+      "confidence": 0.6,
+      "alternatives": [
+        "no smoothing"
+      ],
+      "affects_section": "Section 5.2"
+    },
+    {
+      "assumption": "AutoAugment and weight EMA are not implemented in the scaffold.",
+      "basis": "Scope limit; required for paper accuracy.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 5.2"
+    },
+    {
+      "assumption": "SE squeezes to 0.25 x block input channels.",
+      "basis": "Matches the reference implementation; paper says 'squeeze-and-excitation optimization'.",
+      "confidence": 0.85,
+      "alternatives": [],
+      "affects_section": "Section 4"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 5.2",
+      "description": "B7 top-1 reported as 84.3% (later arXiv versions) vs 84.4% (earlier).",
+      "primary_assumption": "84.3",
+      "alternatives": [
+        "84.4"
+      ],
+      "confidence": 0.8
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.96,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.93,
+    "training_pipeline": 0.72,
+    "evaluation_protocol": 0.85,
+    "implementation_assumptions": 0.75,
+    "overall_sir_confidence": 0.86
+  }
+}
