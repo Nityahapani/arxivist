@@ -1,0 +1,287 @@
+{
+  "paper_id": "arxiv_2304_02643",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Segment Anything",
+    "authors": [
+      "Alexander Kirillov",
+      "Eric Mintun",
+      "Nikhila Ravi",
+      "Hanzi Mao",
+      "Chloe Rolland",
+      "Laura Gustafson",
+      "Tete Xiao",
+      "Spencer Whitehead",
+      "Alexander C. Berg",
+      "Wan-Yen Lo",
+      "Piotr Dollár",
+      "Ross Girshick"
+    ],
+    "affiliations": [
+      "Meta AI Research, FAIR"
+    ],
+    "arxiv_id": "2304.02643",
+    "doi": null,
+    "submission_date": "2023-04-05",
+    "abstract": "The Segment Anything project introduces a new task, model and dataset for image segmentation. Using an efficient model in a data collection loop, the authors built the largest segmentation dataset to date, with over 1 billion masks on 11M licensed and privacy-respecting images. The promptable model transfers zero-shot to new image distributions and tasks, with zero-shot performance that is often competitive with or better than prior fully supervised results.",
+    "domain": "CV",
+    "key_claims": [
+      "A promptable segmentation task (return a valid mask for any point, box, mask or text prompt) enables zero-shot transfer via prompt engineering.",
+      "SAM decouples a heavy image encoder (run once per image) from a lightweight prompt encoder and mask decoder that run in about 50 ms in a web browser.",
+      "Predicting three masks per ambiguous prompt and back-propagating only the lowest-loss mask handles ambiguity.",
+      "The data engine produced SA-1B: 1.1B masks on 11M images, 99.1% generated fully automatically."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "SAM ViT-H: MAE-pretrained windowed ViT-H/16 image encoder (1024 px input, 64x64x256 embedding), Fourier prompt encoder, 2-layer two-way transformer mask decoder with 3+1 mask tokens and IoU head",
+    "modules": [
+      {
+        "name": "ImageEncoderViT",
+        "operation_type": "vit_windowed",
+        "input_shape": "[B, 3, 1024, 1024]",
+        "output_shape": "[B, 256, 64, 64]",
+        "parameters": {
+          "window": 14,
+          "global_blocks": 4,
+          "neck_channels": 256
+        },
+        "paper_section": "Section 3; Appendix A",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "PromptEncoder",
+        "operation_type": "prompt_encoder",
+        "input_shape": "points / box / mask",
+        "output_shape": "sparse [B, T, 256], dense [B, 256, 64, 64]",
+        "parameters": {
+          "pe": "random Fourier"
+        },
+        "paper_section": "Appendix A",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "MaskDecoder",
+        "operation_type": "two_way_transformer",
+        "input_shape": "embedding + tokens",
+        "output_shape": "[B, K, 256, 256] logits, [B, K] IoU",
+        "parameters": {
+          "depth": 2,
+          "heads": 8,
+          "mlp": 2048,
+          "mask_tokens": 4
+        },
+        "paper_section": "Appendix A, Fig. 14",
+        "confidence": 0.9,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "ImageEncoderViT",
+        "to": "MaskDecoder",
+        "tensor_name": "image_embedding"
+      },
+      {
+        "from": "PromptEncoder",
+        "to": "MaskDecoder",
+        "tensor_name": "prompt_tokens"
+      }
+    ],
+    "variants": [
+      {
+        "name": "ViT-B",
+        "differences": {
+          "image_encoder": "ViT-B"
+        }
+      },
+      {
+        "name": "ViT-L",
+        "differences": {
+          "image_encoder": "ViT-L"
+        }
+      },
+      {
+        "name": "ViT-H",
+        "differences": {
+          "image_encoder": "ViT-H"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Mask loss",
+      "latex": "\\mathcal{L}_{mask} = 20\\,\\mathcal{L}_{focal} + \\mathcal{L}_{dice}",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3; Appendix A",
+      "confidence": 0.95
+    },
+    {
+      "name": "Ambiguity-aware minimum",
+      "latex": "\\mathcal{L} = \\min_{k \\in \\{1,2,3\\}} \\mathcal{L}_{mask}(\\hat m_k, m) + \\mathcal{L}_{IoU}",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.9
+    },
+    {
+      "name": "IoU prediction loss",
+      "latex": "\\mathcal{L}_{IoU} = \\|\\hat s - \\mathrm{IoU}(\\hat m, m)\\|_2^2",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A",
+      "confidence": 0.9
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "image",
+      "shape_notation": "[B, 3, 1024, 1024]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "ImageEncoderViT",
+      "confidence": 0.9
+    },
+    {
+      "name": "image_embedding",
+      "shape_notation": "[B, 256, 64, 64]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "MaskDecoder",
+      "confidence": 0.9
+    },
+    {
+      "name": "masks",
+      "shape_notation": "[B, 3, 256, 256]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "MaskDecoder",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": 0.0008,
+      "beta1": 0.9,
+      "beta2": 0.999,
+      "weight_decay": 0.1,
+      "confidence": 0.6
+    },
+    "lr_schedule": {
+      "type": "linear warmup then step decay",
+      "warmup_steps": 250,
+      "total_steps": null,
+      "confidence": 0.6
+    },
+    "batch_size": 256,
+    "effective_batch_size": 256,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.6
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "SA-1B",
+        "split": "11M images, 1.1B masks",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "23 zero-shot evaluation datasets",
+        "split": "single-point evaluation",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "BSDS500, LVIS, COCO",
+        "split": "edge, proposal, instance evaluation",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "mIoU (single and multi-point)",
+      "Human quality rating",
+      "Edge ODS/OIS",
+      "AR@1000",
+      "Mask AP"
+    ],
+    "reported_results": [],
+    "baselines": [
+      "RITM",
+      "SimpleClick",
+      "FocalClick",
+      "ViTDet-H"
+    ],
+    "compute": "Trained on 256 A100 GPUs for 3 to 5 days (ViT-H).",
+    "special_conditions": [],
+    "confidence": 0.6
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "AdamW lr 8e-4, warmup 250, 90k iterations, batch 256, weight decay 0.1, step decay, drop path 0.4, layer decay 0.8 (configs/paper.json).",
+      "basis": "Best-recalled from Appendix A; must be checked.",
+      "confidence": 0.6,
+      "alternatives": [],
+      "affects_section": "Appendix A"
+    },
+    {
+      "assumption": "Multiple masks only on the first round when no box is given; otherwise the single-mask token.",
+      "basis": "Paper predicts a single mask when more than one prompt is given.",
+      "confidence": 0.75,
+      "alternatives": [
+        "treat a box as an ambiguous prompt"
+      ],
+      "affects_section": "Section 3"
+    },
+    {
+      "assumption": "No relative positional embeddings in windowed attention; random init instead of MAE pretraining.",
+      "basis": "Simplification for a CPU scaffold.",
+      "confidence": 0.8,
+      "alternatives": [],
+      "affects_section": "Appendix A"
+    },
+    {
+      "assumption": "Text-prompt (CLIP) experiments are not implemented.",
+      "basis": "Exploratory in the paper.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 7.5"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Appendix A",
+      "description": "Exact optimiser schedule and regularisation values.",
+      "primary_assumption": "see configs/paper.json",
+      "alternatives": [],
+      "confidence": 0.6
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.88,
+    "mathematical_spec": 0.92,
+    "tensor_semantics": 0.88,
+    "training_pipeline": 0.6,
+    "evaluation_protocol": 0.6,
+    "implementation_assumptions": 0.75,
+    "overall_sir_confidence": 0.8
+  }
+}
