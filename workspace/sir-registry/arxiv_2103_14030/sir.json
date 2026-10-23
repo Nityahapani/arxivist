@@ -1,0 +1,388 @@
+{
+  "paper_id": "arxiv_2103_14030",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows",
+    "authors": [
+      "Ze Liu",
+      "Yutong Lin",
+      "Yue Cao",
+      "Han Hu",
+      "Yixuan Wei",
+      "Zheng Zhang",
+      "Stephen Lin",
+      "Baining Guo"
+    ],
+    "affiliations": [
+      "Microsoft Research Asia"
+    ],
+    "arxiv_id": "2103.14030",
+    "doi": null,
+    "submission_date": "2021-03-25",
+    "abstract": "Swin Transformer is a hierarchical vision Transformer whose representation is computed with shifted windows: self-attention is limited to non-overlapping local windows while allowing cross-window connections, giving linear complexity in image size. It serves as a general-purpose backbone, achieving 87.3% ImageNet-1K top-1, 58.7 box AP / 51.1 mask AP on COCO test-dev and 53.5 mIoU on ADE20K val.",
+    "domain": "CV",
+    "key_claims": [
+      "Self-attention within non-overlapping M x M windows gives complexity linear in the number of tokens.",
+      "Alternating regular and shifted window partitions in consecutive blocks creates cross-window connections efficiently.",
+      "A hierarchical design with patch merging produces multi-scale feature maps suitable for dense prediction.",
+      "Swin-T reaches 81.3% ImageNet-1K top-1 with 28M parameters.",
+      "Swin-L achieves 58.7 box AP and 51.1 mask AP on COCO test-dev and 53.5 mIoU on ADE20K val."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "Swin-T: C=96, depths (2,2,6,2), heads (3,6,12,24), window M=7, patch 4",
+    "modules": [
+      {
+        "name": "PatchPartitionEmbed",
+        "operation_type": "conv_patchify",
+        "input_shape": "[B, 3, 224, 224]",
+        "output_shape": "[B, 3136, 96]",
+        "parameters": {
+          "patch": 4
+        },
+        "paper_section": "Section 3.1",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "WMSA",
+        "operation_type": "window_attention",
+        "input_shape": "[B*nW, 49, C]",
+        "output_shape": "[B*nW, 49, C]",
+        "parameters": {
+          "window": 7,
+          "relative_position_bias": "(2M-1)^2 table"
+        },
+        "paper_section": "Section 3.2",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "SWMSA",
+        "operation_type": "shifted_window_attention",
+        "input_shape": "[B, H*W, C]",
+        "output_shape": "[B, H*W, C]",
+        "parameters": {
+          "shift": "floor(M/2)",
+          "implementation": "cyclic shift + mask"
+        },
+        "paper_section": "Section 3.2, Fig. 4",
+        "confidence": 0.94,
+        "notes": null
+      },
+      {
+        "name": "PatchMerging",
+        "operation_type": "downsample",
+        "input_shape": "[B, H*W, C]",
+        "output_shape": "[B, H*W/4, 2C]",
+        "parameters": {
+          "concat": "2x2",
+          "linear": "4C -> 2C"
+        },
+        "paper_section": "Section 3.1",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "Head",
+        "operation_type": "linear",
+        "input_shape": "[B, 8C]",
+        "output_shape": "[B, 1000]",
+        "parameters": {
+          "pool": "global average"
+        },
+        "paper_section": "Section 4.1",
+        "confidence": 0.9,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "PatchPartitionEmbed",
+        "to": "WMSA",
+        "tensor_name": null
+      },
+      {
+        "from": "WMSA",
+        "to": "SWMSA",
+        "tensor_name": null
+      },
+      {
+        "from": "SWMSA",
+        "to": "PatchMerging",
+        "tensor_name": null
+      },
+      {
+        "from": "PatchMerging",
+        "to": "Head",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "Swin-S",
+        "differences": {
+          "depths": [
+            2,
+            2,
+            18,
+            2
+          ]
+        }
+      },
+      {
+        "name": "Swin-B",
+        "differences": {
+          "C": 128,
+          "heads": [
+            4,
+            8,
+            16,
+            32
+          ]
+        }
+      },
+      {
+        "name": "Swin-L",
+        "differences": {
+          "C": 192,
+          "heads": [
+            6,
+            12,
+            24,
+            48
+          ]
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Window attention with relative bias",
+      "latex": "\\mathrm{Attention}(Q,K,V) = \\mathrm{SoftMax}(QK^\\top/\\sqrt{d} + B)V",
+      "role": "attention",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.2, Eq. 4",
+      "confidence": 0.96
+    },
+    {
+      "name": "Complexity",
+      "latex": "\\Omega(\\mathrm{W\\text{-}MSA}) = 4hwC^2 + 2M^2hwC",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.2, Eq. 1-2",
+      "confidence": 0.95
+    },
+    {
+      "name": "Consecutive blocks",
+      "latex": "\\hat z^l = \\mathrm{W\\text{-}MSA}(\\mathrm{LN}(z^{l-1})) + z^{l-1};\\; \\hat z^{l+1} = \\mathrm{SW\\text{-}MSA}(\\mathrm{LN}(z^l)) + z^l",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.2, Eq. 3",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "image",
+      "shape_notation": "[B, 3, 224, 224]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "PatchPartitionEmbed",
+      "confidence": 0.9
+    },
+    {
+      "name": "windows",
+      "shape_notation": "[B*nW, M*M, C]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "WMSA",
+      "confidence": 0.9
+    },
+    {
+      "name": "relative_position_bias",
+      "shape_notation": "[heads, M*M, M*M]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "WMSA",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, 1000]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "Head",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": 0.001,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.05,
+      "confidence": 0.85
+    },
+    "lr_schedule": {
+      "type": "cosine, 20 warm-up epochs",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.85
+    },
+    "batch_size": 1024,
+    "effective_batch_size": 1024,
+    "training_steps": null,
+    "epochs": 300,
+    "mixed_precision": null,
+    "gradient_clipping": 5.0,
+    "data_augmentation": [
+      "RandAugment",
+      "Mixup",
+      "CutMix",
+      "Random Erasing",
+      "label smoothing 0.1"
+    ],
+    "curriculum": null,
+    "confidence": 0.85
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "ImageNet-1K",
+        "split": "train / val",
+        "size": 1281167,
+        "publicly_available": true
+      },
+      {
+        "name": "ImageNet-22K",
+        "split": "pretraining",
+        "size": 14197122,
+        "publicly_available": true
+      },
+      {
+        "name": "COCO 2017",
+        "split": "detection",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "ADE20K",
+        "split": "segmentation",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "ImageNet top-1",
+      "COCO box AP / mask AP",
+      "ADE20K mIoU"
+    ],
+    "reported_results": [
+      {
+        "metric": "Top-1, Swin-T",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 81.3,
+        "is_primary": true
+      },
+      {
+        "metric": "Top-1, Swin-S",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 83.0,
+        "is_primary": false
+      },
+      {
+        "metric": "Top-1, Swin-B",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 83.5,
+        "is_primary": false
+      },
+      {
+        "metric": "Box AP, Swin-L (HTC++)",
+        "dataset": "COCO test-dev",
+        "split": "test",
+        "value": 58.7,
+        "is_primary": false
+      },
+      {
+        "metric": "Mask AP, Swin-L (HTC++)",
+        "dataset": "COCO test-dev",
+        "split": "test",
+        "value": 51.1,
+        "is_primary": false
+      },
+      {
+        "metric": "mIoU, Swin-L (UperNet)",
+        "dataset": "ADE20K",
+        "split": "val",
+        "value": 53.5,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "DeiT",
+      "ViT",
+      "RegNetY",
+      "EfficientNet",
+      "ResNe(X)t"
+    ],
+    "compute": "Swin-T 300 epochs ImageNet-1K: 8-16 V100/A100 GPUs for several days.",
+    "special_conditions": [],
+    "confidence": 0.85
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "RandAugment and Random Erasing are not implemented; Mixup/CutMix/label smoothing are.",
+      "basis": "Scope limit; must be added before reporting.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 4.1"
+    },
+    {
+      "assumption": "If a stage's resolution is <= window size, the window equals the full map and no shift is applied.",
+      "basis": "Follows the reference implementation.",
+      "confidence": 0.85,
+      "alternatives": [],
+      "affects_section": "Section 3.2"
+    },
+    {
+      "assumption": "Clip-norm 5.0 from the reference recipe is documented but not applied in the scaffold loop.",
+      "basis": "To be added with the full recipe.",
+      "confidence": 0.7,
+      "alternatives": [],
+      "affects_section": "Section 4.1"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 3.2",
+      "description": "Masking value for disallowed window pairs.",
+      "primary_assumption": "-100 additive mask",
+      "alternatives": [
+        "-inf"
+      ],
+      "confidence": 0.85
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.96,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.93,
+    "training_pipeline": 0.82,
+    "evaluation_protocol": 0.85,
+    "implementation_assumptions": 0.8,
+    "overall_sir_confidence": 0.88
+  }
+}
