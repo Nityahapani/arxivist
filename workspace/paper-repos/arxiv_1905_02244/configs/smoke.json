@@ -1,0 +1,7 @@
+{
+  "paper": {"title": "MobileNetV3 smoke-test configuration", "arxiv_id": "1905.02244"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"name": "synthetic", "image_size": 32, "n_classes": 4, "n_train": 128, "n_test": 64},
+  "model": {"mode": "small", "width_mult": 0.35, "dropout": 0.2},
+  "train": {"steps": 10, "batch_size": 16, "lr": 0.01, "scale_lr": false, "weight_decay": 1e-5, "decay_rate": 0.97, "decay_every_epochs": 3, "steps_per_epoch": 4, "label_smoothing": 0.0, "ema_decay": 0.99, "log_every": 5}
+}

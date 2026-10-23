@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "MobileNetV3-Large 1.0 ImageNet training (Section 6.1)", "arxiv_id": "1905.02244"},
+  "run_name": "in1k_mbv3_large", "seed": 0, "device": "auto",
+  "data": {"name": "imagenet", "root": "data/imagenet", "image_size": 224, "n_classes": 1000},
+  "model": {"mode": "large", "width_mult": 1.0, "dropout": 0.2},
+  "train": {"steps": 187500, "batch_size": 4096, "lr": 0.1, "scale_lr": true, "weight_decay": 1e-5, "decay_rate": 0.97, "decay_every_epochs": 3, "steps_per_epoch": 312, "label_smoothing": 0.0, "ema_decay": 0.9999, "log_every": 100},
+  "note": "Paper: RMSProp momentum 0.9, initial LR 0.1, batch 4096 (128 per TPU chip), 'learning rate decay rate of 0.01 every 3 epochs', dropout 0.8, L2 1e-5, Inception preprocessing, EMA 0.9999. The decay wording is ambiguous; decay_rate 0.97 every 3 epochs is our interpretation (a common reading in public reimplementations). 'Dropout 0.8' is read as keep-probability 0.8 (dropout 0.2). Epoch budget (~600) is an assumption. Set model.mode to small for MobileNetV3-Small."
+}
