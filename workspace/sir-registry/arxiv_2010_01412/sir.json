@@ -1,0 +1,275 @@
+{
+  "paper_id": "arxiv_2010_01412",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Sharpness-Aware Minimization for Efficiently Improving Generalization",
+    "authors": [
+      "Pierre Foret",
+      "Ariel Kleiner",
+      "Hossein Mobahi",
+      "Behnam Neyshabur"
+    ],
+    "affiliations": [
+      "Google Research"
+    ],
+    "arxiv_id": "2010.01412",
+    "doi": null,
+    "submission_date": "2020-10-03",
+    "abstract": "SAM simultaneously minimises loss value and loss sharpness by seeking parameters whose neighbourhoods have uniformly low loss. The min-max problem admits an efficient first-order approximation requiring one extra forward/backward pass. SAM improves generalization across CIFAR-10/100, ImageNet and fine-tuning tasks, provides robustness to label noise, and the paper introduces m-sharpness.",
+    "domain": "CV",
+    "key_claims": [
+      "Minimising max_{||eps||<=rho} L(w + eps) improves generalization, motivated by a PAC-Bayesian bound.",
+      "The inner maximisation is approximated by eps_hat = rho g / ||g||, costing one extra gradient computation per step.",
+      "SAM improves test error over SGD across architectures on CIFAR-10, CIFAR-100, and ImageNet, and in fine-tuning.",
+      "SAM provides robustness to label noise comparable to dedicated noisy-label methods.",
+      "m-sharpness computed on small per-accelerator sub-batches correlates better with generalization."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "SAM wrapped around SGD with momentum, rho=0.05, L2 neighbourhood (p=2), WRN-28-10 on CIFAR-10",
+    "modules": [
+      {
+        "name": "WideResNet28x10",
+        "operation_type": "wide_resnet",
+        "input_shape": "[B, 3, 32, 32]",
+        "output_shape": "[B, C]",
+        "parameters": {
+          "depth": 28,
+          "widen": 10
+        },
+        "paper_section": "Section 3.1",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "AscentStep",
+        "operation_type": "weight_perturbation",
+        "input_shape": "w, grad",
+        "output_shape": "w + eps_hat",
+        "parameters": {
+          "rho": 0.05,
+          "p": 2
+        },
+        "paper_section": "Algorithm 1; Eq. 2",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "DescentStep",
+        "operation_type": "optimizer_step",
+        "input_shape": "grad at w + eps_hat",
+        "output_shape": "w_{t+1}",
+        "parameters": {
+          "base": "SGD momentum 0.9"
+        },
+        "paper_section": "Algorithm 1",
+        "confidence": 0.95,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "WideResNet28x10",
+        "to": "AscentStep",
+        "tensor_name": null
+      },
+      {
+        "from": "AscentStep",
+        "to": "DescentStep",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "SGD baseline",
+        "differences": {
+          "rho": 0
+        }
+      },
+      {
+        "name": "m-sharpness",
+        "differences": {
+          "m": "per-accelerator sub-batch size"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "SAM objective",
+      "latex": "\\min_w L^{SAM}_S(w) + \\lambda\\|w\\|_2^2,\\; L^{SAM}_S(w) = \\max_{\\|\\epsilon\\|_p\\le\\rho} L_S(w+\\epsilon)",
+      "role": "objective",
+      "used_in": "training",
+      "hyperparameters": [
+        "rho",
+        "lambda"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 2, Eq. 1",
+      "confidence": 0.95
+    },
+    {
+      "name": "Approximate inner solution",
+      "latex": "\\hat\\epsilon(w) = \\rho\\, \\mathrm{sign}(\\nabla L)|\\nabla L|^{q-1} / (\\|\\nabla L\\|_q^q)^{1/p}",
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2, Eq. 2",
+      "confidence": 0.93
+    },
+    {
+      "name": "SAM gradient",
+      "latex": "\\nabla_w L^{SAM}_S(w) \\approx \\nabla_w L_S(w)|_{w+\\hat\\epsilon(w)}",
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2, Eq. 3",
+      "confidence": 0.93
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "x",
+      "shape_notation": "[B, 3, 32, 32]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "WideResNet28x10",
+      "confidence": 0.9
+    },
+    {
+      "name": "eps_hat",
+      "shape_notation": "same as w",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "AscentStep",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, C]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "WideResNet28x10",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "SAM(SGD, momentum 0.9)",
+      "learning_rate": 0.1,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.0005,
+      "confidence": 0.65
+    },
+    "lr_schedule": {
+      "type": "cosine",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.65
+    },
+    "batch_size": 256,
+    "effective_batch_size": 256,
+    "training_steps": null,
+    "epochs": 200,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "random crop",
+      "horizontal flip"
+    ],
+    "curriculum": null,
+    "confidence": 0.65
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "CIFAR-10",
+        "split": "train / test",
+        "size": 60000,
+        "publicly_available": true
+      },
+      {
+        "name": "CIFAR-100",
+        "split": "train / test",
+        "size": 60000,
+        "publicly_available": true
+      },
+      {
+        "name": "ImageNet",
+        "split": "train / val",
+        "size": 1281167,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Test error rate (%)"
+    ],
+    "reported_results": [],
+    "baselines": [
+      "SGD with momentum (same budget)"
+    ],
+    "compute": "WRN-28-10, 200 epochs, SAM doubles gradient cost: ~1 GPU-day on a modern GPU.",
+    "special_conditions": [],
+    "confidence": 0.7
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Batch 256, LR 0.1 cosine, weight decay 5e-4, 200 epochs, rho 0.05.",
+      "basis": "Representative CIFAR settings; contributors should verify against the paper's appendix table.",
+      "confidence": 0.6,
+      "alternatives": [
+        "rho grid {0.01,...,0.5}"
+      ],
+      "affects_section": "Table 1; Appendix"
+    },
+    {
+      "assumption": "Emulate the paper's data-parallel m-sharpness by splitting each batch into chunks of m=128 with independent perturbations.",
+      "basis": "The paper notes that per-accelerator perturbation effectively computes m-sharpness.",
+      "confidence": 0.7,
+      "alternatives": [
+        "m = full batch"
+      ],
+      "affects_section": "Section 4.1"
+    },
+    {
+      "assumption": "Only the basic augmentation row (crop+flip) is implemented; Cutout and AutoAugment rows are not.",
+      "basis": "Scope limit.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Table 1"
+    },
+    {
+      "assumption": "No numeric targets are recorded in the SIR; read the target error rates from Table 1 when filling in results.",
+      "basis": "Avoids transcribing values that could not be verified in the authoring environment.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Table 1"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 3.1",
+      "description": "rho chosen per setting by validation.",
+      "primary_assumption": "0.05",
+      "alternatives": [
+        "0.1",
+        "0.02"
+      ],
+      "confidence": 0.6
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.9,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.88,
+    "training_pipeline": 0.65,
+    "evaluation_protocol": 0.7,
+    "implementation_assumptions": 0.7,
+    "overall_sir_confidence": 0.8
+  }
+}
