@@ -1,0 +1,273 @@
+{
+  "paper_id": "arxiv_2405_21060",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality",
+    "authors": [
+      "Tri Dao",
+      "Albert Gu"
+    ],
+    "affiliations": [
+      "Princeton University",
+      "Carnegie Mellon University"
+    ],
+    "arxiv_id": "2405.21060",
+    "doi": null,
+    "submission_date": "2024-05-31",
+    "abstract": "The paper shows that state space models and variants of attention are closely related through structured semiseparable matrices, developing the state space duality (SSD) framework. SSD yields Mamba-2, whose core layer refines Mamba's selective SSM and is 2-8x faster while remaining competitive with Transformers on language modelling.",
+    "domain": "NLP",
+    "key_claims": [
+      "An SSM with scalar-times-identity A is equivalent to masked linear attention with a 1-semiseparable mask L (state space duality).",
+      "The SSD chunked algorithm computes the layer with matrix multiplications, combining quadratic intra-chunk and linear inter-chunk computation.",
+      "The SSD core layer is 2-8x faster than Mamba's selective scan and allows much larger state sizes.",
+      "Mamba-2 (parallel projections, extra normalisation, multi-head SSM) matches or beats Mamba and Transformer++ in LM scaling and improves on MQAR associative recall."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "Mamba-2 block: parallel in_proj to (z, x, B, C, dt), depthwise conv, SSD with scalar A per head, gated RMSNorm, out_proj",
+    "modules": [
+      {
+        "name": "InProj",
+        "operation_type": "linear",
+        "input_shape": "[B, L, d]",
+        "output_shape": "[B, L, 2*d_inner + 2N + H]",
+        "parameters": {
+          "parallel_projections": true
+        },
+        "paper_section": "Section 7.1, Fig. 6",
+        "confidence": 0.92,
+        "notes": null
+      },
+      {
+        "name": "Conv1d",
+        "operation_type": "depthwise_conv",
+        "input_shape": "[B, L, d_inner + 2N]",
+        "output_shape": "[B, L, d_inner + 2N]",
+        "parameters": {
+          "kernel": 4,
+          "activation": "SiLU"
+        },
+        "paper_section": "Section 7.1",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "SSD",
+        "operation_type": "ssm",
+        "input_shape": "[B, L, H, P]",
+        "output_shape": "[B, L, H, P]",
+        "parameters": {
+          "A": "scalar per head",
+          "state": "N x P per head",
+          "algorithm": "chunked"
+        },
+        "paper_section": "Sections 6-7",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "GatedRMSNorm",
+        "operation_type": "norm",
+        "input_shape": "[B, L, d_inner]",
+        "output_shape": "[B, L, d_inner]",
+        "parameters": {
+          "gate": "silu(z)"
+        },
+        "paper_section": "Section 7.2",
+        "confidence": 0.88,
+        "notes": null
+      },
+      {
+        "name": "OutProj",
+        "operation_type": "linear",
+        "input_shape": "[B, L, d_inner]",
+        "output_shape": "[B, L, d]",
+        "parameters": {},
+        "paper_section": "Fig. 6",
+        "confidence": 0.92,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "InProj",
+        "to": "Conv1d",
+        "tensor_name": "xBC"
+      },
+      {
+        "from": "Conv1d",
+        "to": "SSD",
+        "tensor_name": "x, B, C"
+      },
+      {
+        "from": "SSD",
+        "to": "GatedRMSNorm",
+        "tensor_name": "y"
+      },
+      {
+        "from": "GatedRMSNorm",
+        "to": "OutProj",
+        "tensor_name": "y"
+      }
+    ],
+    "variants": []
+  },
+  "mathematical_spec": [
+    {
+      "name": "SSM recurrence",
+      "latex": "h_t = a_t h_{t-1} + B_t x_t^\\top,\\; y_t = h_t^\\top C_t",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.95
+    },
+    {
+      "name": "Quadratic (dual) form",
+      "latex": "Y = (L \\circ C B^\\top) X,\\; L_{ij} = a_{j+1}\\cdots a_i\\;(i \\ge j)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4-5",
+      "confidence": 0.95
+    },
+    {
+      "name": "Discretisation",
+      "latex": "a_t = \\exp(\\Delta_t A),\\; \\bar{x}_t = \\Delta_t x_t,\\; \\Delta_t = \\mathrm{softplus}(\\cdot + b_\\Delta)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 7",
+      "confidence": 0.85
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "u",
+      "shape_notation": "[B, L, d]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "InProj",
+      "confidence": 0.9
+    },
+    {
+      "name": "ssm_state",
+      "shape_notation": "[B, H, P, N]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "SSD",
+      "confidence": 0.9
+    },
+    {
+      "name": "y",
+      "shape_notation": "[B, L, d]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "OutProj",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW (0.9, 0.95)",
+      "learning_rate": null,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.1,
+      "confidence": 0.5
+    },
+    "lr_schedule": {
+      "type": "warmup + cosine",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.5
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.5
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "MQAR synthetic associative recall",
+        "split": "synthetic",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "The Pile",
+        "split": "LM pretraining",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "MQAR accuracy",
+      "Validation perplexity",
+      "Zero-shot accuracy",
+      "Layer throughput"
+    ],
+    "reported_results": [],
+    "baselines": [
+      "Mamba",
+      "Transformer++",
+      "FlashAttention-2",
+      "Pythia",
+      "RWKV"
+    ],
+    "compute": "A100/H100 GPUs for LM scaling; Triton kernels for SSD.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Only the 2–8× core-layer speed-up is quoted; read MQAR (Fig. 8), scaling (Fig. 9) and zero-shot (Table 1) targets from the paper.",
+      "basis": "Avoid citing uncertain numbers.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 9"
+    },
+    {
+      "assumption": "Pure PyTorch einsum implementation of Listing 1; no Triton kernels.",
+      "basis": "CPU-testable reference.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 6"
+    },
+    {
+      "assumption": "A ~ -U[1,16], dt in [1e-3, 0.1] log-uniform, D = 1 (reference implementation defaults).",
+      "basis": "Not fully specified in text.",
+      "confidence": 0.7,
+      "alternatives": [],
+      "affects_section": "Appendix"
+    },
+    {
+      "assumption": "AdamW (0.9, 0.95), wd 0.1, warmup-cosine; LR is an assumption.",
+      "basis": "Paper follows GPT-3/Mamba recipes.",
+      "confidence": 0.5,
+      "alternatives": [],
+      "affects_section": "Appendix D"
+    }
+  ],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "architecture": 0.93,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.92,
+    "training_pipeline": 0.5,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.55,
+    "overall_sir_confidence": 0.84
+  }
+}
