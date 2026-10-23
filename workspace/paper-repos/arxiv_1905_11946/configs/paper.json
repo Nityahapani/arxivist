@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "EfficientNet-B0 ImageNet training (Section 5.2)", "arxiv_id": "1905.11946"},
+  "run_name": "in1k_b0", "seed": 0, "device": "auto",
+  "data": {"name": "imagenet", "root": "data/imagenet", "image_size": 224, "n_classes": 1000},
+  "model": {"name": "b0", "drop_connect": 0.2},
+  "train": {"steps": 109200, "batch_size": 4096, "lr": 0.256, "scale_lr": true, "weight_decay": 1e-5, "decay_rate": 0.97, "decay_every_epochs": 2.4, "steps_per_epoch": 312, "label_smoothing": 0.1, "log_every": 100},
+  "note": "Paper: RMSProp (decay 0.9, momentum 0.9), BN momentum 0.99, weight decay 1e-5, initial LR 0.256 decaying 0.97 every 2.4 epochs, SiLU, AutoAugment, stochastic depth survival 0.8, dropout 0.2 (B0) to 0.5 (B7). The batch size and 350-epoch budget follow the authors' public TPU recipe (batch 4096) and are assumptions; label smoothing 0.1 is from that recipe. AutoAugment and EMA are not implemented here. Set model.name to b1..b7 and data.image_size to the matching resolution."
+}

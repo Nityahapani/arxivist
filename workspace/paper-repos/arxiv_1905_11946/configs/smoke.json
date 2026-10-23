@@ -1,0 +1,7 @@
+{
+  "paper": {"title": "EfficientNet smoke-test configuration", "arxiv_id": "1905.11946"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"name": "synthetic", "image_size": 32, "n_classes": 4, "n_train": 128, "n_test": 64},
+  "model": {"name": "b0", "width_mult": 0.25, "depth_mult": 0.5, "drop_connect": 0.2},
+  "train": {"steps": 10, "batch_size": 16, "lr": 0.016, "scale_lr": false, "weight_decay": 1e-5, "decay_rate": 0.97, "decay_every_epochs": 2.4, "steps_per_epoch": 4, "label_smoothing": 0.1, "log_every": 5}
+}
