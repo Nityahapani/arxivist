@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "BYOL ResNet-50 ImageNet pretraining (Section 3.3, Appendix C)", "arxiv_id": "2006.07733"},
+  "run_name": "byol_r50_in1k_1000ep", "seed": 0, "device": "auto",
+  "data": {"name": "imagenet", "root": "data/imagenet", "image_size": 224, "n_classes": 1000},
+  "model": {"arch": "resnet50", "cifar_stem": false, "hidden": 4096, "proj_dim": 256},
+  "train": {"steps": 312500, "batch_size": 4096, "lr_per_256": 0.2, "weight_decay": 1.5e-6, "tau_base": 0.996, "blur": true, "warmup_fraction": 0.01, "log_every": 100},
+  "linear_eval": {"steps": 25000, "lr": 0.4, "batch_size": 1024},
+  "note": "1000 epochs at batch 4096 (312,500 steps), 10-epoch warmup (=1%). ImageNet needs a streaming loader; data.load_dataset only provides synthetic and CIFAR-10. The paper's linear protocol (SGD Nesterov, 80 epochs, batch 1024, grid over LR) should replace the short linear_eval here."
+}
