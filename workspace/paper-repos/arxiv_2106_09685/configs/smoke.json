@@ -1,0 +1,10 @@
+{
+  "paper": {"title": "LoRA smoke-test configuration", "arxiv_id": "2106.09685"},
+  "backend": "synthetic",
+  "run_name": "smoke",
+  "seed": 0,
+  "model": {"d_model": 32, "n_layers": 2, "n_heads": 4},
+  "data": {"vocab": 16, "seq_len": 17, "n_train": 2048, "n_val": 512},
+  "train": {"pretrain_steps": 60, "pretrain_lr": 0.003, "steps": 60, "lr": 0.01, "batch_size": 64, "eval_every": 20},
+  "lora": {"r": 4, "alpha": 4, "target_modules": ["q_proj", "v_proj"]}
+}

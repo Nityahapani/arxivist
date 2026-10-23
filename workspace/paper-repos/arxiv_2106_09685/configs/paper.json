@@ -1,0 +1,71 @@
+{
+  "paper": {
+    "title": "LoRA RoBERTa-base GLUE protocol (Table 2, hyperparameters from Table 9)",
+    "arxiv_id": "2106.09685"
+  },
+  "backend": "hf",
+  "base_model": "roberta-base",
+  "task": "mnli",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "max_seq_len": 512,
+  "warmup_ratio": 0.06,
+  "lr_schedule": "linear",
+  "lora": {
+    "r": 8,
+    "alpha": 8,
+    "target_modules": [
+      "query",
+      "value"
+    ],
+    "init": "gaussian"
+  },
+  "glue_hparams": {
+    "mnli": {
+      "batch_size": 16,
+      "epochs": 30,
+      "lr": 0.0005
+    },
+    "sst2": {
+      "batch_size": 16,
+      "epochs": 60,
+      "lr": 0.0005
+    },
+    "mrpc": {
+      "batch_size": 16,
+      "epochs": 30,
+      "lr": 0.0004
+    },
+    "cola": {
+      "batch_size": 16,
+      "epochs": 80,
+      "lr": 0.0004
+    },
+    "qnli": {
+      "batch_size": 32,
+      "epochs": 25,
+      "lr": 0.0004
+    },
+    "qqp": {
+      "batch_size": 16,
+      "epochs": 25,
+      "lr": 0.0005
+    },
+    "rte": {
+      "batch_size": 32,
+      "epochs": 80,
+      "lr": 0.0005
+    },
+    "stsb": {
+      "batch_size": 16,
+      "epochs": 40,
+      "lr": 0.0004
+    }
+  },
+  "note": "Hyperparameters transcribed from the paper's RoBERTa-base appendix table (batch sizes, epochs, learning rates). Verify each value against the paper before reporting. The paper reports the median over 5 random seeds; run each task once per seed."
+}
