@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "Segment Anything smoke-test configuration", "arxiv_id": "2304.02643"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"n_train": 16, "max_objects": 3},
+  "model": {"img_size": 64, "patch": 8, "dim": 64, "depth": 4, "heads": 4, "window_size": 4, "global_attn": [1, 3],
+            "embed_dim": 32, "dec_depth": 2, "dec_heads": 4, "dec_mlp": 64},
+  "train": {"batch_size": 2, "steps": 4, "lr": 8e-4, "weight_decay": 0.1, "warmup": 2, "rounds": 3, "log_every": 2}
+}

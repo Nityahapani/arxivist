@@ -1,0 +1,10 @@
+{
+  "paper": {"title": "SAM ViT-H trained on SA-1B (Section 3 / Appendix A)", "arxiv_id": "2304.02643"},
+  "run_name": "sam_vit_h_sa1b", "seed": 0, "device": "auto",
+  "data": {"dataset": "SA-1B", "n_train": 0, "max_objects": 0},
+  "model": {"img_size": 1024, "patch": 16, "dim": 1280, "depth": 32, "heads": 16, "window_size": 14, "global_attn": [7, 15, 23, 31],
+            "embed_dim": 256, "dec_depth": 2, "dec_heads": 8, "dec_mlp": 2048},
+  "train": {"batch_size": 256, "steps": 90000, "lr": 8e-4, "weight_decay": 0.1, "warmup": 250, "rounds": 11, "log_every": 100,
+            "lr_decay_steps": [60000, 86666], "layer_decay": 0.8, "drop_path": 0.4},
+  "note": "Architecture (windowed ViT-H with 4 global blocks, 256-d embedding, 2-layer two-way decoder, 3+1 mask tokens), the 20:1 focal:dice loss and 11-round interactive simulation follow the paper. Optimiser values (AdamW lr 8e-4, warmup 250, 90k iterations, batch 256, step decay, weight decay 0.1, drop path 0.4, layer decay 0.8) are best-recalled from Appendix A and must be checked; step decay, layer decay and drop path are not wired into train.py yet. The image encoder must be initialised from an MAE-pretrained ViT-H (not included). SA-1B loader not included."
+}
