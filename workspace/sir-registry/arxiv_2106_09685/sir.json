@@ -1,0 +1,386 @@
+{
+  "paper_id": "arxiv_2106_09685",
+  "sir_version": 1,
+  "provenance": {
+    "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+    "authors": [
+      "Edward J. Hu",
+      "Yelong Shen",
+      "Phillip Wallis",
+      "Zeyuan Allen-Zhu",
+      "Yuanzhi Li",
+      "Shean Wang",
+      "Lu Wang",
+      "Weizhu Chen"
+    ],
+    "affiliations": [
+      "Microsoft Corporation"
+    ],
+    "arxiv_id": "2106.09685",
+    "doi": null,
+    "submission_date": "2021-06-17",
+    "abstract": "LoRA freezes pretrained Transformer weights and injects trainable rank-decomposition matrices into selected layers, so a weight update is represented as BA with small rank r. It reduces trainable parameters by up to 10,000x and GPU memory by about 3x for GPT-3 175B while matching or exceeding full fine-tuning quality, and adds no inference latency because BA can be merged into W0.",
+    "domain": "NLP",
+    "key_claims": [
+      "A weight update can be parameterised as Delta W = B A with rank r << min(d, k) while W0 stays frozen.",
+      "On GPT-3 175B, LoRA reduces trainable parameters by about 10,000x and GPU memory by about 3x relative to full fine-tuning.",
+      "LoRA matches or exceeds fine-tuning quality on RoBERTa, DeBERTa, GPT-2 and GPT-3 benchmarks.",
+      "Because BA can be merged into W0, LoRA introduces no additional inference latency.",
+      "A very small rank (even r=1 or 2) adapting W_q and W_v is often sufficient."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "LoRA on W_q and W_v of every self-attention layer, rank r=8, alpha=8, RoBERTa-base on GLUE (main reproduced table); classifier head trained, all other weights frozen",
+    "modules": [
+      {
+        "name": "FrozenPretrainedLinear",
+        "operation_type": "linear",
+        "input_shape": "[B, T, k]",
+        "output_shape": "[B, T, d]",
+        "parameters": {
+          "weight": "W0 in R^{d x k}",
+          "trainable": false
+        },
+        "paper_section": "Section 4.1",
+        "confidence": 0.97,
+        "notes": "Pretrained projection (W_q or W_v) kept frozen."
+      },
+      {
+        "name": "LoRADown",
+        "operation_type": "linear",
+        "input_shape": "[B, T, k]",
+        "output_shape": "[B, T, r]",
+        "parameters": {
+          "matrix": "A in R^{r x k}",
+          "init": "random Gaussian"
+        },
+        "paper_section": "Section 4.1",
+        "confidence": 0.95,
+        "notes": "Released loralib uses kaiming-uniform for nn.Linear; both are supported."
+      },
+      {
+        "name": "LoRAUp",
+        "operation_type": "linear",
+        "input_shape": "[B, T, r]",
+        "output_shape": "[B, T, d]",
+        "parameters": {
+          "matrix": "B in R^{d x r}",
+          "init": "zeros",
+          "scaling": "alpha / r"
+        },
+        "paper_section": "Section 4.1",
+        "confidence": 0.97,
+        "notes": "Zero init makes Delta W = 0 at the start of training."
+      },
+      {
+        "name": "MergedInference",
+        "operation_type": "weight_merge",
+        "input_shape": "W0, B, A",
+        "output_shape": "W = W0 + (alpha/r) B A",
+        "parameters": {},
+        "paper_section": "Section 4.1",
+        "confidence": 0.97,
+        "notes": "No added inference latency."
+      }
+    ],
+    "connections": [
+      {
+        "from": "LoRADown",
+        "to": "LoRAUp",
+        "tensor_name": "low_rank_activation"
+      },
+      {
+        "from": "FrozenPretrainedLinear",
+        "to": "MergedInference",
+        "tensor_name": "W0"
+      },
+      {
+        "from": "LoRAUp",
+        "to": "MergedInference",
+        "tensor_name": "delta_W"
+      }
+    ],
+    "variants": [
+      {
+        "name": "RoBERTa-base GLUE",
+        "differences": {
+          "r": 8,
+          "alpha": 8,
+          "targets": "W_q, W_v",
+          "trainable_params": "0.3M"
+        }
+      },
+      {
+        "name": "GPT-2 M E2E NLG",
+        "differences": {
+          "r": 4,
+          "targets": "W_q, W_v",
+          "dropout": 0.1
+        }
+      },
+      {
+        "name": "GPT-3 175B",
+        "differences": {
+          "note": "r and targets vary per task; Section 7 rank study"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "LoRA forward",
+      "latex": "h = W_0 x + \\Delta W x = W_0 x + \\frac{\\alpha}{r} B A x",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [
+        "r",
+        "alpha"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 4.1 (Eq. 3)",
+      "confidence": 0.97
+    },
+    {
+      "name": "Initialisation",
+      "latex": "A \\sim \\mathcal{N}(0, \\sigma^2),\\; B = 0",
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [
+        "sigma"
+      ],
+      "undefined_symbols": [
+        "sigma"
+      ],
+      "paper_section": "Section 4.1",
+      "confidence": 0.85
+    },
+    {
+      "name": "Trainable parameter count",
+      "latex": "|\\Theta| = 2 \\times \\hat{L}_{LoRA} \\times d_{model} \\times r",
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [
+        "r"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 5.1 / Table 4 caption",
+      "confidence": 0.9
+    },
+    {
+      "name": "Task objective",
+      "latex": "\\max_{\\Theta} \\sum_{(x,y)} \\sum_t \\log p_{\\Phi_0 + \\Delta\\Phi(\\Theta)}(y_t \\mid x, y_{<t})",
+      "role": "objective",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2 (Eq. 2)",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "x",
+      "shape_notation": "[B, T, k]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "FrozenPretrainedLinear",
+      "confidence": 0.95
+    },
+    {
+      "name": "lora_A",
+      "shape_notation": "[r, k]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "LoRADown",
+      "confidence": 0.97
+    },
+    {
+      "name": "lora_B",
+      "shape_notation": "[d, r]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "LoRAUp",
+      "confidence": 0.97
+    },
+    {
+      "name": "h",
+      "shape_notation": "[B, T, d]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "MergedInference",
+      "confidence": 0.95
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": 0.0005,
+      "beta1": 0.9,
+      "beta2": 0.999,
+      "weight_decay": null,
+      "confidence": 0.75
+    },
+    "lr_schedule": {
+      "type": "linear decay with warmup ratio 0.06 (RoBERTa GLUE)",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.75
+    },
+    "batch_size": 16,
+    "effective_batch_size": 16,
+    "training_steps": null,
+    "epochs": 30,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.75
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "GLUE (MNLI, SST-2, MRPC, CoLA, QNLI, QQP, RTE, STS-B)",
+        "split": "dev",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "E2E NLG Challenge",
+        "split": "test",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "WikiSQL / MultiNLI / SAMSum (GPT-3)",
+        "split": "validation/test",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Accuracy (MNLI matched, SST-2, MRPC, QNLI, QQP, RTE)",
+      "Matthews correlation (CoLA)",
+      "Pearson correlation (STS-B)",
+      "BLEU/NIST/METEOR/ROUGE-L/CIDEr (E2E)"
+    ],
+    "reported_results": [
+      {
+        "metric": "GLUE average, RoBERTa-base LoRA (0.3M trainable)",
+        "dataset": "GLUE dev",
+        "split": "dev",
+        "value": 87.2,
+        "is_primary": true
+      },
+      {
+        "metric": "MNLI accuracy, RoBERTa-base LoRA",
+        "dataset": "MNLI-m",
+        "split": "dev",
+        "value": 87.5,
+        "is_primary": false
+      },
+      {
+        "metric": "SST-2 accuracy, RoBERTa-base LoRA",
+        "dataset": "SST-2",
+        "split": "dev",
+        "value": 95.1,
+        "is_primary": false
+      },
+      {
+        "metric": "E2E BLEU, GPT-2 M LoRA (0.35M)",
+        "dataset": "E2E NLG",
+        "split": "test",
+        "value": 70.4,
+        "is_primary": false
+      },
+      {
+        "metric": "WikiSQL accuracy, GPT-3 175B LoRA",
+        "dataset": "WikiSQL",
+        "split": "validation",
+        "value": 73.4,
+        "is_primary": false
+      },
+      {
+        "metric": "MNLI-m accuracy, GPT-3 175B LoRA",
+        "dataset": "MNLI-m",
+        "split": "validation",
+        "value": 91.7,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "Full fine-tuning",
+      "BitFit",
+      "Adapter (Houlsby / Lin / Pfeiffer / AdapterDrop)",
+      "Prefix-embedding / prefix-layer tuning"
+    ],
+    "compute": "RoBERTa-base GLUE: single modern GPU per task; GPT-3 experiments require a large multi-GPU cluster and are out of scope.",
+    "special_conditions": [],
+    "confidence": 0.85
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Initialise A from N(0, (1/r)^2) and B to zero; kaiming-uniform (loralib default) available via init='kaiming'.",
+      "basis": "The paper specifies a random Gaussian for A and zero for B but not the Gaussian's variance.",
+      "confidence": 0.8,
+      "alternatives": [
+        "kaiming_uniform_(a=sqrt(5)) as in loralib"
+      ],
+      "affects_section": "Section 4.1"
+    },
+    {
+      "assumption": "Use the RoBERTa-base per-task batch size / epochs / learning rate transcribed into configs/paper.json from the appendix table; contributors should verify each value against the paper.",
+      "basis": "Values were transcribed manually and could contain transcription errors.",
+      "confidence": 0.7,
+      "alternatives": [
+        "Re-tune on dev set"
+      ],
+      "affects_section": "Table 2; appendix hyperparameter table"
+    },
+    {
+      "assumption": "Train the task classifier head together with LoRA matrices; all other weights frozen.",
+      "basis": "Standard in the released GLUE scripts; the paper counts LoRA parameters separately.",
+      "confidence": 0.85,
+      "alternatives": [
+        "Freeze the head (not meaningful for new label spaces)"
+      ],
+      "affects_section": "Table 2"
+    },
+    {
+      "assumption": "CPU smoke test uses a synthetic pretrain -> adapt task with a 2-layer, width-32 model; it validates mechanics only.",
+      "basis": "No GPU or pretrained checkpoints in the authoring environment.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Verification only"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 4.1",
+      "description": "Variance of the Gaussian used to initialise A is not given.",
+      "primary_assumption": "std = 1/r",
+      "alternatives": [
+        "kaiming uniform",
+        "std = 0.02"
+      ],
+      "confidence": 0.7
+    },
+    {
+      "location": "Table 2",
+      "description": "Exact seed-level numbers are not published; paper reports medians over 5 seeds.",
+      "primary_assumption": "Run 5 seeds and report the median",
+      "alternatives": [],
+      "confidence": 0.9
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.95,
+    "mathematical_spec": 0.93,
+    "tensor_semantics": 0.92,
+    "training_pipeline": 0.75,
+    "evaluation_protocol": 0.85,
+    "implementation_assumptions": 0.8,
+    "overall_sir_confidence": 0.87
+  }
+}
