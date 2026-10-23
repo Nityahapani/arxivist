@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "ConvNeXt-T ImageNet-1K 300-epoch recipe (Appendix A.1)", "arxiv_id": "2201.03545"},
+  "run_name": "in1k_convnext_tiny_300ep", "seed": 0, "device": "auto",
+  "data": {"name": "imagenet", "root": "data/imagenet", "image_size": 224, "n_classes": 1000},
+  "model": {"variant": "convnext_tiny", "drop_path": 0.1, "layer_scale_init": 1e-6},
+  "train": {"steps": 93750, "batch_size": 4096, "lr": 4e-3, "scale_lr": true, "weight_decay": 0.05, "warmup_fraction": 0.0667,
+            "mixup": 0.8, "cutmix": 1.0, "label_smoothing": 0.1, "ema_decay": 0.9999, "log_every": 100},
+  "note": "300 epochs x 1,281,167 / 4,096 ≈ 93,750 steps; 20 warm-up epochs. Stochastic depth 0.1/0.4/0.5 for T/S/B. RandAugment (9, 0.5) and Random Erasing (0.25) are part of the paper recipe but are not implemented in this scaffold; add them (e.g. via timm) before reporting. Requires an ImageNet loader."
+}
