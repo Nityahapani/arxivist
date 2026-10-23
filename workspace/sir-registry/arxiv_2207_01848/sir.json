@@ -1,0 +1,269 @@
+{
+  "paper_id": "arxiv_2207_01848",
+  "sir_version": 1,
+  "provenance": {
+    "title": "TabPFN: A Transformer That Solves Small Tabular Classification Problems in a Second",
+    "authors": [
+      "Noah Hollmann",
+      "Samuel Müller",
+      "Katharina Eggensperger",
+      "Frank Hutter"
+    ],
+    "affiliations": [
+      "University of Freiburg",
+      "Charité Universitätsmedizin Berlin",
+      "Bosch Center for Artificial Intelligence"
+    ],
+    "arxiv_id": "2207.01848",
+    "doi": null,
+    "submission_date": "2022-07-05",
+    "abstract": "TabPFN is a trained Transformer that performs supervised classification for small tabular datasets in under a second, needs no hyperparameter tuning, and is competitive with state-of-the-art methods. It is a Prior-Data Fitted Network trained offline once to approximate Bayesian inference on synthetic datasets drawn from a prior based on structural causal models and Bayesian neural networks. It performs in-context learning with a single forward pass.",
+    "domain": "Tabular",
+    "key_claims": [
+      "A Transformer trained on synthetic datasets from a prior approximates the posterior predictive distribution for new datasets in one forward pass.",
+      "The prior combines structural causal models and Bayesian neural networks, encoding a preference for simple causal structure.",
+      "On small datasets (up to 1000 training samples, 100 numerical features, 10 classes) TabPFN matches gradient boosting and AutoML systems.",
+      "TabPFN is up to 230x faster on CPU and 5700x faster on GPU than the strongest AutoML baselines at equal performance."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "12-layer Transformer (d=512, 4 heads, FFN 1024), train tokens attend to train tokens, test tokens attend to train tokens only",
+    "modules": [
+      {
+        "name": "FeatureEncoder",
+        "operation_type": "linear",
+        "input_shape": "[B, n, 100]",
+        "output_shape": "[B, n, 512]",
+        "parameters": {
+          "padding": "zero-pad to 100 features, scaled by 100/d"
+        },
+        "paper_section": "Section 4; Appendix",
+        "confidence": 0.85,
+        "notes": null
+      },
+      {
+        "name": "LabelEncoder",
+        "operation_type": "embedding",
+        "input_shape": "[B, n_train]",
+        "output_shape": "[B, n_train, 512]",
+        "parameters": {
+          "added_to": "train tokens"
+        },
+        "paper_section": "Section 3",
+        "confidence": 0.85,
+        "notes": null
+      },
+      {
+        "name": "TransformerEncoder",
+        "operation_type": "transformer",
+        "input_shape": "[B, n, 512]",
+        "output_shape": "[B, n, 512]",
+        "parameters": {
+          "layers": 12,
+          "heads": 4,
+          "ff": 1024,
+          "mask": "test -> train only"
+        },
+        "paper_section": "Section 4; Fig. 1",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "Decoder",
+        "operation_type": "mlp",
+        "input_shape": "[B, n_test, 512]",
+        "output_shape": "[B, n_test, 10]",
+        "parameters": {},
+        "paper_section": "Section 4",
+        "confidence": 0.8,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "FeatureEncoder",
+        "to": "LabelEncoder",
+        "tensor_name": null
+      },
+      {
+        "from": "LabelEncoder",
+        "to": "TransformerEncoder",
+        "tensor_name": null
+      },
+      {
+        "from": "TransformerEncoder",
+        "to": "Decoder",
+        "tensor_name": null
+      }
+    ],
+    "variants": []
+  },
+  "mathematical_spec": [
+    {
+      "name": "PFN training objective",
+      "latex": "\\ell_\\theta = \\mathbb{E}_{D \\cup \\{x,y\\} \\sim p(D)}\\left[-\\log q_\\theta(y \\mid x, D)\\right]",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.95
+    },
+    {
+      "name": "Posterior predictive",
+      "latex": "p(y\\mid x, D) \\propto \\int_\\Phi p(y\\mid x,\\phi)\\,p(D\\mid\\phi)\\,p(\\phi)\\,d\\phi",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "x_train, y_train",
+      "shape_notation": "[B, n_train, F], [B, n_train]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "FeatureEncoder",
+      "confidence": 0.9
+    },
+    {
+      "name": "x_test",
+      "shape_notation": "[B, n_test, F]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "FeatureEncoder",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, n_test, C]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "Decoder",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "Adam",
+      "learning_rate": null,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null,
+      "confidence": 0.5
+    },
+    "lr_schedule": {
+      "type": "warmup + cosine",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.5
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "prior sampling"
+    ],
+    "curriculum": null,
+    "confidence": 0.5
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "Synthetic SCM / BNN prior",
+        "split": "prior fitting",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "OpenML-CC18 (30 small numerical datasets)",
+        "split": "evaluation",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "ROC AUC (OVO)",
+      "Accuracy",
+      "Cross-entropy",
+      "Fit + predict time"
+    ],
+    "reported_results": [
+      {
+        "metric": "Speed-up vs best AutoML at equal performance, CPU (x)",
+        "dataset": "OpenML-CC18",
+        "split": "test",
+        "value": 230.0,
+        "is_primary": false
+      },
+      {
+        "metric": "Speed-up vs best AutoML at equal performance, GPU (x)",
+        "dataset": "OpenML-CC18",
+        "split": "test",
+        "value": 5700.0,
+        "is_primary": true
+      }
+    ],
+    "baselines": [
+      "XGBoost",
+      "LightGBM",
+      "CatBoost",
+      "Auto-sklearn 2.0",
+      "AutoGluon",
+      "Logistic regression",
+      "KNN",
+      "GP"
+    ],
+    "compute": "Prior fitting about 20 hours on 8 GPUs (one-off).",
+    "special_conditions": [],
+    "confidence": 0.75
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "A simplified SCM/BNN mixture (random MLP structure, random activations, node noise, quantile thresholds) without feature warping, categorical features or missing values.",
+      "basis": "The paper's prior (Appendix C) has many more hyper-priors.",
+      "confidence": 0.6,
+      "alternatives": [],
+      "affects_section": "Section 4; Appendix C"
+    },
+    {
+      "assumption": "Adam with warmup-cosine; steps, batch and LR are assumptions.",
+      "basis": "Not confidently recovered.",
+      "confidence": 0.4,
+      "alternatives": [],
+      "affects_section": "Appendix"
+    },
+    {
+      "assumption": "Feature-permutation and class-relabelling ensemble; power transforms are omitted.",
+      "basis": "Simplification.",
+      "confidence": 0.7,
+      "alternatives": [],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "Smoke evaluation on sklearn's breast cancer dataset instead of OpenML-CC18.",
+      "basis": "Offline availability.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 5"
+    }
+  ],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "architecture": 0.88,
+    "mathematical_spec": 0.92,
+    "tensor_semantics": 0.8,
+    "training_pipeline": 0.45,
+    "evaluation_protocol": 0.75,
+    "implementation_assumptions": 0.55,
+    "overall_sir_confidence": 0.78
+  }
+}
