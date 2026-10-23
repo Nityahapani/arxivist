@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "RetNet smoke-test configuration", "arxiv_id": "2307.08621"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"vocab": 32, "n_tokens": 20000},
+  "model": {"d_model": 32, "n_layers": 2, "n_heads": 4, "d_ff": 64},
+  "train": {"steps": 10, "batch_size": 8, "seq_len": 32, "lr": 0.003, "weight_decay": 0.05, "warmup": 2, "mode": "parallel", "chunk": 16, "log_every": 5},
+  "eval": {"prompt_len": 16, "n_new": 16}
+}

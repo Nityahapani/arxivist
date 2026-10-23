@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "RetNet 1.3B language modelling (Section 3.1, Table 7 analogue)", "arxiv_id": "2307.08621"},
+  "run_name": "retnet_1.3b", "seed": 0, "device": "auto",
+  "data": {"vocab": 100000, "n_tokens": 0, "corpus": "The Pile + C4 + The Stack (requires external loader)"},
+  "model": {"d_model": 2048, "n_layers": 24, "n_heads": 8, "d_ff": 4096},
+  "train": {"steps": 25000, "batch_size": 256, "seq_len": 2048, "lr": 0.0006, "weight_decay": 0.05, "warmup": 375, "mode": "chunkwise", "chunk": 512, "log_every": 100},
+  "eval": {"prompt_len": 1024, "n_new": 1024},
+  "note": "Model sizes (1.3B: d=2048, 24 layers; 2.7B: 2560/32; 6.7B: 4096/32), sequence length 2048, AdamW betas (0.9, 0.98) and weight decay 0.05 follow our reading of Section 3.1 / Table 7; verify LR, batch size (tokens per step) and warmup against the paper before running. The vocabulary and data mix require a real tokenizer and corpus loader."
+}
