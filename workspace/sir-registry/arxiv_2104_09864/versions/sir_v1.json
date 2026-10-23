@@ -1,0 +1,277 @@
+{
+  "paper_id": "arxiv_2104_09864",
+  "sir_version": 1,
+  "provenance": {
+    "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+    "authors": [
+      "Jianlin Su",
+      "Yu Lu",
+      "Shengfeng Pan",
+      "Ahmed Murtadha",
+      "Bo Wen",
+      "Yunfeng Liu"
+    ],
+    "affiliations": [
+      "Zhuiyi Technology Co., Ltd."
+    ],
+    "arxiv_id": "2104.09864",
+    "doi": null,
+    "submission_date": "2021-04-20",
+    "abstract": "Rotary Position Embedding (RoPE) encodes absolute position with a rotation matrix while incorporating explicit relative position dependency in self-attention. RoPE supports flexible sequence length, decaying inter-token dependency with increasing relative distance, and can equip linear self-attention with relative position encoding. RoFormer, a Transformer with RoPE, is evaluated on long-text classification benchmarks and outperforms its alternatives.",
+    "domain": "NLP",
+    "key_claims": [
+      "Rotating query and key pairs by angles m*theta_i makes their inner product depend only on the relative position m - n.",
+      "RoPE has a long-term decay property: the bound on the attention contribution decreases with relative distance.",
+      "RoPE is compatible with linear attention by rotating feature-mapped queries and keys in the numerator.",
+      "RoFormer converges faster than BERT in MLM pretraining and improves on long-text tasks (CAIL2019-SCM)."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "RoFormer: BERT-base encoder with RoPE applied to queries and keys in every self-attention layer",
+    "modules": [
+      {
+        "name": "TokenEmbedding",
+        "operation_type": "embedding",
+        "input_shape": "[B, T]",
+        "output_shape": "[B, T, d]",
+        "parameters": {
+          "position_embedding": null
+        },
+        "paper_section": "Section 3.4",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "RoPESelfAttention",
+        "operation_type": "attention",
+        "input_shape": "[B, T, d]",
+        "output_shape": "[B, T, d]",
+        "parameters": {
+          "rope": "q,k rotated by m*theta_i",
+          "theta_base": 10000
+        },
+        "paper_section": "Section 3.2-3.4, Eq. 15/34",
+        "confidence": 0.97,
+        "notes": null
+      },
+      {
+        "name": "MLMHead",
+        "operation_type": "linear",
+        "input_shape": "[B, T, d]",
+        "output_shape": "[B, T, V]",
+        "parameters": {},
+        "paper_section": "Section 4.5",
+        "confidence": 0.85,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "TokenEmbedding",
+        "to": "RoPESelfAttention",
+        "tensor_name": null
+      },
+      {
+        "from": "RoPESelfAttention",
+        "to": "MLMHead",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "RoFormer with linear attention (Performer-style)",
+        "differences": {
+          "attention": "Eq. 19 linear attention with RoPE"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Rotary transform",
+      "latex": "f_{q}(x_m, m) = R^d_{\\Theta,m} W_q x_m,\\; \\theta_i = 10000^{-2(i-1)/d}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.4.2, Eq. 14-15",
+      "confidence": 0.98
+    },
+    {
+      "name": "Relative property",
+      "latex": "q_m^\\top k_n = x_m^\\top W_q^\\top R^d_{\\Theta,n-m} W_k x_n",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.4.2, Eq. 16",
+      "confidence": 0.98
+    },
+    {
+      "name": "Efficient form",
+      "latex": "R^d_{\\Theta,m} x = x \\otimes \\cos(m\\theta) + \\mathrm{rot}(x) \\otimes \\sin(m\\theta)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.4.2, Eq. 34",
+      "confidence": 0.97
+    },
+    {
+      "name": "Linear attention with RoPE",
+      "latex": "\\mathrm{Attn}_m = \\frac{\\sum_n (R_m\\phi(q_m))^\\top (R_n\\varphi(k_n)) v_n}{\\sum_n \\phi(q_m)^\\top \\varphi(k_n)}",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.4.3, Eq. 19",
+      "confidence": 0.9
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "ids",
+      "shape_notation": "[B, T]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "TokenEmbedding",
+      "confidence": 0.9
+    },
+    {
+      "name": "q, k",
+      "shape_notation": "[B, H, T, d_h]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "RoPESelfAttention",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, T, V]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "MLMHead",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": null,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null,
+      "confidence": 0.4
+    },
+    "lr_schedule": {
+      "type": "see Section 4",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.4
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.4
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "BookCorpus + English Wikipedia",
+        "split": "MLM pretraining",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "GLUE",
+        "split": "fine-tuning",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Enwik8",
+        "split": "Performer + RoPE LM",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Chinese corpus (~34GB) and CAIL2019-SCM",
+        "split": "Chinese pretraining and long-text evaluation",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "MLM loss",
+      "GLUE scores",
+      "Enwik8 LM loss",
+      "CAIL2019-SCM accuracy"
+    ],
+    "reported_results": [],
+    "baselines": [
+      "BERT (absolute learned positions)",
+      "Performer without RoPE",
+      "WoBERT / NEZHA (Chinese)"
+    ],
+    "compute": "Multi-GPU pretraining at BERT-base scale.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "No numeric targets are hard-coded; read targets from Table 2 (GLUE), Table 5 (CAIL2019-SCM) and Figures 3–4 (pretraining curves).",
+      "basis": "Avoid citing uncertain numbers.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "Interleaved pairs (x_{2i-1}, x_{2i}) as in Eq. 15.",
+      "basis": "Many implementations use a half-split layout; both are equivalent up to a permutation.",
+      "confidence": 0.9,
+      "alternatives": [
+        "half split"
+      ],
+      "affects_section": "Eq. 15"
+    },
+    {
+      "assumption": "phi = elu + 1 for both queries and keys.",
+      "basis": "Paper leaves the non-negative feature map generic.",
+      "confidence": 0.7,
+      "alternatives": [],
+      "affects_section": "Eq. 19"
+    },
+    {
+      "assumption": "AdamW, LR 1e-4, 10k warmup in configs/paper.json.",
+      "basis": "Not confidently recovered from the paper.",
+      "confidence": 0.4,
+      "alternatives": [],
+      "affects_section": "Section 4"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 4",
+      "description": "Exact optimiser settings for each experiment.",
+      "primary_assumption": "BERT-base defaults",
+      "alternatives": [],
+      "confidence": 0.4
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.95,
+    "mathematical_spec": 0.97,
+    "tensor_semantics": 0.9,
+    "training_pipeline": 0.45,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.5,
+    "overall_sir_confidence": 0.82
+  }
+}
