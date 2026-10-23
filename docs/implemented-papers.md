@@ -1,6 +1,6 @@
 # Implemented paper registry
 
-> Catalog snapshot: **2026-10-22** · **66 paper entries** across **68 implementation locations**.
+> Catalog snapshot: **2026-10-23** · **67 paper entries** across **69 implementation locations**.
 
 This registry indexes the paper implementation artifacts checked into `workspace/paper-repos/`, the NeRF project under `workspace/`, and the DDPM reproduction notebook under `ladnmark_paper_reproductions/`. Duplicate code locations for the same arXiv paper are grouped into one entry.
 
@@ -47,6 +47,7 @@ This registry indexes the paper implementation artifacts checked into `workspace
 | Generative Adversarial Nets | [Paper](https://arxiv.org/abs/1406.2661) | [arxiv_1406_2661](../workspace/paper-repos/arxiv_1406_2661/README.md) | [SIR](../workspace/sir-registry/arxiv_1406_2661/sir.json) |
 | GENERator: A Long-Context Generative Genomic Foundation Model | [Paper](https://arxiv.org/abs/2502.07272) | [arxiv_2502_007272](../workspace/paper-repos/arxiv_2502_007272/README.md) | [SIR](../workspace/sir-registry/arxiv_2502_007272/sir.json) |
 | GeomHerd: A Forward-looking Herding Quantification via Ricci Flow Geometry on Agent Interactive Simulations | [Paper](https://arxiv.org/abs/2605.11645) | [arxiv_2605_11645](../workspace/paper-repos/arxiv_2605_11645/README.md) | [SIR](../workspace/sir-registry/arxiv_2605_11645/sir.json) |
+| Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets | [Paper](https://arxiv.org/abs/2201.02177) | [arxiv_2201_02177](../workspace/paper-repos/arxiv_2201_02177/README.md) | [SIR](../workspace/sir-registry/arxiv_2201_02177/sir.json) |
 | HOPANN — Heteroskedastic Ordered Probit Models with an Artificial Neural Network | [Citation in README](../workspace/paper-repos/paper_hopann-heteroskedastic-ordered-probit/README.md) | [paper_hopann-heteroskedastic-ordered-probit](../workspace/paper-repos/paper_hopann-heteroskedastic-ordered-probit/README.md) | [SIR](../workspace/sir-registry/paper_hopann-heteroskedastic-ordered-probit/sir.json) |
 | HyenaDNA: Long-Range Genomic Sequence Modeling at Single Nucleotide Resolution | [Paper](https://arxiv.org/abs/2306.15794) | [arxiv_2306_015794](../workspace/paper-repos/arxiv_2306_015794) | [SIR](../workspace/sir-registry/arxiv_2306_015794/sir.json) |
 | Improving Random Forests by Smoothing | [Paper](https://doi.org/10.1007/s10994-026-07077-z) | [paper_improving-random-forests-by-smoothing](../workspace/paper-repos/paper_improving-random-forests-by-smoothing/README.md) | [SIR](../workspace/sir-registry/paper_improving-random-forests-by-smoothing/sir.json) |
