@@ -1,0 +1,292 @@
+{
+  "paper_id": "arxiv_2006_07733",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Bootstrap Your Own Latent: A New Approach to Self-Supervised Learning",
+    "authors": [
+      "Jean-Bastien Grill",
+      "Florian Strub",
+      "Florent Altché",
+      "Corentin Tallec",
+      "Pierre H. Richemond",
+      "Elena Buchatskaya",
+      "Carl Doersch",
+      "Bernardo Avila Pires",
+      "Zhaohan Daniel Guo",
+      "Mohammad Gheshlaghi Azar",
+      "Bilal Piot",
+      "Koray Kavukcuoglu",
+      "Rémi Munos",
+      "Michal Valko"
+    ],
+    "affiliations": [
+      "DeepMind",
+      "Imperial College"
+    ],
+    "arxiv_id": "2006.07733",
+    "doi": null,
+    "submission_date": "2020-06-13",
+    "abstract": "BYOL learns image representations without negative pairs. An online network is trained to predict the target network's representation of another augmented view of the same image, while the target network is a slow-moving average of the online network. BYOL reaches 74.3% top-1 linear evaluation accuracy on ImageNet with a ResNet-50 and 79.6% with a larger ResNet, and is more robust than contrastive methods to batch size and augmentation choices.",
+    "domain": "CV",
+    "key_claims": [
+      "Representations can be learned without negative pairs by predicting a slow-moving target network's projection.",
+      "The predictor and the moving-average target together prevent collapse in practice.",
+      "BYOL reaches 74.3% ImageNet linear top-1 with ResNet-50 and 79.6% with ResNet-200 (2x).",
+      "BYOL is more robust than SimCLR to smaller batch sizes and to removing colour distortion."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "BYOL with ResNet-50 encoder, 4096-256 projector and predictor MLPs, tau_base 0.996",
+    "modules": [
+      {
+        "name": "OnlineEncoder",
+        "operation_type": "resnet",
+        "input_shape": "[B, 3, 224, 224]",
+        "output_shape": "[B, 2048]",
+        "parameters": {
+          "arch": "ResNet-50"
+        },
+        "paper_section": "Section 3.3",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "Projector",
+        "operation_type": "mlp",
+        "input_shape": "[B, 2048]",
+        "output_shape": "[B, 256]",
+        "parameters": {
+          "hidden": 4096,
+          "bn": true
+        },
+        "paper_section": "Section 3.3",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "Predictor",
+        "operation_type": "mlp",
+        "input_shape": "[B, 256]",
+        "output_shape": "[B, 256]",
+        "parameters": {
+          "hidden": 4096,
+          "bn": true
+        },
+        "paper_section": "Section 3.3",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "TargetNetwork",
+        "operation_type": "ema_copy",
+        "input_shape": "[B, 3, 224, 224]",
+        "output_shape": "[B, 256]",
+        "parameters": {
+          "update": "xi <- tau xi + (1 - tau) theta"
+        },
+        "paper_section": "Section 3.1, Eq. 1",
+        "confidence": 0.95,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "OnlineEncoder",
+        "to": "Projector",
+        "tensor_name": "y"
+      },
+      {
+        "from": "Projector",
+        "to": "Predictor",
+        "tensor_name": "z"
+      }
+    ],
+    "variants": [
+      {
+        "name": "ResNet-200 (2x)",
+        "differences": {
+          "encoder": "ResNet-200 width 2"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "BYOL loss",
+      "latex": "\\mathcal{L}_{\\theta,\\xi} = \\left\\| \\bar{q}_\\theta(z_\\theta) - \\bar{z}'_\\xi \\right\\|_2^2 = 2 - 2\\,\\frac{\\langle q_\\theta(z_\\theta), z'_\\xi\\rangle}{\\|q_\\theta(z_\\theta)\\|\\,\\|z'_\\xi\\|}",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.1, Eq. 2",
+      "confidence": 0.97
+    },
+    {
+      "name": "Symmetrised loss",
+      "latex": "\\mathcal{L}^{BYOL} = \\mathcal{L}_{\\theta,\\xi} + \\tilde{\\mathcal{L}}_{\\theta,\\xi}",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.1",
+      "confidence": 0.95
+    },
+    {
+      "name": "Target update",
+      "latex": "\\xi \\leftarrow \\tau \\xi + (1 - \\tau)\\theta",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.1, Eq. 1",
+      "confidence": 0.97
+    },
+    {
+      "name": "Tau schedule",
+      "latex": "\\tau = 1 - (1 - \\tau_{base})\\,(\\cos(\\pi k / K) + 1)/2",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [
+        "tau_base=0.996"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.2",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "view",
+      "shape_notation": "[B, 3, 224, 224]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "OnlineEncoder",
+      "confidence": 0.9
+    },
+    {
+      "name": "prediction",
+      "shape_notation": "[B, 256]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "Predictor",
+      "confidence": 0.9
+    },
+    {
+      "name": "target_projection",
+      "shape_notation": "[B, 256]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "TargetNetwork",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "LARS",
+      "learning_rate": 0.2,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 1.5e-06,
+      "confidence": 0.85
+    },
+    "lr_schedule": {
+      "type": "cosine, 10 warmup epochs",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.85
+    },
+    "batch_size": 4096,
+    "effective_batch_size": 4096,
+    "training_steps": null,
+    "epochs": 1000,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "random resized crop",
+      "flip",
+      "colour jitter",
+      "grayscale",
+      "blur (asymmetric)",
+      "solarize (asymmetric)"
+    ],
+    "curriculum": null,
+    "confidence": 0.85
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "ImageNet ILSVRC-2012",
+        "split": "train / val",
+        "size": 1281167,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Linear evaluation top-1 / top-5",
+      "Semi-supervised top-1 (1% / 10% labels)",
+      "Transfer accuracy"
+    ],
+    "reported_results": [
+      {
+        "metric": "Linear top-1, ResNet-50",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 74.3,
+        "is_primary": true
+      },
+      {
+        "metric": "Linear top-1, ResNet-200 (2x)",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 79.6,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "SimCLR",
+      "MoCo v2",
+      "CPC v2",
+      "InfoMin"
+    ],
+    "compute": "512 Cloud TPU v3 cores; ResNet-50 for 1000 epochs takes about 8 hours.",
+    "special_conditions": [],
+    "confidence": 0.85
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "BatchNorm running statistics of the target network are copied from the online network.",
+      "basis": "Only parameters are averaged by Eq. 1; buffers are not discussed.",
+      "confidence": 0.6,
+      "alternatives": [
+        "EMA buffers"
+      ],
+      "affects_section": "Section 3.1"
+    },
+    {
+      "assumption": "Short SGD linear probe on frozen features in smoke runs.",
+      "basis": "Paper protocol is 80 epochs with an LR grid.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Appendix C.1"
+    },
+    {
+      "assumption": "Not included; synthetic data and CIFAR-10 only.",
+      "basis": "Scope limit.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "-"
+    }
+  ],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "architecture": 0.96,
+    "mathematical_spec": 0.96,
+    "tensor_semantics": 0.94,
+    "training_pipeline": 0.85,
+    "evaluation_protocol": 0.85,
+    "implementation_assumptions": 0.85,
+    "overall_sir_confidence": 0.9
+  }
+}
