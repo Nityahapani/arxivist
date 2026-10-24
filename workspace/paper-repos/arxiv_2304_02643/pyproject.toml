@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "segment-anything-paper-reproduction"
+version = "0.1.0"
+description = "Independent reproduction of Kirillov et al. (2023), arXiv:2304.02643"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.2",
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+data = ["pycocotools>=2.0", "pillow>=10.0"]
+
+[project.scripts]
+segment-anything-repro = "segment_anything_repro.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"

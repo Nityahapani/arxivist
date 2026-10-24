@@ -1,0 +1,12 @@
+# Paper-to-reproduction comparison — arXiv:2304.02643
+
+This file separates results **reported in the paper** from results **actually run in this checkout**. The protocol is implemented in `configs/paper.json`, but paper-scale runs have not been executed here.
+
+| Claim / result | Paper report | Current reproduction status |
+|---|---|---|
+| SA-1B scale | 11M images, 1.1B masks | Not reproduced |
+| Zero-shot single-point mIoU on 23 datasets | see paper Fig. 9 | Not run |
+| Windowed attention partition roundtrip | — | Verified |
+| Lowest-loss mask selection | — | Verified |
+
+The only executed training run is the CPU smoke test (`configs/smoke.json`); it verifies the training/output path, not any numeric result in the paper. Do not copy smoke values into the paper column. The contributor running the paper-scale protocol should replace "not run" entries with measured values, the exact command, hardware, and seed(s).

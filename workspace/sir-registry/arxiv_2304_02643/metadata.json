@@ -1,0 +1,48 @@
+{
+  "paper_id": "arxiv_2304_02643",
+  "title": "Segment Anything",
+  "authors": [
+    "Alexander Kirillov",
+    "Eric Mintun",
+    "Nikhila Ravi",
+    "Hanzi Mao",
+    "Chloe Rolland",
+    "Laura Gustafson",
+    "Tete Xiao",
+    "Spencer Whitehead",
+    "Alexander C. Berg",
+    "Wan-Yen Lo",
+    "Piotr Dollár",
+    "Ross Girshick"
+  ],
+  "domain": "CV",
+  "arxiv_id": "2304.02643",
+  "version": 1,
+  "created_at": "2026-10-23T12:00:00+05:30",
+  "last_updated": "2026-10-23T12:00:00+05:30",
+  "sir_confidence": 0.8,
+  "stages_with_data": [
+    "paper_analysis",
+    "sir_registry",
+    "independent_reproduction"
+  ],
+  "has_comparison_report": true,
+  "repo_path": "workspace/paper-repos/arxiv_2304_02643",
+  "update_history": [
+    {
+      "version": 1,
+      "timestamp": "2026-10-23T12:00:00+05:30",
+      "reason": "initial SIR and reproduction scaffold (AI-generated, bot-authored)",
+      "changed_sections": [
+        "provenance",
+        "architecture",
+        "mathematical_spec",
+        "tensor_semantics",
+        "training_pipeline",
+        "evaluation_protocol",
+        "implementation_assumptions",
+        "ambiguities"
+      ]
+    }
+  ]
+}
