@@ -1,0 +1,263 @@
+{
+  "paper_id": "arxiv_2305_14314",
+  "sir_version": 1,
+  "provenance": {
+    "title": "QLoRA: Efficient Finetuning of Quantized LLMs",
+    "authors": [
+      "Tim Dettmers",
+      "Artidoro Pagnoni",
+      "Ari Holtzman",
+      "Luke Zettlemoyer"
+    ],
+    "affiliations": [
+      "University of Washington"
+    ],
+    "arxiv_id": "2305.14314",
+    "doi": null,
+    "submission_date": "2023-05-23",
+    "abstract": "QLoRA backpropagates through a frozen 4-bit quantized pretrained language model into Low-Rank Adapters, reducing memory enough to finetune a 65B model on a single 48GB GPU while preserving 16-bit finetuning performance. It introduces 4-bit NormalFloat (NF4), Double Quantization, and Paged Optimizers. The resulting Guanaco models reach 99.3% of ChatGPT's performance on the Vicuna benchmark after 24 hours of finetuning on one GPU.",
+    "domain": "NLP",
+    "key_claims": [
+      "NF4 is an information-theoretically optimal 4-bit data type for normally distributed weights and outperforms FP4 and Int4.",
+      "Double Quantization reduces quantization-constant overhead from 0.5 to about 0.127 bits per parameter.",
+      "QLoRA with NF4 matches 16-bit full finetuning and 16-bit LoRA on academic benchmarks.",
+      "LoRA must be applied to all linear layers to match full finetuning.",
+      "Guanaco 65B reaches 99.3% of ChatGPT on the Vicuna benchmark, trained in 24 hours on a single 48GB GPU."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "NF4 base weights (block 64) + Double Quantization (8-bit, block 256) + LoRA r=64, alpha=16 on all linear layers, bf16 compute",
+    "modules": [
+      {
+        "name": "NF4Linear",
+        "operation_type": "quantized_linear",
+        "input_shape": "[B, T, d_in]",
+        "output_shape": "[B, T, d_out]",
+        "parameters": {
+          "dtype": "NF4",
+          "block": 64,
+          "double_quant": "8-bit, block 256",
+          "frozen": true
+        },
+        "paper_section": "Section 3, Eq. 5-6",
+        "confidence": 0.94,
+        "notes": null
+      },
+      {
+        "name": "LoRAAdapter",
+        "operation_type": "low_rank",
+        "input_shape": "[B, T, d_in]",
+        "output_shape": "[B, T, d_out]",
+        "parameters": {
+          "r": 64,
+          "alpha": 16,
+          "dropout": "0.1 / 0.05"
+        },
+        "paper_section": "Section 3; Appendix B",
+        "confidence": 0.93,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "NF4Linear",
+        "to": "LoRAAdapter",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "FP4 base weights",
+        "differences": {
+          "dtype": "FP4"
+        }
+      },
+      {
+        "name": "No double quantization",
+        "differences": {
+          "double_quant": false
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "NF4 quantiles",
+      "latex": "q_i = \\tfrac{1}{2}\\left(Q_X\\!\\left(\\tfrac{i}{2^k+1}\\right) + Q_X\\!\\left(\\tfrac{i+1}{2^k+1}\\right)\\right)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3, Eq. 4",
+      "confidence": 0.9
+    },
+    {
+      "name": "Blockwise absmax quantization",
+      "latex": "X^{Int} = \\mathrm{round}\\left(\\frac{127}{\\mathrm{absmax}(X)} X\\right)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2, Eq. 1",
+      "confidence": 0.95
+    },
+    {
+      "name": "QLoRA forward",
+      "latex": "Y = X\\,\\mathrm{doubleDequant}(c_1^{FP32}, c_2^{k\\text{-bit}}, W^{NF4}) + X L_1 L_2",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3, Eq. 5",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "W_nf4 codes",
+      "shape_notation": "[d_out * d_in] uint4",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "NF4Linear",
+      "confidence": 0.9
+    },
+    {
+      "name": "c2 (DQ constants)",
+      "shape_notation": "[n_blocks] int8",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "NF4Linear",
+      "confidence": 0.9
+    },
+    {
+      "name": "L1, L2",
+      "shape_notation": "[r, d_in], [d_out, r]",
+      "dtype": "float32",
+      "tensor_type": "parameter",
+      "module": "LoRAAdapter",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "paged AdamW",
+      "learning_rate": 0.0002,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null,
+      "confidence": 0.85
+    },
+    "lr_schedule": {
+      "type": "constant",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.85
+    },
+    "batch_size": 16,
+    "effective_batch_size": 16,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.85
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "OASST1",
+        "split": "Guanaco finetuning",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "FLAN v2, Alpaca, Self-Instruct, Unnatural Instructions, Chip2, Longform, HH-RLHF",
+        "split": "ablations",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "MMLU",
+        "split": "evaluation",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Vicuna / OA benchmark",
+        "split": "chatbot evaluation",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "MMLU 5-shot accuracy",
+      "Vicuna benchmark relative score (GPT-4 judged)",
+      "Elo ratings",
+      "Memory footprint"
+    ],
+    "reported_results": [
+      {
+        "metric": "Guanaco 65B relative to ChatGPT (%)",
+        "dataset": "Vicuna benchmark",
+        "split": "test",
+        "value": 99.3,
+        "is_primary": true
+      }
+    ],
+    "baselines": [
+      "16-bit full finetuning",
+      "16-bit LoRA",
+      "FP4 QLoRA",
+      "ChatGPT",
+      "Vicuna"
+    ],
+    "compute": "Single 48GB GPU for 65B (24 hours for Guanaco 65B).",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Asymmetric quantile construction with offset 0.9677083 (8 positive, 7 negative levels plus exact zero), matching the published NF4 table.",
+      "basis": "Paper describes the construction; the offset follows the reference bitsandbytes code.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 3"
+    },
+    {
+      "assumption": "Second-level constants are 8-bit symmetric integers per 256-block (centred by the mean).",
+      "basis": "Paper uses 8-bit floats; the overhead in bits is identical.",
+      "confidence": 0.7,
+      "alternatives": [
+        "FP8 dynamic map"
+      ],
+      "affects_section": "Section 3"
+    },
+    {
+      "assumption": "Not implemented (CPU reference); standard Adam is used.",
+      "basis": "Paging only affects memory spikes, not the math.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 3"
+    },
+    {
+      "assumption": "A tiny GPT pretrained in-script stands in for LLaMA.",
+      "basis": "CPU-testable pipeline.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "-"
+    }
+  ],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "architecture": 0.95,
+    "mathematical_spec": 0.93,
+    "tensor_semantics": 0.9,
+    "training_pipeline": 0.85,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.8,
+    "overall_sir_confidence": 0.88
+  }
+}

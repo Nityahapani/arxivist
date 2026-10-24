@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "QLoRA hyperparameters (Appendix B) applied to the toy pipeline", "arxiv_id": "2305.14314"},
+  "run_name": "qlora_toy_r64", "seed": 0, "device": "auto",
+  "data": {"vocab": 64, "seq_len": 64},
+  "model": {"d_model": 256, "n_layers": 4, "n_heads": 4, "d_ff": 1024},
+  "train": {"pretrain_steps": 3000, "pretrain_lr": 0.001, "steps": 1875, "batch_size": 16, "lr": 0.0002, "max_grad_norm": 0.3, "log_every": 50},
+  "qlora": {"r": 64, "alpha": 16, "dropout": 0.1, "block": 64, "dq_block": 256},
+  "note": "Paper (Guanaco): LLaMA 7B-65B, NF4 + double quantization, bf16 compute, LoRA r=64 alpha=16 on all linear layers, dropout 0.1 (7B/13B) or 0.05 (33B/65B), lr 2e-4 (7B/13B) or 1e-4 (33B/65B), batch 16, constant schedule, max grad norm 0.3, paged AdamW; OASST1 for 1875 steps. Real runs need bitsandbytes + PEFT + transformers on a GPU (install the 'hf' extra); this config mirrors the optimiser settings on the toy model."
+}

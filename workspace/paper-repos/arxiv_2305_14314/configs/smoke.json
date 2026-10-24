@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "QLoRA smoke-test configuration", "arxiv_id": "2305.14314"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"vocab": 16, "seq_len": 16},
+  "model": {"d_model": 64, "n_layers": 1, "n_heads": 2, "d_ff": 128},
+  "train": {"pretrain_steps": 5, "pretrain_lr": 0.003, "steps": 6, "batch_size": 16, "lr": 0.0002, "max_grad_norm": 0.3, "log_every": 3},
+  "qlora": {"r": 8, "alpha": 16, "dropout": 0.1, "block": 64, "dq_block": 256}
+}
