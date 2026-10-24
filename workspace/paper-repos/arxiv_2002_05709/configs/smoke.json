@@ -1,0 +1,11 @@
+{
+  "paper": {"title": "SimCLR smoke-test configuration", "arxiv_id": "2002.05709"},
+  "run_name": "smoke",
+  "seed": 0,
+  "device": "cpu",
+  "data": {"name": "synthetic", "image_size": 32, "n_classes": 4, "n_train": 256, "n_test": 128},
+  "model": {"arch": "resnet18", "base_width": 8, "proj_dim": 16, "cifar_stem": true},
+  "train": {"steps": 8, "batch_size": 32, "lr_per_256": 0.3, "weight_decay": 1e-6, "temperature": 0.5,
+            "color_strength": 0.5, "blur": false, "warmup_fraction": 0.1, "log_every": 4},
+  "linear_eval": {"steps": 100, "lr": 0.1, "batch_size": 128}
+}

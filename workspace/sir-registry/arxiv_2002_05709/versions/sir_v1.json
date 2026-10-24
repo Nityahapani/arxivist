@@ -1,0 +1,337 @@
+{
+  "paper_id": "arxiv_2002_05709",
+  "sir_version": 1,
+  "provenance": {
+    "title": "A Simple Framework for Contrastive Learning of Visual Representations",
+    "authors": [
+      "Ting Chen",
+      "Simon Kornblith",
+      "Mohammad Norouzi",
+      "Geoffrey Hinton"
+    ],
+    "affiliations": [
+      "Google Research, Brain Team"
+    ],
+    "arxiv_id": "2002.05709",
+    "doi": null,
+    "submission_date": "2020-02-13",
+    "abstract": "SimCLR learns visual representations by maximizing agreement between two augmented views of the same image with a contrastive loss in a latent space. Key findings: composition of augmentations (especially random crop plus colour distortion) is critical, a learnable nonlinear projection head improves representation quality, and contrastive learning benefits from larger batches and longer training. A linear classifier on SimCLR ResNet-50 features reaches 76.5% top-1 on ImageNet with 4x width.",
+    "domain": "CV",
+    "key_claims": [
+      "Composition of data augmentations, notably random cropping plus colour distortion, is crucial for contrastive representation learning.",
+      "A learnable nonlinear projection head between representation and contrastive loss substantially improves the representation.",
+      "Contrastive learning benefits from larger batch sizes and more training steps than supervised learning.",
+      "Linear evaluation of ResNet-50 (4x) SimCLR features reaches 76.5% ImageNet top-1, matching supervised ResNet-50."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "ResNet-50 encoder + 2-layer MLP projection head (output 128), NT-Xent loss, LARS, large batch",
+    "modules": [
+      {
+        "name": "Augmentation",
+        "operation_type": "data_augmentation",
+        "input_shape": "[B, 3, H, W]",
+        "output_shape": "2 x [B, 3, H, W]",
+        "parameters": {
+          "ops": "random resized crop, flip, colour jitter (p=0.8), grayscale (p=0.2), blur (p=0.5, ImageNet)"
+        },
+        "paper_section": "Section 3; Appendix A",
+        "confidence": 0.92,
+        "notes": null
+      },
+      {
+        "name": "Encoder",
+        "operation_type": "resnet",
+        "input_shape": "[2B, 3, H, W]",
+        "output_shape": "[2B, 2048]",
+        "parameters": {
+          "arch": "ResNet-50",
+          "output": "h after global average pooling"
+        },
+        "paper_section": "Section 2.1",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "ProjectionHead",
+        "operation_type": "mlp",
+        "input_shape": "[2B, 2048]",
+        "output_shape": "[2B, 128]",
+        "parameters": {
+          "layers": 2,
+          "activation": "ReLU",
+          "output_dim": 128
+        },
+        "paper_section": "Section 2.1, 4.2",
+        "confidence": 0.92,
+        "notes": null
+      },
+      {
+        "name": "NTXent",
+        "operation_type": "contrastive_loss",
+        "input_shape": "[2B, 128]",
+        "output_shape": "scalar",
+        "parameters": {
+          "similarity": "cosine",
+          "temperature": "tau"
+        },
+        "paper_section": "Section 2.1, Eq. 1",
+        "confidence": 0.97,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "Augmentation",
+        "to": "Encoder",
+        "tensor_name": null
+      },
+      {
+        "from": "Encoder",
+        "to": "ProjectionHead",
+        "tensor_name": null
+      },
+      {
+        "from": "ProjectionHead",
+        "to": "NTXent",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "ResNet-50 (2x/4x)",
+        "differences": {
+          "width_multiplier": [
+            2,
+            4
+          ]
+        }
+      },
+      {
+        "name": "CIFAR-10",
+        "differences": {
+          "stem": "3x3 conv stride 1, no max-pool",
+          "blur": false
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Cosine similarity",
+      "latex": "\\mathrm{sim}(u,v) = u^\\top v / \\|u\\|\\|v\\|",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2.1",
+      "confidence": 0.97
+    },
+    {
+      "name": "NT-Xent",
+      "latex": "\\ell_{i,j} = -\\log \\frac{\\exp(\\mathrm{sim}(z_i,z_j)/\\tau)}{\\sum_{k=1}^{2N} \\mathbb{1}_{[k\\neq i]} \\exp(\\mathrm{sim}(z_i,z_k)/\\tau)}",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [
+        "tau"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 2.1, Eq. 1",
+      "confidence": 0.97
+    },
+    {
+      "name": "Projection head",
+      "latex": "z = g(h) = W^{(2)} \\sigma(W^{(1)} h)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2.1",
+      "confidence": 0.95
+    },
+    {
+      "name": "Learning-rate scaling",
+      "latex": "\\mathrm{lr} = 0.3 \\times \\mathrm{BatchSize}/256",
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 2.1 / Appendix B",
+      "confidence": 0.85
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "views",
+      "shape_notation": "[2B, 3, H, W]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "Augmentation",
+      "confidence": 0.9
+    },
+    {
+      "name": "h",
+      "shape_notation": "[2B, 2048]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "Encoder",
+      "confidence": 0.9
+    },
+    {
+      "name": "z",
+      "shape_notation": "[2B, 128]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "ProjectionHead",
+      "confidence": 0.9
+    },
+    {
+      "name": "similarity_matrix",
+      "shape_notation": "[2B, 2B]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "NTXent",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "LARS",
+      "learning_rate": 4.8,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 1e-06,
+      "confidence": 0.85
+    },
+    "lr_schedule": {
+      "type": "linear warmup 10 epochs then cosine decay",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.85
+    },
+    "batch_size": 4096,
+    "effective_batch_size": 4096,
+    "training_steps": null,
+    "epochs": 100,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "random resized crop",
+      "horizontal flip",
+      "colour jitter",
+      "random grayscale",
+      "Gaussian blur"
+    ],
+    "curriculum": null,
+    "confidence": 0.85
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "ImageNet ILSVRC-2012",
+        "split": "train / val",
+        "size": 1281167,
+        "publicly_available": true
+      },
+      {
+        "name": "CIFAR-10",
+        "split": "train / test",
+        "size": 60000,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Linear evaluation top-1 accuracy",
+      "Semi-supervised top-5 accuracy (1% / 10% labels)",
+      "Transfer accuracy"
+    ],
+    "reported_results": [
+      {
+        "metric": "ImageNet linear eval top-1, ResNet-50",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 69.3,
+        "is_primary": true
+      },
+      {
+        "metric": "ImageNet linear eval top-1, ResNet-50 (4x)",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 76.5,
+        "is_primary": false
+      },
+      {
+        "metric": "ImageNet top-5 with 1% labels, ResNet-50 (4x)",
+        "dataset": "ImageNet",
+        "split": "val",
+        "value": 85.8,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "Supervised ResNet-50",
+      "CPC v2",
+      "MoCo",
+      "PIRL"
+    ],
+    "compute": "ImageNet: 32-128 TPU v3 cores in the paper; CIFAR-10 protocol is feasible on 1-8 GPUs.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Run the CIFAR-10 variant (ResNet-50, CIFAR stem, no blur, batch 1024, tau 0.5, colour strength 0.5, ~1000 epochs) as the primary reproducible target.",
+      "basis": "ImageNet-scale pretraining is beyond typical contributor hardware; Appendix B.9 describes the CIFAR-10 setting.",
+      "confidence": 0.75,
+      "alternatives": [
+        "ImageNet protocol (batch 4096, lr 4.8, tau 0.1)"
+      ],
+      "affects_section": "Appendix B.9"
+    },
+    {
+      "assumption": "Linear evaluation uses Nesterov-momentum SGD on frozen, pre-extracted features without augmentation.",
+      "basis": "Simplification of the paper's linear protocol (which trains with random crops/flips).",
+      "confidence": 0.65,
+      "alternatives": [
+        "Train linear head with augmentation"
+      ],
+      "affects_section": "Section 2.3"
+    },
+    {
+      "assumption": "Colour jitter is implemented in-tensor (brightness/contrast/saturation 0.8s, hue 0.2s, random order).",
+      "basis": "Mirrors torchvision ColorJitter semantics used in Appendix A pseudo-code.",
+      "confidence": 0.8,
+      "alternatives": [],
+      "affects_section": "Appendix A"
+    },
+    {
+      "assumption": "LARS with trust coefficient 0.001, momentum 0.9; 1-D parameters (bias, BN) excluded from adaptation and weight decay.",
+      "basis": "Matches common SimCLR implementations; paper states LARS + weight decay 1e-6.",
+      "confidence": 0.8,
+      "alternatives": [],
+      "affects_section": "Section 2.1"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Appendix B.9",
+      "description": "CIFAR-10 best setting varies with batch size / epochs; one representative point chosen.",
+      "primary_assumption": "batch 1024, 1000 epochs, tau 0.5, s=0.5",
+      "alternatives": [
+        "paper sweep grid"
+      ],
+      "confidence": 0.6
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.93,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.9,
+    "training_pipeline": 0.8,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.75,
+    "overall_sir_confidence": 0.86
+  }
+}
