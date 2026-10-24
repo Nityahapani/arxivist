@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "DPO hyperparameters (Appendix B) on the synthetic controlled-generation task", "arxiv_id": "2305.18290"},
+  "run_name": "dpo_synthetic_beta0.1", "seed": 0, "device": "auto",
+  "data": {"vocab": 64, "prompt_len": 8, "response_len": 24, "n_positive": 16, "reward_scale": 10.0, "n_pairs": 20000, "n_eval": 512},
+  "model": {"d_model": 256, "n_layers": 4, "n_heads": 4, "d_ff": 1024},
+  "train": {"sft_steps": 2000, "sft_lr": 0.0003, "steps": 5000, "batch_size": 64, "lr": 1e-6, "warmup_steps": 150, "beta": 0.1, "log_every": 100},
+  "note": "Paper defaults: beta 0.1 (0.5 for TL;DR), batch 64, RMSprop lr 1e-6 with linear warmup over 150 steps. Paper experiments use GPT-2-large on IMDb with a sentiment classifier reward, GPT-J on Reddit TL;DR, and Pythia-2.8B on Anthropic HH, evaluated by GPT-4 win rates; these require Hugging Face models/datasets not bundled here. With a tiny model lr 1e-6 is very slow; sweep lr for the synthetic task."
+}
