@@ -1,0 +1,303 @@
+{
+  "paper_id": "arxiv_2205_14135",
+  "sir_version": 1,
+  "provenance": {
+    "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+    "authors": [
+      "Tri Dao",
+      "Daniel Y. Fu",
+      "Stefano Ermon",
+      "Atri Rudra",
+      "Christopher Ré"
+    ],
+    "affiliations": [
+      "Stanford University",
+      "University at Buffalo, SUNY"
+    ],
+    "arxiv_id": "2205.14135",
+    "doi": null,
+    "submission_date": "2022-05-27",
+    "abstract": "FlashAttention is an IO-aware exact attention algorithm that uses tiling to reduce reads and writes between GPU high-bandwidth memory and on-chip SRAM. It requires fewer HBM accesses than standard attention and is optimal for a range of SRAM sizes. It yields 15% end-to-end speed-up on BERT-large, 3x on GPT-2, 2.4x on Long Range Arena, and enables the first better-than-chance results on Path-X and Path-256.",
+    "domain": "NLP",
+    "key_claims": [
+      "Tiling with an online softmax plus recomputation in the backward pass computes exact attention without materialising the N x N matrix.",
+      "FlashAttention requires Theta(N^2 d^2 / M) HBM accesses versus Theta(N d + N^2) for standard attention, and this is optimal for a range of M.",
+      "End-to-end speed-ups: 15% on BERT-large (seq 512), 3x on GPT-2 (seq 1K), 2.4x on Long Range Arena.",
+      "Longer context enables 61.4% on Path-X (16K) and 63.1% on Path-256 (64K), the first better-than-chance results.",
+      "Block-sparse FlashAttention is faster still, with IO complexity reduced proportionally to sparsity."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "Exact FlashAttention forward (Algorithm 1) and backward with recomputation (Algorithm 4); block-sparse variant (Algorithm 5)",
+    "modules": [
+      {
+        "name": "FlashForward",
+        "operation_type": "attention_kernel",
+        "input_shape": "[B, H, N, d] x3",
+        "output_shape": "[B, H, N, d], [B, H, N]",
+        "parameters": {
+          "tiling": "B_r x B_c",
+          "online_softmax": true
+        },
+        "paper_section": "Algorithm 1-2",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "FlashBackward",
+        "operation_type": "attention_kernel",
+        "input_shape": "Q, K, V, O, L, dO",
+        "output_shape": "dQ, dK, dV",
+        "parameters": {
+          "recompute": true
+        },
+        "paper_section": "Algorithm 4",
+        "confidence": 0.92,
+        "notes": null
+      },
+      {
+        "name": "BlockSparse",
+        "operation_type": "attention_kernel",
+        "input_shape": "[B, H, N, d] x3",
+        "output_shape": "[B, H, N, d]",
+        "parameters": {
+          "block_mask": true
+        },
+        "paper_section": "Algorithm 5",
+        "confidence": 0.88,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "FlashForward",
+        "to": "FlashBackward",
+        "tensor_name": null
+      },
+      {
+        "from": "FlashBackward",
+        "to": "BlockSparse",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "Block-sparse FlashAttention",
+        "differences": {
+          "block_mask": "skip zero blocks"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Online softmax",
+      "latex": "m^{new} = \\max(m, \\tilde m),\\; \\ell^{new} = e^{m - m^{new}}\\ell + e^{\\tilde m - m^{new}}\\tilde\\ell",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.1, Algorithm 1",
+      "confidence": 0.95
+    },
+    {
+      "name": "Backward softmax gradient",
+      "latex": "dS_{ij} = P_{ij}(dP_{ij} - D_i),\\; D_i = dO_i^\\top O_i",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Appendix B.2",
+      "confidence": 0.93
+    },
+    {
+      "name": "IO complexity",
+      "latex": "\\Theta(N^2 d^2 M^{-1}) \\text{ vs } \\Theta(Nd + N^2)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.2, Theorem 2",
+      "confidence": 0.95
+    },
+    {
+      "name": "Block sizes",
+      "latex": "B_c = \\lceil M / 4d \\rceil,\\; B_r = \\min(\\lceil M / 4d \\rceil, d)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Algorithm 1",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "Q, K, V",
+      "shape_notation": "[B, H, N, d]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "FlashForward",
+      "confidence": 0.9
+    },
+    {
+      "name": "L (logsumexp)",
+      "shape_notation": "[B, H, N]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "FlashBackward",
+      "confidence": 0.9
+    },
+    {
+      "name": "O",
+      "shape_notation": "[B, H, N, d]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "FlashForward",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": null,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null,
+      "confidence": 0.6
+    },
+    "lr_schedule": {
+      "type": "per-benchmark (MLPerf BERT, GPT-2 OpenWebText, LRA)",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.6
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.6
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "Wikipedia (BERT-large MLPerf)",
+        "split": "pretraining",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "OpenWebText (GPT-2)",
+        "split": "LM",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Long Range Arena",
+        "split": "benchmark",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Path-X / Path-256",
+        "split": "benchmark",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Wall-clock training time",
+      "Attention runtime / memory",
+      "HBM accesses",
+      "Accuracy / perplexity"
+    ],
+    "reported_results": [
+      {
+        "metric": "Speed-up BERT-large training (%)",
+        "dataset": "Wikipedia",
+        "split": "train",
+        "value": 15.0,
+        "is_primary": false
+      },
+      {
+        "metric": "Speed-up GPT-2 training (x)",
+        "dataset": "OpenWebText",
+        "split": "train",
+        "value": 3.0,
+        "is_primary": true
+      },
+      {
+        "metric": "Speed-up Long Range Arena (x)",
+        "dataset": "LRA",
+        "split": "train",
+        "value": 2.4,
+        "is_primary": false
+      },
+      {
+        "metric": "Path-X accuracy (%)",
+        "dataset": "Path-X",
+        "split": "test",
+        "value": 61.4,
+        "is_primary": false
+      },
+      {
+        "metric": "Path-256 accuracy (%)",
+        "dataset": "Path-256",
+        "split": "test",
+        "value": 63.1,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "Standard PyTorch attention",
+      "Megatron-LM attention",
+      "Linformer",
+      "Performer",
+      "Reformer",
+      "Longformer",
+      "BigBird"
+    ],
+    "compute": "A100 GPUs (8 × A100 for GPT-2 / BERT).",
+    "special_conditions": [],
+    "confidence": 0.85
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Pure-PyTorch tiled implementation for correctness and IO accounting; no CUDA kernel.",
+      "basis": "Speed claims need the CUDA kernel.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 3"
+    },
+    {
+      "assumption": "Attention dropout (regenerated from the RNG state in the backward pass) is not implemented.",
+      "basis": "Keeps the reference exact and deterministic.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Algorithm 2"
+    },
+    {
+      "assumption": "Element counts per (batch, head) for Algorithm 0 and Algorithm 1 with the Algorithm 2 loop order.",
+      "basis": "Constants differ from the asymptotic statement.",
+      "confidence": 0.75,
+      "alternatives": [],
+      "affects_section": "Theorem 2"
+    }
+  ],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "architecture": 0.95,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.92,
+    "training_pipeline": 0.6,
+    "evaluation_protocol": 0.85,
+    "implementation_assumptions": 0.6,
+    "overall_sir_confidence": 0.86
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "FlashAttention smoke-test configuration", "arxiv_id": "2205.14135"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"vocab": 32},
+  "model": {"d_model": 32, "n_layers": 1, "n_heads": 2, "d_ff": 64, "br": 8, "bc": 8},
+  "train": {"steps": 6, "batch_size": 4, "seq_len": 32, "lr": 0.003, "weight_decay": 0.0, "log_every": 3},
+  "io": {"seq_len": 1024, "head_dim": 64, "sram_elements": 24576}
+}

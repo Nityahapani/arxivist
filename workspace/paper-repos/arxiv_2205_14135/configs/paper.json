@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "GPT-2 small with FlashAttention (Section 4.1 analogue, reference kernel)", "arxiv_id": "2205.14135"},
+  "run_name": "gpt2_small_flash_ref", "seed": 0, "device": "auto",
+  "data": {"vocab": 50257},
+  "model": {"d_model": 768, "n_layers": 12, "n_heads": 12, "d_ff": 3072, "br": 64, "bc": 64},
+  "train": {"steps": 1000, "batch_size": 8, "seq_len": 1024, "lr": 0.0006, "weight_decay": 0.1, "log_every": 50},
+  "io": {"seq_len": 1024, "head_dim": 64, "sram_elements": 24576},
+  "note": "The Python-loop reference is exact but slow; reproducing the paper's wall-clock speed-ups (BERT-large 15%, GPT-2 3x, LRA 2.4x) requires the CUDA kernel (flash-attn package) on A100 GPUs and OpenWebText. The train loop uses synthetic tokens; plug in an OpenWebText loader for real runs. sram_elements=24576 approximates 96KB of fp32 SRAM per SM-partition; adjust for the target GPU."
+}
