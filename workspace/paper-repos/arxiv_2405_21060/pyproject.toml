@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mamba2-paper-reproduction"
+version = "0.1.0"
+description = "Independent reproduction of Dao & Gu (2024), arXiv:2405.21060"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.4",
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+
+[project.scripts]
+mamba2-repro = "mamba2_repro.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
