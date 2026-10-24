@@ -1,0 +1,12 @@
+{
+  "paper": {"title": "DINOv2 ViT-g/14 pretraining on LVD-142M (Section 4-5, Appendix)", "arxiv_id": "2304.07193"},
+  "run_name": "dinov2_vitg14_lvd142m", "seed": 0, "device": "auto",
+  "data": {"image_size": 224, "n_classes": 1000, "n_train": 0, "n_test": 0, "dataset": "LVD-142M (not public)"},
+  "model": {"global_size": 224, "local_size": 98, "patch": 14, "dim": 1536, "depth": 40, "heads": 24, "drop_path": 0.4, "swiglu": true,
+            "n_prototypes": 131072, "head_hidden": 4096, "head_bottleneck": 384},
+  "train": {"steps": 625000, "batch_size": 3072, "n_local": 8, "blur": true, "lr": 0.0002, "warmup": 100000, "layer_decay": 0.9,
+            "wd_start": 0.04, "wd_end": 0.2, "momentum_start": 0.994, "teacher_temp_start": 0.04, "teacher_temp_end": 0.07,
+            "teacher_temp_warmup": 30000, "student_temp": 0.1, "mask_ratio": [0.1, 0.5], "mask_prob": 0.5,
+            "ibot_weight": 1.0, "koleo_weight": 0.1, "clip_grad": 3.0, "log_every": 100},
+  "note": "Most values (multi-crop 2x224 + 8x98, Sinkhorn-Knopp teacher centring, KoLeo weight 0.1, wd 0.04->0.2, teacher temperature 0.04->0.07, mask ratio 0.1-0.5) follow Section 4 and the public training config as best recalled; LR, warmup length, prototype counts, head sizes, and momentum start should be checked against the paper's Appendix before running. The final high-resolution (518 px) adaptation phase and distillation into smaller models are not configured. LVD-142M is not public; ImageNet-22k is a possible substitute. The train loop uses synthetic images."
+}

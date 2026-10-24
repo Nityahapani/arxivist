@@ -1,0 +1,349 @@
+{
+  "paper_id": "arxiv_2304_07193",
+  "sir_version": 1,
+  "provenance": {
+    "title": "DINOv2: Learning Robust Visual Features without Supervision",
+    "authors": [
+      "Maxime Oquab",
+      "Timothée Darcet",
+      "Théo Moutakanni",
+      "Huy Vo",
+      "Marc Szafraniec",
+      "Vasil Khalidov",
+      "Pierre Fernandez",
+      "Daniel Haziza",
+      "Francisco Massa",
+      "Alaaeldin El-Nouby",
+      "Mahmoud Assran",
+      "Nicolas Ballas",
+      "Wojciech Galuba",
+      "Russell Howes",
+      "Po-Yao Huang",
+      "Shang-Wen Li",
+      "Ishan Misra",
+      "Michael Rabbat",
+      "Vasu Sharma",
+      "Gabriel Synnaeve",
+      "Hu Xu",
+      "Hervé Jegou",
+      "Julien Mairal",
+      "Patrick Labatut",
+      "Armand Joulin",
+      "Piotr Bojanowski"
+    ],
+    "affiliations": [
+      "Meta AI Research",
+      "Inria"
+    ],
+    "arxiv_id": "2304.07193",
+    "doi": null,
+    "submission_date": "2023-04-14",
+    "abstract": "DINOv2 shows that existing discriminative self-supervised methods can produce all-purpose visual features that work across image distributions and tasks without finetuning, if trained on enough curated data. It combines DINO and iBOT losses with technical improvements (Sinkhorn-Knopp centring, KoLeo regulariser, untied heads, efficient implementation), builds an automatically curated 142M-image dataset (LVD-142M), trains a 1B-parameter ViT and distils it into smaller models.",
+    "domain": "CV",
+    "key_claims": [
+      "Self-supervised features trained on curated data rival or surpass weakly supervised (OpenCLIP) features on most image- and pixel-level benchmarks.",
+      "Combining image-level DINO and patch-level iBOT losses with untied heads, Sinkhorn-Knopp centring and the KoLeo regulariser improves features.",
+      "An automatic curation pipeline produces LVD-142M from uncurated web images by retrieval against curated datasets.",
+      "ViT-g/14 reaches 86.5% ImageNet linear-probe top-1; smaller models are obtained by distillation from ViT-g."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "ViT-g/14 (1.1B, SwiGLU) trained with DINO + iBOT + KoLeo on LVD-142M; ViT-S/B/L distilled",
+    "modules": [
+      {
+        "name": "ViTBackbone",
+        "operation_type": "vit",
+        "input_shape": "[B, 3, 224, 224]",
+        "output_shape": "[B, 1+256, d]",
+        "parameters": {
+          "patch": 14,
+          "layerscale": true,
+          "mask_token": true
+        },
+        "paper_section": "Section 5",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "DINOHead",
+        "operation_type": "projection_head",
+        "input_shape": "[B, d]",
+        "output_shape": "[B, K]",
+        "parameters": {
+          "mlp": 3,
+          "bottleneck": 256,
+          "weight_norm": true
+        },
+        "paper_section": "Section 4",
+        "confidence": 0.85,
+        "notes": null
+      },
+      {
+        "name": "iBOTHead",
+        "operation_type": "projection_head",
+        "input_shape": "[B, N, d]",
+        "output_shape": "[B, N, K]",
+        "parameters": {
+          "untied_from_dino": true
+        },
+        "paper_section": "Section 4",
+        "confidence": 0.85,
+        "notes": null
+      },
+      {
+        "name": "Teacher",
+        "operation_type": "ema_copy",
+        "input_shape": "-",
+        "output_shape": "-",
+        "parameters": {
+          "centering": "Sinkhorn-Knopp, 3 iterations"
+        },
+        "paper_section": "Section 4",
+        "confidence": 0.9,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "ViTBackbone",
+        "to": "DINOHead",
+        "tensor_name": null
+      },
+      {
+        "from": "DINOHead",
+        "to": "iBOTHead",
+        "tensor_name": null
+      },
+      {
+        "from": "iBOTHead",
+        "to": "Teacher",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "ViT-S/14",
+        "differences": {
+          "dim": 384,
+          "depth": 12,
+          "heads": 6
+        }
+      },
+      {
+        "name": "ViT-B/14",
+        "differences": {
+          "dim": 768,
+          "depth": 12,
+          "heads": 12
+        }
+      },
+      {
+        "name": "ViT-L/14",
+        "differences": {
+          "dim": 1024,
+          "depth": 24,
+          "heads": 16
+        }
+      },
+      {
+        "name": "ViT-g/14",
+        "differences": {
+          "dim": 1536,
+          "depth": 40,
+          "heads": 24
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "DINO loss",
+      "latex": "\\mathcal{L}_{DINO} = -\\sum p_t \\log p_s",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4",
+      "confidence": 0.95
+    },
+    {
+      "name": "iBOT loss",
+      "latex": "\\mathcal{L}_{iBOT} = -\\sum_{i\\,\\in\\,\\text{masked}} p_{ti} \\log p_{si}",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4",
+      "confidence": 0.92
+    },
+    {
+      "name": "KoLeo regulariser",
+      "latex": "\\mathcal{L}_{koleo} = -\\frac{1}{n}\\sum_{i=1}^{n} \\log(d_{n,i}),\\; d_{n,i} = \\min_{j \\neq i} \\|x_i - x_j\\|",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "crops",
+      "shape_notation": "2 x [B, 3, 224, 224] + 8 x [B, 3, 98, 98]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "ViTBackbone",
+      "confidence": 0.9
+    },
+    {
+      "name": "prototype scores",
+      "shape_notation": "[B, K]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "DINOHead",
+      "confidence": 0.9
+    },
+    {
+      "name": "features",
+      "shape_notation": "[B, d]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "ViTBackbone",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": null,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.04,
+      "confidence": 0.6
+    },
+    "lr_schedule": {
+      "type": "cosine LR; wd 0.04 -> 0.2; teacher momentum cosine -> 1",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.6
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "multi-crop",
+      "colour jitter",
+      "blur",
+      "solarize"
+    ],
+    "curriculum": null,
+    "confidence": 0.6
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "LVD-142M (curated, not public)",
+        "split": "pretraining",
+        "size": 142000000,
+        "publicly_available": true
+      },
+      {
+        "name": "ImageNet-1k",
+        "split": "linear / k-NN evaluation",
+        "size": 1281167,
+        "publicly_available": true
+      },
+      {
+        "name": "ADE20K, Cityscapes, NYU-Depth v2, iNaturalist, Places205, ...",
+        "split": "downstream",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "ImageNet linear top-1",
+      "k-NN top-1",
+      "Segmentation mIoU",
+      "Depth RMSE",
+      "Retrieval mAP"
+    ],
+    "reported_results": [
+      {
+        "metric": "ImageNet linear-probe top-1, ViT-g/14",
+        "dataset": "ImageNet-1k",
+        "split": "val",
+        "value": 86.5,
+        "is_primary": true
+      }
+    ],
+    "baselines": [
+      "OpenCLIP",
+      "EVA-CLIP",
+      "iBOT",
+      "DINO",
+      "MAE",
+      "SWAG"
+    ],
+    "compute": "A100 GPU cluster (ViT-g trained on hundreds of A100s).",
+    "special_conditions": [],
+    "confidence": 0.75
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "LR, warmup, prototype counts, head sizes and teacher momentum start in configs/paper.json are best-recalled values; verify against the paper's appendix.",
+      "basis": "Not all values were confirmed.",
+      "confidence": 0.45,
+      "alternatives": [],
+      "affects_section": "Appendix"
+    },
+    {
+      "assumption": "Random (not block-wise) patch masking with ratio U[0.1, 0.5] on 50% of global crops.",
+      "basis": "Simplification of iBOT block masking.",
+      "confidence": 0.7,
+      "alternatives": [
+        "block-wise masking"
+      ],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "FlashAttention/xFormers, sequence packing, FSDP and the high-resolution phase are not implemented.",
+      "basis": "Implementation details that do not change the objective.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 5"
+    },
+    {
+      "assumption": "Synthetic images replace LVD-142M; the curation pipeline is not implemented.",
+      "basis": "LVD-142M is not public.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 3"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 4 / Appendix",
+      "description": "Exact prototype counts and head widths for ViT-g.",
+      "primary_assumption": "131072 prototypes, hidden 4096, bottleneck 384",
+      "alternatives": [
+        "65536 prototypes, hidden 2048, bottleneck 256"
+      ],
+      "confidence": 0.4
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.88,
+    "mathematical_spec": 0.92,
+    "tensor_semantics": 0.85,
+    "training_pipeline": 0.5,
+    "evaluation_protocol": 0.75,
+    "implementation_assumptions": 0.55,
+    "overall_sir_confidence": 0.78
+  }
+}
