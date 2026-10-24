@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "BYOL smoke-test configuration", "arxiv_id": "2006.07733"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"name": "synthetic", "image_size": 32, "n_classes": 4, "n_train": 256, "n_test": 128},
+  "model": {"arch": "resnet18", "base_width": 8, "cifar_stem": true, "hidden": 64, "proj_dim": 16},
+  "train": {"steps": 8, "batch_size": 32, "lr_per_256": 0.2, "weight_decay": 1.5e-6, "tau_base": 0.996, "blur": false, "warmup_fraction": 0.1, "log_every": 4},
+  "linear_eval": {"steps": 100, "lr": 0.1, "batch_size": 128}
+}
