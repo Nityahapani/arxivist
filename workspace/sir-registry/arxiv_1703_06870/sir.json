@@ -1,0 +1,351 @@
+{
+  "paper_id": "arxiv_1703_06870",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Mask R-CNN",
+    "authors": [
+      "Kaiming He",
+      "Georgia Gkioxari",
+      "Piotr Dollár",
+      "Ross Girshick"
+    ],
+    "affiliations": [
+      "Facebook AI Research (FAIR)"
+    ],
+    "arxiv_id": "1703.06870",
+    "doi": null,
+    "submission_date": "2017-03-20",
+    "abstract": "Mask R-CNN extends Faster R-CNN by adding a branch for predicting an object mask in parallel with the existing branch for bounding box recognition, efficiently detecting objects while generating a high-quality segmentation mask for each instance. It is simple to train, adds a small overhead, runs at 5 fps, and generalises to other tasks such as human pose estimation. It outperforms all existing single-model entries on every COCO 2016 challenge task.",
+    "domain": "CV",
+    "key_claims": [
+      "A parallel fully convolutional mask branch on each RoI turns Faster R-CNN into an instance segmentation system with small overhead.",
+      "RoIAlign removes the harsh quantisation of RoIPool and substantially improves mask accuracy.",
+      "Decoupling mask and class prediction (per-class binary masks with sigmoid BCE, no inter-class competition) is essential.",
+      "Mask R-CNN with ResNeXt-101-FPN reaches 37.1 mask AP and 39.8 box AP on COCO test-dev, running at about 5 fps."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "Mask R-CNN with ResNet-50-FPN backbone, RoIAlign, 4-conv mask head producing 28x28 per-class masks",
+    "modules": [
+      {
+        "name": "Backbone",
+        "operation_type": "resnet",
+        "input_shape": "[B, 3, H, W]",
+        "output_shape": "C2..C5",
+        "parameters": {
+          "arch": "ResNet-50/101, ResNeXt-101",
+          "frozen_bn": true
+        },
+        "paper_section": "Section 3",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "FPN",
+        "operation_type": "fpn",
+        "input_shape": "C2..C5",
+        "output_shape": "P2..P6 (256 ch)",
+        "parameters": {},
+        "paper_section": "Section 3",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "RPN",
+        "operation_type": "rpn",
+        "input_shape": "P2..P6",
+        "output_shape": "proposals",
+        "parameters": {
+          "anchors": "5 sizes x 3 ratios",
+          "nms": 0.7
+        },
+        "paper_section": "Section 3",
+        "confidence": 0.85,
+        "notes": null
+      },
+      {
+        "name": "RoIAlign",
+        "operation_type": "roi_align",
+        "input_shape": "P2..P5, RoIs",
+        "output_shape": "[R, 256, 7/14, 7/14]",
+        "parameters": {
+          "sampling": "bilinear, 4 points per bin",
+          "quantization": false
+        },
+        "paper_section": "Section 3, Fig. 3",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "BoxHead",
+        "operation_type": "mlp",
+        "input_shape": "[R, 256, 7, 7]",
+        "output_shape": "[R, K+1], [R, 4K]",
+        "parameters": {
+          "fc": 1024
+        },
+        "paper_section": "Fig. 4",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "MaskHead",
+        "operation_type": "fcn",
+        "input_shape": "[R, 256, 14, 14]",
+        "output_shape": "[R, K, 28, 28]",
+        "parameters": {
+          "convs": "4 x 3x3 256",
+          "deconv": "2x2 s2"
+        },
+        "paper_section": "Fig. 4 right",
+        "confidence": 0.93,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "Backbone",
+        "to": "FPN",
+        "tensor_name": null
+      },
+      {
+        "from": "FPN",
+        "to": "RPN",
+        "tensor_name": null
+      },
+      {
+        "from": "RPN",
+        "to": "RoIAlign",
+        "tensor_name": null
+      },
+      {
+        "from": "RoIAlign",
+        "to": "BoxHead",
+        "tensor_name": null
+      },
+      {
+        "from": "BoxHead",
+        "to": "MaskHead",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "R-101-FPN",
+        "differences": {
+          "backbone": "ResNet-101"
+        }
+      },
+      {
+        "name": "X-101-FPN",
+        "differences": {
+          "backbone": "ResNeXt-101 32x4d"
+        }
+      },
+      {
+        "name": "C4 head",
+        "differences": {
+          "head": "ResNet C5 stage on RoIs, no FPN"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Multi-task loss",
+      "latex": "L = L_{cls} + L_{box} + L_{mask}",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.97
+    },
+    {
+      "name": "Mask loss",
+      "latex": "L_{mask} = -\\frac{1}{m^2}\\sum_{ij}\\left[y_{ij}\\log\\sigma(\\hat y^{k}_{ij}) + (1-y_{ij})\\log(1-\\sigma(\\hat y^{k}_{ij}))\\right],\\; k = \\text{GT class}",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.95
+    },
+    {
+      "name": "FPN level assignment",
+      "latex": "k = \\lfloor k_0 + \\log_2(\\sqrt{wh}/224) \\rfloor,\\; k_0 = 4",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "FPN paper, used in Section 3",
+      "confidence": 0.9
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "image",
+      "shape_notation": "[B, 3, H, W]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "Backbone",
+      "confidence": 0.9
+    },
+    {
+      "name": "rois",
+      "shape_notation": "[R, 5]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "RoIAlign",
+      "confidence": 0.9
+    },
+    {
+      "name": "masks",
+      "shape_notation": "[R, K, 28, 28]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "MaskHead",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "SGD (momentum 0.9)",
+      "learning_rate": 0.02,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.0001,
+      "confidence": 0.92
+    },
+    "lr_schedule": {
+      "type": "x0.1 at 120k of 160k iterations",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.92
+    },
+    "batch_size": 16,
+    "effective_batch_size": 16,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "shorter side 800 px",
+      "horizontal flip"
+    ],
+    "curriculum": null,
+    "confidence": 0.92
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "COCO (trainval35k / minival / test-dev)",
+        "split": "80 categories",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Cityscapes",
+        "split": "instance segmentation",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "COCO keypoints",
+        "split": "pose",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Mask AP (AP, AP50, AP75, APS/M/L)",
+      "Box AP",
+      "FPS"
+    ],
+    "reported_results": [
+      {
+        "metric": "Mask AP, X-101-FPN",
+        "dataset": "COCO test-dev",
+        "split": "test",
+        "value": 37.1,
+        "is_primary": true
+      },
+      {
+        "metric": "Box AP, X-101-FPN",
+        "dataset": "COCO test-dev",
+        "split": "test",
+        "value": 39.8,
+        "is_primary": false
+      },
+      {
+        "metric": "Mask AP, R-101-FPN",
+        "dataset": "COCO test-dev",
+        "split": "test",
+        "value": 35.7,
+        "is_primary": false
+      },
+      {
+        "metric": "Inference speed (fps)",
+        "dataset": "COCO",
+        "split": "test",
+        "value": 5.0,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "MNC",
+      "FCIS",
+      "FCIS+++",
+      "Faster R-CNN (box)"
+    ],
+    "compute": "8 GPUs; R-50-FPN trains in about 32 hours.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Default aligned=True (half-pixel offset, later Detectron2 convention); aligned=False reproduces original Detectron.",
+      "basis": "Paper does not specify pixel-centre convention.",
+      "confidence": 0.75,
+      "alternatives": [
+        "aligned=False"
+      ],
+      "affects_section": "Section 3"
+    },
+    {
+      "assumption": "Random init in this repo; paper uses ImageNet-pretrained backbones.",
+      "basis": "Offline environment.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 3.1"
+    },
+    {
+      "assumption": "FPN-style RPN (anchor sizes 32–512 on P2–P6, 256 anchors/image, NMS 0.7, 2000/1000 proposals).",
+      "basis": "Inherited from Faster R-CNN / FPN papers.",
+      "confidence": 0.8,
+      "alternatives": [],
+      "affects_section": "Section 3.1"
+    },
+    {
+      "assumption": "Linear warmup over 500 iterations in paper config (Detectron convention, not in paper).",
+      "basis": "Stabilises large-LR start.",
+      "confidence": 0.6,
+      "alternatives": [
+        "no warmup"
+      ],
+      "affects_section": "-"
+    }
+  ],
+  "ambiguities": [],
+  "confidence_annotations": {
+    "architecture": 0.93,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.9,
+    "training_pipeline": 0.88,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.8,
+    "overall_sir_confidence": 0.88
+  }
+}

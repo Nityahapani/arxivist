@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "Mask R-CNN R-50-FPN on COCO (Section 4, 160k iterations)", "arxiv_id": "1703.06870"},
+  "run_name": "mask_rcnn_r50_fpn_coco", "seed": 0, "device": "auto",
+  "data": {"image_size": 800, "n_classes": 80, "max_objects": 100, "dataset": "coco2017", "root": "data/coco"},
+  "model": {"arch": "resnet50", "base_width": 64, "fpn_dim": 256, "anchor_sizes": [32, 64, 128, 256, 512], "canonical": 224,
+            "rpn_pre_nms": 2000, "rpn_post_nms": 1000, "rois_per_image": 512, "fc": 1024, "mask_dim": 256},
+  "train": {"steps": 160000, "batch_size": 16, "base_lr": 0.02, "weight_decay": 0.0001, "warmup": 500, "lr_steps": [120000], "log_every": 100},
+  "note": "Paper: 8 GPUs x 2 images, LR 0.02 decayed by 10 at 120k of 160k iterations, momentum 0.9, wd 1e-4, images resized to 800 px shorter side, ImageNet-pretrained backbone; trainval35k / minival. Warmup is a later Detectron convention. Requires a COCO loader and pycocotools for AP; the train loop uses synthetic shapes. RoIAlign uses the aligned=True convention by default; set aligned=False to match the original Detectron."
+}
