@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "TabPFN prior fitting (Section 4, Appendix): 12-layer Transformer, d=512", "arxiv_id": "2207.01848"},
+  "run_name": "tabpfn_prior_fit", "seed": 0, "device": "auto",
+  "prior": {"n_samples": 1024, "max_features": 100, "max_classes": 10, "p_scm": 0.5},
+  "model": {"d_model": 512, "n_layers": 12, "n_heads": 4, "d_ff": 1024},
+  "train": {"steps": 100000, "batch_size": 64, "lr": 0.0001, "warmup": 1000, "log_every": 100},
+  "eval": {"n_train": 500, "n_test": 69, "n_ensemble": 32},
+  "note": "Architecture (12 layers, d_model 512, 4 heads, FFN 1024), up to 100 features, 10 classes and 1024 samples follow the paper; the paper's prior is a richer SCM/BNN mixture with feature warping, categorical features and missing values (Appendix C) and was trained for ~20 hours on 8 GPUs. Step count, batch size and LR here are assumptions. Evaluation in the paper is on 30 OpenML-CC18 datasets (<=1000 samples, <=100 numerical features, <=10 classes) with ROC AUC."
+}
