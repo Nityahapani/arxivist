@@ -1,0 +1,10 @@
+{
+  "paper": {"title": "TRADES CIFAR-10 WRN-34-10, 1/lambda = 6 (Table 5)", "arxiv_id": "1901.08573"},
+  "run_name": "cifar10_wrn34_10_beta6", "seed": 0, "device": "auto",
+  "data": {"name": "cifar10", "root": "data", "augment": true},
+  "model": {"depth": 34, "widen": 10, "n_classes": 10},
+  "train": {"epochs": 76, "batch_size": 128, "lr": 0.1, "weight_decay": 2e-4, "beta": 6.0, "lr_decay_at": [0.9868], "log_every": 100},
+  "attack_train": {"eps": 0.031, "step_size": 0.007, "steps": 10},
+  "attack_eval": {"eps": 0.031, "step_size": 0.003, "steps": 20},
+  "note": "Epoch count (76) and LR decay at epoch 75 follow the authors' public training script; the paper's Section 5 describes eps=0.031, 10 inner steps of size 0.007 for training and FGSM^k (PGD-20, step 0.003) for evaluation. Set train.beta to 1 for the 1/lambda = 1 row."
+}

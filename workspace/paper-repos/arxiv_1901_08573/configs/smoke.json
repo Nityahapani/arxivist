@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "TRADES smoke-test configuration", "arxiv_id": "1901.08573"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"name": "synthetic", "image_size": 16, "n_classes": 4, "n_train": 128, "n_test": 64, "augment": true},
+  "model": {"depth": 10, "widen": 1, "n_classes": 4},
+  "train": {"steps": 6, "batch_size": 16, "lr": 0.1, "weight_decay": 2e-4, "beta": 6.0, "lr_decay_at": [0.75], "log_every": 3},
+  "attack_train": {"eps": 0.031, "step_size": 0.007, "steps": 2},
+  "attack_eval": {"eps": 0.031, "step_size": 0.003, "steps": 3, "n_eval": 64}
+}
