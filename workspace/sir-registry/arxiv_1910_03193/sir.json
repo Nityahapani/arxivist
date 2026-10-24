@@ -1,0 +1,342 @@
+{
+  "paper_id": "arxiv_1910_03193",
+  "sir_version": 1,
+  "provenance": {
+    "title": "DeepONet: Learning nonlinear operators for identifying differential equations based on the universal approximation theorem of operators",
+    "authors": [
+      "Lu Lu",
+      "Pengzhan Jin",
+      "George Em Karniadakis"
+    ],
+    "affiliations": [
+      "Brown University",
+      "Chinese Academy of Sciences"
+    ],
+    "arxiv_id": "1910.03193",
+    "doi": null,
+    "submission_date": "2019-10-08",
+    "abstract": "DeepONet learns nonlinear operators mapping input functions to output functions, motivated by the universal approximation theorem for operators. A branch net encodes the input function sampled at fixed sensors and a trunk net encodes the output location; their inner product gives G(u)(y). Stacked and unstacked variants are evaluated on ODE/PDE operators and compared with fully connected and sequence baselines.",
+    "domain": "Other",
+    "key_claims": [
+      "Operators can be approximated by G(u)(y) ≈ sum_k b_k(u(x_1..x_m)) t_k(y) + b_0 with branch and trunk networks.",
+      "DeepONet achieves smaller generalization error than FNN baselines on the studied operators.",
+      "Unstacked DeepONet with bias generalizes better than stacked DeepONet in the paper's experiments.",
+      "Test error shows fast (exponential then polynomial) convergence with respect to the number of training examples."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "Unstacked DeepONet with bias: branch FCN on m=100 sensor values, trunk FCN on y, inner product of p-dimensional features",
+    "modules": [
+      {
+        "name": "BranchNet",
+        "operation_type": "mlp",
+        "input_shape": "[N, m]",
+        "output_shape": "[N, p]",
+        "parameters": {
+          "m": 100,
+          "hidden": "assumed [40]"
+        },
+        "paper_section": "Section 3, Fig. 1",
+        "confidence": 0.85,
+        "notes": null
+      },
+      {
+        "name": "TrunkNet",
+        "operation_type": "mlp",
+        "input_shape": "[N, d_y]",
+        "output_shape": "[N, p]",
+        "parameters": {
+          "hidden": "assumed [40, 40]",
+          "activation_on_last_layer": true
+        },
+        "paper_section": "Section 3, Fig. 1",
+        "confidence": 0.85,
+        "notes": null
+      },
+      {
+        "name": "InnerProductPlusBias",
+        "operation_type": "dot_product",
+        "input_shape": "[N, p] x [N, p]",
+        "output_shape": "[N, 1]",
+        "parameters": {
+          "bias": "b_0"
+        },
+        "paper_section": "Section 3, Eq. 2",
+        "confidence": 0.95,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "BranchNet",
+        "to": "InnerProductPlusBias",
+        "tensor_name": "b"
+      },
+      {
+        "from": "TrunkNet",
+        "to": "InnerProductPlusBias",
+        "tensor_name": "t"
+      }
+    ],
+    "variants": [
+      {
+        "name": "Stacked DeepONet",
+        "differences": {
+          "branch": "p independent branch nets with scalar output"
+        }
+      },
+      {
+        "name": "Unstacked DeepONet",
+        "differences": {
+          "branch": "single branch net with p outputs"
+        }
+      },
+      {
+        "name": "FNN baseline",
+        "differences": {
+          "input": "concatenation [u(x_1..m), y]"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "DeepONet approximation",
+      "latex": "G(u)(y) \\approx \\sum_{k=1}^{p} b_k(u(x_1),\\dots,u(x_m))\\, t_k(y) + b_0",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.95
+    },
+    {
+      "name": "Antiderivative operator",
+      "latex": "\\frac{ds}{dx} = u(x),\\; s(0)=0",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4.1",
+      "confidence": 0.95
+    },
+    {
+      "name": "Nonlinear ODE",
+      "latex": "\\frac{ds}{dx} = -s^2(x) + u(x),\\; s(0)=0",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4.1",
+      "confidence": 0.9
+    },
+    {
+      "name": "Gravity pendulum",
+      "latex": "\\dot s_1 = s_2,\\; \\dot s_2 = -k\\sin s_1 + u(t),\\; k=1",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4.1",
+      "confidence": 0.85
+    },
+    {
+      "name": "MSE loss",
+      "latex": "\\mathcal{L} = \\frac{1}{N}\\sum (G_\\theta(u)(y) - G(u)(y))^2",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 4",
+      "confidence": 0.9
+    },
+    {
+      "name": "GRF kernel",
+      "latex": "k(x_1,x_2) = \\exp(-\\|x_1-x_2\\|^2 / 2l^2)",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [
+        "l"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 4",
+      "confidence": 0.9
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "u_sensors",
+      "shape_notation": "[N, m]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "BranchNet",
+      "confidence": 0.9
+    },
+    {
+      "name": "y",
+      "shape_notation": "[N, 1]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "TrunkNet",
+      "confidence": 0.9
+    },
+    {
+      "name": "branch_features",
+      "shape_notation": "[N, p]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "BranchNet",
+      "confidence": 0.9
+    },
+    {
+      "name": "trunk_features",
+      "shape_notation": "[N, p]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "TrunkNet",
+      "confidence": 0.9
+    },
+    {
+      "name": "G_u_y",
+      "shape_notation": "[N, 1]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "InnerProductPlusBias",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "Adam",
+      "learning_rate": 0.001,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null,
+      "confidence": 0.6
+    },
+    "lr_schedule": {
+      "type": "constant",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.6
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": 50000,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.6
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "Antiderivative operator, GRF inputs (l=0.2)",
+        "split": "train/test, generated",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Nonlinear ODE operator",
+        "split": "train/test, generated",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Gravity pendulum operator",
+        "split": "train/test, generated",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Test mean squared error",
+      "Generalization error vs number of training examples"
+    ],
+    "reported_results": [],
+    "baselines": [
+      "FNN",
+      "ResNet",
+      "seq2seq"
+    ],
+    "compute": "CPU or a single GPU is sufficient; full protocol is cheap compared with modern deep learning.",
+    "special_conditions": [],
+    "confidence": 0.7
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Use p=40, branch hidden [40], trunk hidden [40, 40] with ReLU.",
+      "basis": "Chosen as representative small widths; exact widths per experiment must be checked against the paper's tables.",
+      "confidence": 0.55,
+      "alternatives": [
+        "Widths from the paper's per-problem tables"
+      ],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "10,000 training (u, y) pairs with one output location per function; 1,000 test functions x 100 locations.",
+      "basis": "Exact sample counts differ across experiments in the paper.",
+      "confidence": 0.55,
+      "alternatives": [
+        "Multiple locations per function"
+      ],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "50,000 full-batch Adam steps at lr 1e-3.",
+      "basis": "Iteration counts are not uniformly stated.",
+      "confidence": 0.5,
+      "alternatives": [
+        "Learning-rate decay"
+      ],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "Pendulum operator integrated on T=1 using RK4 on a 1,001-point grid.",
+      "basis": "Implementation choice for the reference solver.",
+      "confidence": 0.6,
+      "alternatives": [],
+      "affects_section": "Section 4.1"
+    },
+    {
+      "assumption": "The diffusion-reaction PDE example is not implemented in this scaffold.",
+      "basis": "Scope limit; left for the contributor.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 4.2"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 4",
+      "description": "Per-problem network sizes and training sample counts are given in tables that should be cross-checked.",
+      "primary_assumption": "p=40 widths and 10k samples",
+      "alternatives": [
+        "paper table values"
+      ],
+      "confidence": 0.55
+    },
+    {
+      "location": "Section 3",
+      "description": "Whether the trunk's last layer is activated.",
+      "primary_assumption": "Activated (t_k are nonlinear features)",
+      "alternatives": [
+        "linear last layer"
+      ],
+      "confidence": 0.7
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.88,
+    "mathematical_spec": 0.92,
+    "tensor_semantics": 0.88,
+    "training_pipeline": 0.6,
+    "evaluation_protocol": 0.7,
+    "implementation_assumptions": 0.6,
+    "overall_sir_confidence": 0.76
+  }
+}
