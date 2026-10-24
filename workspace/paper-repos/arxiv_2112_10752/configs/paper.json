@@ -1,0 +1,10 @@
+{
+  "paper": {"title": "Class-conditional LDM-4 on ImageNet 256 (Section 4.3, Table 3 / Appendix)", "arxiv_id": "2112.10752"},
+  "run_name": "ldm4_imagenet_cin256", "seed": 0, "device": "auto",
+  "data": {"image_size": 256, "n_classes": 1000, "n_train": 0, "dataset": "imagenet"},
+  "autoencoder": {"ch": 128, "mult": [1, 2, 4], "z_ch": 3, "n_res": 2, "kl_weight": 1e-6, "disc_ch": 64, "disc_weight": 0.5},
+  "unet": {"ch": 192, "mult": [1, 2, 3, 5], "attn_levels": [1, 2, 3], "n_res": 2, "heads": 8, "d_ctx": 512},
+  "train": {"batch_size": 64, "ae_steps": 500000, "ae_lr": 4.5e-6, "disc_start": 50001, "steps": 178000, "lr": 1e-4, "T": 1000,
+            "p_uncond": 0.1, "ddim_steps": 250, "guidance": 1.5, "log_every": 100},
+  "note": "The paper reports FID 3.60 for LDM-4 on class-conditional ImageNet with classifier-free guidance scale 1.5 (250 DDIM steps). Channel multipliers, iteration counts and the autoencoder (the paper uses VQ-f4 / KL-f4/f8 first stages trained with LPIPS + PatchGAN) are best-recalled values; check the paper's appendix tables (Tables 12-15). LPIPS is not implemented (needs pretrained VGG). Requires an ImageNet loader; the train loop uses synthetic images. The paper's original class conditioning uses cross-attention on a learned class embedding, as implemented here."
+}

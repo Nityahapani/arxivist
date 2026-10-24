@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "LDM smoke-test configuration", "arxiv_id": "2112.10752"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"image_size": 32, "n_classes": 4, "n_train": 128},
+  "autoencoder": {"ch": 16, "mult": [1, 2, 2], "z_ch": 4, "n_res": 1, "kl_weight": 1e-6, "disc_ch": 16, "disc_weight": 0.5},
+  "unet": {"ch": 32, "mult": [1, 2], "attn_levels": [1], "n_res": 1, "heads": 4, "d_ctx": 32},
+  "train": {"batch_size": 8, "ae_steps": 4, "ae_lr": 4.5e-6, "disc_start": 2, "steps": 4, "lr": 1e-4, "T": 1000,
+            "p_uncond": 0.1, "ddim_steps": 4, "guidance": 3.0, "log_every": 2}
+}

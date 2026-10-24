@@ -1,0 +1,354 @@
+{
+  "paper_id": "arxiv_2112_10752",
+  "sir_version": 1,
+  "provenance": {
+    "title": "High-Resolution Image Synthesis with Latent Diffusion Models",
+    "authors": [
+      "Robin Rombach",
+      "Andreas Blattmann",
+      "Dominik Lorenz",
+      "Patrick Esser",
+      "Björn Ommer"
+    ],
+    "affiliations": [
+      "Ludwig Maximilian University of Munich",
+      "Heidelberg University (IWR)",
+      "Runway ML"
+    ],
+    "arxiv_id": "2112.10752",
+    "doi": null,
+    "submission_date": "2021-12-20",
+    "abstract": "Diffusion models give state-of-the-art synthesis but are costly in pixel space. Latent diffusion models apply diffusion in the latent space of pretrained autoencoders, balancing complexity reduction and detail preservation. Cross-attention layers make them flexible generators for conditions such as text or boxes. LDMs set a new state of the art for inpainting and are competitive on unconditional generation, super-resolution and text-to-image at much lower cost.",
+    "domain": "CV",
+    "key_claims": [
+      "Separating perceptual compression (autoencoder) from semantic generation (diffusion in latent space) greatly reduces compute while keeping quality.",
+      "Downsampling factors f = 4 to 16 offer the best trade-off between efficiency and fidelity; f = 1 trains slowly and large f loses detail.",
+      "Cross-attention conditioning in the UNet enables text-to-image, layout-to-image and class-conditional synthesis.",
+      "LDMs reach FID 5.11 on CelebA-HQ 256, 3.60 on class-conditional ImageNet 256 (with guidance) and 12.63 on MS-COCO text-to-image."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "LDM-4/8: KL- or VQ-regularised autoencoder (f = 4 or 8) + time-conditional UNet with cross-attention, epsilon-prediction, DDIM sampling",
+    "modules": [
+      {
+        "name": "Encoder",
+        "operation_type": "conv_encoder",
+        "input_shape": "[B, 3, H, W]",
+        "output_shape": "[B, c, H/f, W/f]",
+        "parameters": {
+          "regularization": "KL (1e-6) or VQ"
+        },
+        "paper_section": "Section 3.1",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "Decoder",
+        "operation_type": "conv_decoder",
+        "input_shape": "[B, c, H/f, W/f]",
+        "output_shape": "[B, 3, H, W]",
+        "parameters": {},
+        "paper_section": "Section 3.1",
+        "confidence": 0.9,
+        "notes": null
+      },
+      {
+        "name": "UNet",
+        "operation_type": "unet",
+        "input_shape": "[B, c, h, w]",
+        "output_shape": "[B, c, h, w]",
+        "parameters": {
+          "cross_attention": true,
+          "timestep_embedding": "sinusoidal"
+        },
+        "paper_section": "Section 3.3, Fig. 3",
+        "confidence": 0.88,
+        "notes": null
+      },
+      {
+        "name": "ConditionEncoder",
+        "operation_type": "tau_theta",
+        "input_shape": "y",
+        "output_shape": "[B, M, d_ctx]",
+        "parameters": {
+          "text": "transformer",
+          "classes": "embedding"
+        },
+        "paper_section": "Section 3.3",
+        "confidence": 0.85,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "Encoder",
+        "to": "Decoder",
+        "tensor_name": null
+      },
+      {
+        "from": "Decoder",
+        "to": "UNet",
+        "tensor_name": null
+      },
+      {
+        "from": "UNet",
+        "to": "ConditionEncoder",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "LDM-1",
+        "differences": {
+          "downsampling_factor": 1
+        }
+      },
+      {
+        "name": "LDM-2",
+        "differences": {
+          "downsampling_factor": 2
+        }
+      },
+      {
+        "name": "LDM-4",
+        "differences": {
+          "downsampling_factor": 4
+        }
+      },
+      {
+        "name": "LDM-8",
+        "differences": {
+          "downsampling_factor": 8
+        }
+      },
+      {
+        "name": "LDM-16",
+        "differences": {
+          "downsampling_factor": 16
+        }
+      },
+      {
+        "name": "LDM-32",
+        "differences": {
+          "downsampling_factor": 32
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "LDM objective",
+      "latex": "L_{LDM} = \\mathbb{E}_{\\mathcal{E}(x), \\epsilon \\sim \\mathcal{N}(0,1), t}\\left[\\|\\epsilon - \\epsilon_\\theta(z_t, t)\\|_2^2\\right]",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.2, Eq. 2",
+      "confidence": 0.97
+    },
+    {
+      "name": "Cross-attention",
+      "latex": "\\mathrm{Attention}(Q,K,V) = \\mathrm{softmax}\\left(\\frac{QK^\\top}{\\sqrt d}\\right)V,\\; Q = W_Q\\varphi(z_t),\\; K = W_K\\tau_\\theta(y),\\; V = W_V\\tau_\\theta(y)",
+      "role": "attention",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.3, Eq. 4",
+      "confidence": 0.95
+    },
+    {
+      "name": "Conditional LDM",
+      "latex": "L_{LDM} = \\mathbb{E}\\left[\\|\\epsilon - \\epsilon_\\theta(z_t, t, \\tau_\\theta(y))\\|_2^2\\right]",
+      "role": "loss",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3.3, Eq. 3",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "x",
+      "shape_notation": "[B, 3, H, W]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "Encoder",
+      "confidence": 0.9
+    },
+    {
+      "name": "z",
+      "shape_notation": "[B, c, H/f, W/f]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "UNet",
+      "confidence": 0.9
+    },
+    {
+      "name": "context",
+      "shape_notation": "[B, M, d_ctx]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "UNet",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": 0.0001,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": null,
+      "confidence": 0.6
+    },
+    "lr_schedule": {
+      "type": "constant",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.6
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": null,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.6
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "CelebA-HQ 256",
+        "split": "unconditional",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "FFHQ, LSUN Churches/Bedrooms",
+        "split": "unconditional",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "ImageNet 256",
+        "split": "class-conditional / super-resolution",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "LAION-400M",
+        "split": "text-to-image",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "MS-COCO",
+        "split": "text-to-image eval",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "Places",
+        "split": "inpainting",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "FID",
+      "Inception Score",
+      "Precision / Recall",
+      "Throughput"
+    ],
+    "reported_results": [
+      {
+        "metric": "FID, LDM-4 unconditional",
+        "dataset": "CelebA-HQ 256",
+        "split": "test",
+        "value": 5.11,
+        "is_primary": false
+      },
+      {
+        "metric": "FID, LDM-4-G class-conditional",
+        "dataset": "ImageNet 256",
+        "split": "val",
+        "value": 3.6,
+        "is_primary": true
+      },
+      {
+        "metric": "FID, LDM-KL-8-G text-to-image",
+        "dataset": "MS-COCO 256",
+        "split": "val",
+        "value": 12.63,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "ADM / ADM-G",
+      "BigGAN-deep",
+      "StyleGAN",
+      "VQGAN",
+      "DALL-E",
+      "CogView",
+      "GLIDE"
+    ],
+    "compute": "Single A100 for most models (e.g. LDM-4 ImageNet trained for several days); see the paper's compute table.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "LPIPS is not implemented (needs pretrained VGG weights); first stage uses L1 + KL + PatchGAN.",
+      "basis": "Offline environment.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Section 3.1; Appendix G"
+    },
+    {
+      "assumption": "'Scaled linear' β schedule 0.00085 → 0.012 with T = 1000 (as in the released LDM configs).",
+      "basis": "Paper text does not list the schedule explicitly.",
+      "confidence": 0.7,
+      "alternatives": [
+        "linear 1e-4 → 0.02"
+      ],
+      "affects_section": "Appendix"
+    },
+    {
+      "assumption": "Channel multipliers, attention resolutions and iteration counts in configs/paper.json are best-recalled values.",
+      "basis": "Check the paper's hyperparameter tables.",
+      "confidence": 0.5,
+      "alternatives": [],
+      "affects_section": "Appendix E"
+    },
+    {
+      "assumption": "Latents are rescaled by 1/std estimated on the training set before diffusion (KL models).",
+      "basis": "As described for KL-regularised latents.",
+      "confidence": 0.85,
+      "alternatives": [],
+      "affects_section": "Appendix G"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Appendix",
+      "description": "Exact per-dataset hyperparameters (channels, attention levels, steps).",
+      "primary_assumption": "see configs/paper.json",
+      "alternatives": [],
+      "confidence": 0.5
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.9,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.88,
+    "training_pipeline": 0.55,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.6,
+    "overall_sir_confidence": 0.82
+  }
+}
