@@ -1,0 +1,7 @@
+{
+  "paper": {"title": "U-Net smoke-test configuration", "arxiv_id": "1505.04597"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"tile": 92, "n_cells": 6, "eval_size": 80},
+  "model": {"base": 8, "depth": 2, "dropout": 0.5},
+  "train": {"steps": 10, "lr": 0.01, "momentum": 0.99, "w0": 10.0, "sigma": 5.0, "elastic": true, "log_every": 5}
+}
