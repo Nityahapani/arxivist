@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "DETR R50, 500-epoch COCO schedule (Section 4, Appendix A.4)", "arxiv_id": "2005.12872"},
+  "run_name": "detr_r50_coco_500ep", "seed": 0, "device": "auto",
+  "data": {"image_size": 800, "n_classes": 91, "max_objects": 100, "dataset": "coco2017", "root": "data/coco"},
+  "model": {"arch": "resnet50", "base_width": 64, "n_queries": 100, "d_model": 256, "heads": 8, "enc_layers": 6, "dec_layers": 6, "d_ff": 2048, "dropout": 0.1},
+  "train": {"steps": 924000, "batch_size": 64, "lr": 0.0001, "lr_backbone": 1e-5, "weight_decay": 0.0001, "clip_max_norm": 0.1, "lr_drop_step": 739200,
+            "eos_coef": 0.1, "w_l1": 5.0, "w_giou": 2.0, "log_every": 100},
+  "note": "500 epochs with LR drop at 400 (batch 64 on 16 V100s, ~1848 iters/epoch); the 300-epoch schedule drops at 200. Requires a COCO loader with scale augmentation (shortest side 480-800, max 1333) and random crops, plus an ImageNet-pretrained ResNet-50 (torchvision weights) — not wired up here; the train loop uses synthetic rectangles. COCO AP should be computed with pycocotools."
+}

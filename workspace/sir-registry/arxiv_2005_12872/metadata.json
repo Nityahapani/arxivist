@@ -1,0 +1,42 @@
+{
+  "paper_id": "arxiv_2005_12872",
+  "title": "End-to-End Object Detection with Transformers",
+  "authors": [
+    "Nicolas Carion",
+    "Francisco Massa",
+    "Gabriel Synnaeve",
+    "Nicolas Usunier",
+    "Alexander Kirillov",
+    "Sergey Zagoruyko"
+  ],
+  "domain": "CV",
+  "arxiv_id": "2005.12872",
+  "version": 1,
+  "created_at": "2026-10-23T12:00:00+05:30",
+  "last_updated": "2026-10-23T12:00:00+05:30",
+  "sir_confidence": 0.9,
+  "stages_with_data": [
+    "paper_analysis",
+    "sir_registry",
+    "independent_reproduction"
+  ],
+  "has_comparison_report": true,
+  "repo_path": "workspace/paper-repos/arxiv_2005_12872",
+  "update_history": [
+    {
+      "version": 1,
+      "timestamp": "2026-10-23T12:00:00+05:30",
+      "reason": "initial SIR and reproduction scaffold (AI-generated, bot-authored)",
+      "changed_sections": [
+        "provenance",
+        "architecture",
+        "mathematical_spec",
+        "tensor_semantics",
+        "training_pipeline",
+        "evaluation_protocol",
+        "implementation_assumptions",
+        "ambiguities"
+      ]
+    }
+  ]
+}
