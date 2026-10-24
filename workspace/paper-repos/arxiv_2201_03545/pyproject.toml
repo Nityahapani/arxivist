@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "convnext-paper-reproduction"
+version = "0.1.0"
+description = "Independent reproduction of Liu et al. (2022), arXiv:2201.03545"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.2",
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+
+[project.scripts]
+convnext-repro = "convnext_repro.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"

@@ -1,0 +1,356 @@
+{
+  "paper_id": "arxiv_2201_03545",
+  "sir_version": 1,
+  "provenance": {
+    "title": "A ConvNet for the 2020s",
+    "authors": [
+      "Zhuang Liu",
+      "Hanzi Mao",
+      "Chao-Yuan Wu",
+      "Christoph Feichtenhofer",
+      "Trevor Darrell",
+      "Saining Xie"
+    ],
+    "affiliations": [
+      "Facebook AI Research (FAIR)",
+      "UC Berkeley"
+    ],
+    "arxiv_id": "2201.03545",
+    "doi": null,
+    "submission_date": "2022-01-10",
+    "abstract": "The paper gradually modernises a standard ResNet toward the design of a vision Transformer and discovers key components contributing to the performance gap. The resulting pure-ConvNet family, ConvNeXt, competes favourably with Transformers in accuracy and scalability, achieving 87.8% ImageNet top-1 and outperforming Swin Transformers on COCO detection and ADE20K segmentation while keeping ConvNet simplicity.",
+    "domain": "CV",
+    "key_claims": [
+      "Modernising ResNet step by step (training recipe, macro design, ResNeXt-ify, inverted bottleneck, large kernels, micro design) closes the gap with Swin Transformers.",
+      "ConvNeXt-T reaches 82.1% ImageNet-1K top-1 with 28.6M parameters and 4.5 GFLOPs.",
+      "ConvNeXt-XL pretrained on ImageNet-22K reaches 87.8% top-1 at 384 px.",
+      "ConvNeXt matches or outperforms Swin on COCO detection and ADE20K segmentation."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "ConvNeXt-T: depths (3,3,9,3), widths (96,192,384,768), 7x7 depthwise conv, inverted bottleneck, LN, GELU, layer scale",
+    "modules": [
+      {
+        "name": "PatchifyStem",
+        "operation_type": "conv",
+        "input_shape": "[B, 3, 224, 224]",
+        "output_shape": "[B, 96, 56, 56]",
+        "parameters": {
+          "kernel": 4,
+          "stride": 4,
+          "norm": "LN"
+        },
+        "paper_section": "Section 2.2",
+        "confidence": 0.97,
+        "notes": null
+      },
+      {
+        "name": "ConvNeXtBlock",
+        "operation_type": "conv_block",
+        "input_shape": "[B, C, H, W]",
+        "output_shape": "[B, C, H, W]",
+        "parameters": {
+          "dwconv": "7x7",
+          "norm": "LN",
+          "mlp_ratio": 4,
+          "act": "GELU",
+          "layer_scale": 1e-06
+        },
+        "paper_section": "Section 2.3-2.6; Fig. 4",
+        "confidence": 0.96,
+        "notes": null
+      },
+      {
+        "name": "Downsample",
+        "operation_type": "conv",
+        "input_shape": "[B, C, H, W]",
+        "output_shape": "[B, 2C, H/2, W/2]",
+        "parameters": {
+          "norm": "LN",
+          "kernel": 2,
+          "stride": 2
+        },
+        "paper_section": "Section 2.6",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "Head",
+        "operation_type": "linear",
+        "input_shape": "[B, 768]",
+        "output_shape": "[B, 1000]",
+        "parameters": {
+          "pool": "global average + LN"
+        },
+        "paper_section": "Section 2",
+        "confidence": 0.93,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "PatchifyStem",
+        "to": "ConvNeXtBlock",
+        "tensor_name": null
+      },
+      {
+        "from": "ConvNeXtBlock",
+        "to": "Downsample",
+        "tensor_name": null
+      },
+      {
+        "from": "Downsample",
+        "to": "Head",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "ConvNeXt-S",
+        "differences": {
+          "depths": [
+            3,
+            3,
+            27,
+            3
+          ]
+        }
+      },
+      {
+        "name": "ConvNeXt-B",
+        "differences": {
+          "dims": [
+            128,
+            256,
+            512,
+            1024
+          ]
+        }
+      },
+      {
+        "name": "ConvNeXt-L",
+        "differences": {
+          "dims": [
+            192,
+            384,
+            768,
+            1536
+          ]
+        }
+      },
+      {
+        "name": "ConvNeXt-XL",
+        "differences": {
+          "dims": [
+            256,
+            512,
+            1024,
+            2048
+          ]
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Block",
+      "latex": "y = x + \\mathrm{DropPath}(\\gamma \\odot W_2\\,\\mathrm{GELU}(W_1\\,\\mathrm{LN}(\\mathrm{DWConv}_{7\\times7}(x))))",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Fig. 4",
+      "confidence": 0.95
+    },
+    {
+      "name": "Soft-target cross-entropy",
+      "latex": "\\mathcal{L} = -\\sum_c \\tilde{y}_c \\log \\mathrm{softmax}(z)_c",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1",
+      "confidence": 0.85
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "image",
+      "shape_notation": "[B, 3, 224, 224]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "PatchifyStem",
+      "confidence": 0.9
+    },
+    {
+      "name": "stage4",
+      "shape_notation": "[B, 768, 7, 7]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "ConvNeXtBlock",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, 1000]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "Head",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": 0.004,
+      "beta1": null,
+      "beta2": null,
+      "weight_decay": 0.05,
+      "confidence": 0.88
+    },
+    "lr_schedule": {
+      "type": "cosine, 20 warm-up epochs",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.88
+    },
+    "batch_size": 4096,
+    "effective_batch_size": 4096,
+    "training_steps": null,
+    "epochs": 300,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "RandAugment(9,0.5)",
+      "Mixup 0.8",
+      "CutMix 1.0",
+      "Random Erasing 0.25",
+      "label smoothing 0.1"
+    ],
+    "curriculum": null,
+    "confidence": 0.88
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "ImageNet-1K",
+        "split": "train / val",
+        "size": 1281167,
+        "publicly_available": true
+      },
+      {
+        "name": "ImageNet-22K",
+        "split": "pretraining",
+        "size": 14197122,
+        "publicly_available": true
+      },
+      {
+        "name": "COCO",
+        "split": "detection",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "ADE20K",
+        "split": "segmentation",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "ImageNet top-1 accuracy",
+      "COCO box/mask AP",
+      "ADE20K mIoU",
+      "Params / FLOPs / throughput"
+    ],
+    "reported_results": [
+      {
+        "metric": "Top-1, ConvNeXt-T (224)",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 82.1,
+        "is_primary": true
+      },
+      {
+        "metric": "Top-1, ConvNeXt-S (224)",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 83.1,
+        "is_primary": false
+      },
+      {
+        "metric": "Top-1, ConvNeXt-B (224)",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 83.8,
+        "is_primary": false
+      },
+      {
+        "metric": "Top-1, ConvNeXt-XL IN-22K pretrain (384)",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 87.8,
+        "is_primary": false
+      },
+      {
+        "metric": "Params (M), ConvNeXt-T",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 28.6,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "ResNet",
+      "Swin Transformer",
+      "DeiT",
+      "EfficientNet"
+    ],
+    "compute": "ConvNeXt-T 300 epochs on ImageNet-1K: ~8 × A100 for several days.",
+    "special_conditions": [],
+    "confidence": 0.85
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "RandAugment and Random Erasing are not implemented in the scaffold; Mixup/CutMix/label smoothing are.",
+      "basis": "Scope limit; the contributor should add them (e.g. timm) before reporting.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Appendix A.1"
+    },
+    {
+      "assumption": "EMA of weights (decay 0.9999) is optional and evaluated separately.",
+      "basis": "Paper notes EMA helps larger models.",
+      "confidence": 0.75,
+      "alternatives": [],
+      "affects_section": "Appendix A.1"
+    },
+    {
+      "assumption": "An ImageNet loader must be supplied.",
+      "basis": "Not available in the authoring environment.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 2"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Appendix A.1",
+      "description": "Drop-path rate differs per model size.",
+      "primary_assumption": "T 0.1, S 0.4, B 0.5",
+      "alternatives": [],
+      "confidence": 0.85
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.97,
+    "mathematical_spec": 0.92,
+    "tensor_semantics": 0.93,
+    "training_pipeline": 0.85,
+    "evaluation_protocol": 0.85,
+    "implementation_assumptions": 0.8,
+    "overall_sir_confidence": 0.89
+  }
+}
