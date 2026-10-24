@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "Swin-T ImageNet-1K 300-epoch training (Section 4.1)", "arxiv_id": "2103.14030"},
+  "run_name": "in1k_swin_tiny_300ep", "seed": 0, "device": "auto",
+  "data": {"name": "imagenet", "root": "data/imagenet", "image_size": 224, "n_classes": 1000},
+  "model": {"variant": "swin_tiny", "drop_path": 0.2},
+  "train": {"steps": 375300, "batch_size": 1024, "lr": 1e-3, "scale_lr": true, "weight_decay": 0.05, "warmup_fraction": 0.0667,
+            "mixup": 0.8, "cutmix": 1.0, "label_smoothing": 0.1, "ema_decay": null, "log_every": 100},
+  "note": "300 epochs x 1,281,167 / 1,024 ≈ 375,300 steps; 20 warm-up epochs; gradient clipping 5.0 in the reference recipe. Stochastic depth 0.2/0.3/0.5 for T/S/B. RandAugment and Random Erasing are part of the recipe but not implemented here; add them before reporting. Requires an ImageNet loader."
+}
