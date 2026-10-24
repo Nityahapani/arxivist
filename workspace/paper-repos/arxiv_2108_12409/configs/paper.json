@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "ALiBi WikiText-103 extrapolation (Section 4, Figure 1/4)", "arxiv_id": "2108.12409"},
+  "seed": 0, "device": "auto",
+  "data": {"name": "wikitext103"},
+  "model": {"positions": ["alibi", "sinusoidal", "rotary"], "d_model": 1024, "n_layers": 16, "n_heads": 8, "d_ff": 4096, "dropout": 0.3},
+  "train": {"seq_len": 512, "batch_size": 16, "steps": 286000, "lr": 0.0001, "warmup": 16000, "clip": 0.1, "log_every": 500},
+  "eval": {"lengths": [512, 1024, 1536, 2048, 3072], "max_windows": null},
+  "note": "Architecture follows the Baevski & Auli (2018) WikiText-103 model used by the paper, but with a standard (non-adaptive) embedding/softmax — an explicit simplification. Train with L_train in {64, 128, 256, 512, 1024, 1536, 3072} for Figure 4. Optimizer budget/LR are approximations of the fairseq recipe; verify before reporting."
+}

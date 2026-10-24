@@ -1,0 +1,262 @@
+{
+  "paper_id": "arxiv_2108_12409",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation",
+    "authors": [
+      "Ofir Press",
+      "Noah A. Smith",
+      "Mike Lewis"
+    ],
+    "affiliations": [
+      "University of Washington",
+      "Facebook AI Research",
+      "Allen Institute for AI"
+    ],
+    "arxiv_id": "2108.12409",
+    "doi": null,
+    "submission_date": "2021-08-27",
+    "abstract": "Position methods such as sinusoidal and rotary embeddings fail to extrapolate to sequences longer than those seen in training. ALiBi removes position embeddings and instead adds a static, head-specific linear penalty proportional to query-key distance to attention scores. A 1.3B model trained on 1024 tokens extrapolates to 2048 with the perplexity of a sinusoidal model trained on 2048, while training faster and using less memory.",
+    "domain": "NLP",
+    "key_claims": [
+      "Sinusoidal, rotary and T5-bias position methods extrapolate poorly or expensively beyond the training length.",
+      "Adding -m (i - j) biases to attention scores, with no position embeddings, enables extrapolation.",
+      "A 1.3B ALiBi model trained with L=1024 matches a sinusoidal model trained with L=2048 at evaluation length 2048, training 11% faster with 11% less memory.",
+      "ALiBi's slopes are a fixed geometric sequence and need no tuning across datasets."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "Causal Transformer LM without position embeddings; attention logits + head-specific linear distance penalty",
+    "modules": [
+      {
+        "name": "TokenEmbedding",
+        "operation_type": "embedding",
+        "input_shape": "[B, T]",
+        "output_shape": "[B, T, d]",
+        "parameters": {
+          "position_embeddings": "none"
+        },
+        "paper_section": "Section 3",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "ALiBiAttention",
+        "operation_type": "attention",
+        "input_shape": "[B, T, d]",
+        "output_shape": "[B, T, d]",
+        "parameters": {
+          "bias": "-m_h (i - j)",
+          "slopes": "2^{-8h/n}, h=1..n"
+        },
+        "paper_section": "Section 3, Fig. 3",
+        "confidence": 0.97,
+        "notes": null
+      },
+      {
+        "name": "LMHead",
+        "operation_type": "linear",
+        "input_shape": "[B, T, d]",
+        "output_shape": "[B, T, V]",
+        "parameters": {
+          "tied": true
+        },
+        "paper_section": "Section 4",
+        "confidence": 0.8,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "TokenEmbedding",
+        "to": "ALiBiAttention",
+        "tensor_name": null
+      },
+      {
+        "from": "ALiBiAttention",
+        "to": "LMHead",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "Sinusoidal baseline",
+        "differences": {
+          "position": "added sinusoidal embeddings"
+        }
+      },
+      {
+        "name": "Rotary baseline",
+        "differences": {
+          "position": "RoPE on q,k"
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "ALiBi attention",
+      "latex": "\\mathrm{softmax}(q_i K^\\top + m\\cdot[-(i-1),\\dots,-2,-1,0])",
+      "role": "attention",
+      "used_in": "both",
+      "hyperparameters": [
+        "m"
+      ],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.97
+    },
+    {
+      "name": "Slopes (n heads)",
+      "latex": "m_h = 2^{-8h/n},\\; h = 1,\\dots,n",
+      "role": "other",
+      "used_in": "both",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.95
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "ids",
+      "shape_notation": "[B, T]",
+      "dtype": "int64",
+      "tensor_type": "input",
+      "module": "TokenEmbedding",
+      "confidence": 0.9
+    },
+    {
+      "name": "alibi_bias",
+      "shape_notation": "[H, T, T]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "ALiBiAttention",
+      "confidence": 0.9
+    },
+    {
+      "name": "logits",
+      "shape_notation": "[B, T, V]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "LMHead",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "Adam",
+      "learning_rate": 0.0001,
+      "beta1": 0.9,
+      "beta2": 0.98,
+      "weight_decay": null,
+      "confidence": 0.55
+    },
+    "lr_schedule": {
+      "type": "linear warmup then decay (fairseq recipe; approximated)",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.55
+    },
+    "batch_size": null,
+    "effective_batch_size": null,
+    "training_steps": 286000,
+    "epochs": null,
+    "mixed_precision": null,
+    "gradient_clipping": 0.1,
+    "data_augmentation": [],
+    "curriculum": null,
+    "confidence": 0.55
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "WikiText-103",
+        "split": "train / valid / test",
+        "size": 103000000,
+        "publicly_available": true
+      },
+      {
+        "name": "Toronto BookCorpus",
+        "split": "train / valid / test",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "CC100 + RoBERTa corpus (1.3B models)",
+        "split": "train / valid",
+        "size": null,
+        "publicly_available": false
+      }
+    ],
+    "metrics": [
+      "Perplexity at evaluation length L_valid >= L_train (non-overlapping and sliding window)",
+      "Training speed (words per second)",
+      "Memory"
+    ],
+    "reported_results": [
+      {
+        "metric": "Training speed-up of ALiBi L=1024 vs sinusoidal L=2048 at matched L_valid=2048 perplexity (1.3B, %)",
+        "dataset": "CC100+RoBERTa",
+        "split": "valid",
+        "value": 11.0,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "Sinusoidal",
+      "Rotary",
+      "T5 relative bias"
+    ],
+    "compute": "WikiText-103 247M-parameter models: 8 GPUs for ~1-2 days per training length.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Use standard tied embeddings instead of adaptive input / adaptive softmax.",
+      "basis": "Simplifies the Baevski & Auli (2018) architecture; perplexities will not match exactly.",
+      "confidence": 0.6,
+      "alternatives": [
+        "Implement adaptive input/softmax"
+      ],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "Adam (0.9, 0.98), LR 1e-4 with warmup, clip 0.1, 286k updates.",
+      "basis": "Approximation of the fairseq WikiText-103 recipe; verify against the paper/codebase.",
+      "confidence": 0.5,
+      "alternatives": [],
+      "affects_section": "Section 4"
+    },
+    {
+      "assumption": "Use the interleaving rule from the reference implementation for head counts that are not powers of two.",
+      "basis": "Paper describes the power-of-two case.",
+      "confidence": 0.85,
+      "alternatives": [],
+      "affects_section": "Section 3"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 4",
+      "description": "Exact training hyperparameters inherited from Baevski & Auli.",
+      "primary_assumption": "fairseq defaults (approximate)",
+      "alternatives": [
+        "fairseq transformer_lm_wiki103"
+      ],
+      "confidence": 0.55
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.93,
+    "mathematical_spec": 0.95,
+    "tensor_semantics": 0.9,
+    "training_pipeline": 0.55,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.7,
+    "overall_sir_confidence": 0.8
+  }
+}
