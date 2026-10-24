@@ -1,0 +1,8 @@
+{
+  "paper": {"title": "MAE smoke-test configuration", "arxiv_id": "2111.06377"},
+  "run_name": "smoke", "seed": 0, "device": "cpu",
+  "data": {"name": "synthetic", "image_size": 32, "n_classes": 4, "n_train": 256, "n_test": 128},
+  "model": {"arch": "vit_tiny_patch4", "dec_dim": 32, "dec_depth": 1, "dec_heads": 4, "norm_pix_loss": true},
+  "train": {"steps": 20, "batch_size": 32, "blr": 1.5e-4, "weight_decay": 0.05, "mask_ratio": 0.75, "warmup_fraction": 0.1, "log_every": 5},
+  "linear_probe": {"steps": 100}
+}

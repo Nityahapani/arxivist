@@ -1,0 +1,356 @@
+{
+  "paper_id": "arxiv_2111_06377",
+  "sir_version": 1,
+  "provenance": {
+    "title": "Masked Autoencoders Are Scalable Vision Learners",
+    "authors": [
+      "Kaiming He",
+      "Xinlei Chen",
+      "Saining Xie",
+      "Yanghao Li",
+      "Piotr Dollár",
+      "Ross Girshick"
+    ],
+    "affiliations": [
+      "Facebook AI Research (FAIR)"
+    ],
+    "arxiv_id": "2111.06377",
+    "doi": null,
+    "submission_date": "2021-11-11",
+    "abstract": "MAE masks random patches of the input image (75%) and reconstructs the missing pixels. An asymmetric encoder-decoder design applies the ViT encoder only to visible patches and uses a lightweight decoder with mask tokens. High masking ratios make the pretext task non-trivial and speed up training by 3x or more. A vanilla ViT-Huge reaches 87.8% ImageNet-1K accuracy after fine-tuning using only ImageNet-1K data.",
+    "domain": "CV",
+    "key_claims": [
+      "Masking a high proportion of patches (75%) yields a nontrivial and meaningful self-supervisory task.",
+      "An asymmetric design with the encoder on visible patches only and a lightweight decoder accelerates training by 3x or more.",
+      "ViT-Huge pretrained with MAE reaches 87.8% top-1 on ImageNet-1K (448 px fine-tuning) using only ImageNet-1K data.",
+      "Reconstructing per-patch normalized pixels improves representation quality.",
+      "MAE transfers well to detection, segmentation, and classification, outperforming supervised pretraining."
+    ],
+    "parsed_at": "2026-10-23T12:00:00+05:30",
+    "arxivist_version": "1.0"
+  },
+  "architecture": {
+    "primary_variant": "ViT-L/16 encoder on 25% visible patches; 8-block, 512-d decoder; normalized-pixel MSE on masked patches",
+    "modules": [
+      {
+        "name": "PatchEmbed",
+        "operation_type": "conv_patchify",
+        "input_shape": "[B, 3, 224, 224]",
+        "output_shape": "[B, 196, D]",
+        "parameters": {
+          "patch": 16
+        },
+        "paper_section": "Section 3",
+        "confidence": 0.95,
+        "notes": null
+      },
+      {
+        "name": "RandomMasking",
+        "operation_type": "masking",
+        "input_shape": "[B, 196, D]",
+        "output_shape": "[B, 49, D] + mask [B, 196]",
+        "parameters": {
+          "mask_ratio": 0.75,
+          "sampling": "uniform without replacement"
+        },
+        "paper_section": "Section 3",
+        "confidence": 0.97,
+        "notes": null
+      },
+      {
+        "name": "Encoder",
+        "operation_type": "vit",
+        "input_shape": "[B, 1+49, D]",
+        "output_shape": "[B, 1+49, D]",
+        "parameters": {
+          "arch": "ViT-B/L/H",
+          "pos_embed": "fixed 2-D sin-cos"
+        },
+        "paper_section": "Section 3",
+        "confidence": 0.92,
+        "notes": null
+      },
+      {
+        "name": "Decoder",
+        "operation_type": "transformer",
+        "input_shape": "[B, 1+196, 512]",
+        "output_shape": "[B, 196, p*p*3]",
+        "parameters": {
+          "depth": 8,
+          "width": 512,
+          "heads": 16,
+          "mask_token": "shared learned"
+        },
+        "paper_section": "Section 3; Table 1",
+        "confidence": 0.92,
+        "notes": null
+      },
+      {
+        "name": "NormPixLoss",
+        "operation_type": "mse_loss",
+        "input_shape": "pred, target",
+        "output_shape": "scalar",
+        "parameters": {
+          "on": "masked patches only",
+          "target": "per-patch normalized pixels"
+        },
+        "paper_section": "Section 3",
+        "confidence": 0.95,
+        "notes": null
+      }
+    ],
+    "connections": [
+      {
+        "from": "PatchEmbed",
+        "to": "RandomMasking",
+        "tensor_name": null
+      },
+      {
+        "from": "RandomMasking",
+        "to": "Encoder",
+        "tensor_name": null
+      },
+      {
+        "from": "Encoder",
+        "to": "Decoder",
+        "tensor_name": null
+      },
+      {
+        "from": "Decoder",
+        "to": "NormPixLoss",
+        "tensor_name": null
+      }
+    ],
+    "variants": [
+      {
+        "name": "ViT-B/16",
+        "differences": {
+          "dim": 768,
+          "depth": 12,
+          "heads": 12
+        }
+      },
+      {
+        "name": "ViT-L/16",
+        "differences": {
+          "dim": 1024,
+          "depth": 24,
+          "heads": 16
+        }
+      },
+      {
+        "name": "ViT-H/14",
+        "differences": {
+          "dim": 1280,
+          "depth": 32,
+          "heads": 16
+        }
+      }
+    ]
+  },
+  "mathematical_spec": [
+    {
+      "name": "Masked reconstruction loss",
+      "latex": "\\mathcal{L} = \\frac{1}{|M|}\\sum_{i\\in M} \\|\\hat{x}_i - \\tilde{x}_i\\|_2^2 / (p^2 C)",
+      "role": "loss",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.92
+    },
+    {
+      "name": "Normalized pixel target",
+      "latex": "\\tilde{x}_i = (x_i - \\mu_i)/\\sqrt{\\sigma_i^2 + \\epsilon}",
+      "role": "normalization",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Section 3",
+      "confidence": 0.9
+    },
+    {
+      "name": "LR scaling",
+      "latex": "lr = blr \\times \\mathrm{batch}/256,\\; blr = 1.5\\times10^{-4}",
+      "role": "other",
+      "used_in": "training",
+      "hyperparameters": [],
+      "undefined_symbols": [],
+      "paper_section": "Appendix A.1",
+      "confidence": 0.9
+    }
+  ],
+  "tensor_semantics": [
+    {
+      "name": "imgs",
+      "shape_notation": "[B, 3, 224, 224]",
+      "dtype": "float32",
+      "tensor_type": "input",
+      "module": "PatchEmbed",
+      "confidence": 0.9
+    },
+    {
+      "name": "visible_tokens",
+      "shape_notation": "[B, 49, D]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "RandomMasking",
+      "confidence": 0.9
+    },
+    {
+      "name": "mask",
+      "shape_notation": "[B, 196]",
+      "dtype": "float32",
+      "tensor_type": "intermediate",
+      "module": "RandomMasking",
+      "confidence": 0.9
+    },
+    {
+      "name": "pred",
+      "shape_notation": "[B, 196, 768]",
+      "dtype": "float32",
+      "tensor_type": "output",
+      "module": "Decoder",
+      "confidence": 0.9
+    }
+  ],
+  "training_pipeline": {
+    "optimizer": {
+      "name": "AdamW",
+      "learning_rate": 0.0024,
+      "beta1": 0.9,
+      "beta2": 0.95,
+      "weight_decay": 0.05,
+      "confidence": 0.88
+    },
+    "lr_schedule": {
+      "type": "cosine decay, 40 warm-up epochs",
+      "warmup_steps": null,
+      "total_steps": null,
+      "confidence": 0.88
+    },
+    "batch_size": 4096,
+    "effective_batch_size": 4096,
+    "training_steps": null,
+    "epochs": 800,
+    "mixed_precision": null,
+    "gradient_clipping": null,
+    "data_augmentation": [
+      "RandomResizedCrop(0.2-1.0)",
+      "horizontal flip"
+    ],
+    "curriculum": null,
+    "confidence": 0.88
+  },
+  "evaluation_protocol": {
+    "datasets": [
+      {
+        "name": "ImageNet-1K",
+        "split": "train / val",
+        "size": 1281167,
+        "publicly_available": true
+      },
+      {
+        "name": "COCO",
+        "split": "detection transfer",
+        "size": null,
+        "publicly_available": true
+      },
+      {
+        "name": "ADE20K",
+        "split": "segmentation transfer",
+        "size": null,
+        "publicly_available": true
+      }
+    ],
+    "metrics": [
+      "Fine-tuning top-1 accuracy",
+      "Linear probing top-1 accuracy",
+      "Transfer AP / mIoU"
+    ],
+    "reported_results": [
+      {
+        "metric": "Fine-tune top-1, ViT-B/16",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 83.6,
+        "is_primary": false
+      },
+      {
+        "metric": "Fine-tune top-1, ViT-L/16",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 85.9,
+        "is_primary": true
+      },
+      {
+        "metric": "Fine-tune top-1, ViT-H/14",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 86.9,
+        "is_primary": false
+      },
+      {
+        "metric": "Fine-tune top-1, ViT-H/14 at 448 px",
+        "dataset": "ImageNet-1K",
+        "split": "val",
+        "value": 87.8,
+        "is_primary": false
+      }
+    ],
+    "baselines": [
+      "Supervised ViT",
+      "DINO",
+      "MoCo v3",
+      "BEiT"
+    ],
+    "compute": "ViT-L 800-epoch pretraining used 128 TPU-v3 cores in the paper; multi-node GPU cluster required.",
+    "special_conditions": [],
+    "confidence": 0.8
+  },
+  "implementation_assumptions": [
+    {
+      "assumption": "Pretraining and linear probe are implemented; full fine-tuning recipe (layer-wise LR decay, RandAug, mixup/cutmix, drop path) is not part of this scaffold.",
+      "basis": "Scope limit; required for the fine-tuning numbers.",
+      "confidence": 0.9,
+      "alternatives": [],
+      "affects_section": "Appendix A.2"
+    },
+    {
+      "assumption": "Probe on the mean of encoder patch tokens with a feature-standardisation step (stand-in for BatchNorm without affine).",
+      "basis": "Paper uses [CLS] or average pooling with an extra BN layer.",
+      "confidence": 0.7,
+      "alternatives": [
+        "[CLS] token features"
+      ],
+      "affects_section": "Appendix A.3"
+    },
+    {
+      "assumption": "An ImageNet data loader must be supplied by the contributor (`data.name=imagefolder`).",
+      "basis": "Not available in the authoring environment.",
+      "confidence": 0.95,
+      "alternatives": [],
+      "affects_section": "Section 4"
+    }
+  ],
+  "ambiguities": [
+    {
+      "location": "Section 3",
+      "description": "Whether the [CLS] token is used for fine-tuning; paper shows both work similarly.",
+      "primary_assumption": "global average pooling",
+      "alternatives": [
+        "[CLS]"
+      ],
+      "confidence": 0.75
+    }
+  ],
+  "confidence_annotations": {
+    "architecture": 0.94,
+    "mathematical_spec": 0.92,
+    "tensor_semantics": 0.92,
+    "training_pipeline": 0.88,
+    "evaluation_protocol": 0.8,
+    "implementation_assumptions": 0.75,
+    "overall_sir_confidence": 0.87
+  }
+}

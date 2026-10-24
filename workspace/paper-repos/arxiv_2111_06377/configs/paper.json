@@ -1,0 +1,9 @@
+{
+  "paper": {"title": "MAE ViT-L/16 ImageNet-1K pretraining (Section 4, Appendix A.1)", "arxiv_id": "2111.06377"},
+  "run_name": "in1k_vit_large_800ep", "seed": 0, "device": "auto",
+  "data": {"name": "imagefolder", "root": "data/imagenet", "image_size": 224},
+  "model": {"arch": "vit_large_patch16", "dec_dim": 512, "dec_depth": 8, "dec_heads": 16, "norm_pix_loss": true},
+  "train": {"steps": 250200, "batch_size": 4096, "blr": 1.5e-4, "weight_decay": 0.05, "mask_ratio": 0.75, "warmup_fraction": 0.05, "log_every": 100},
+  "linear_probe": {"steps": 0},
+  "note": "800 epochs x 1,281,167 / 4,096 ≈ 250,200 steps; 40 warm-up epochs = 5%. Fine-tuning (Appendix A.2: 50 epochs ViT-L, layer-wise lr decay 0.75, RandAug, mixup/cutmix, drop path) is not implemented in this scaffold and must be added for the 85.9% ViT-L number. Requires an ImageNet loader."
+}
